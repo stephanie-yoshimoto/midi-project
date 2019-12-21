@@ -3,6 +3,7 @@
 //
 
 #include "hellofunc.h"
+#include "A.h"
 
 void myPrintHelloMake(void) {
 
