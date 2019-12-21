@@ -1,6 +1,7 @@
-//
-// Created by Stephanie Yoshimoto on 12/20/19.
-//
+/*
+Created by Stephanie Yoshimoto on 12/20/19.
+*/
+
 
 #include <stdio.h>
 

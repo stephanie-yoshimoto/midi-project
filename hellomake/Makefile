@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -Wall -I.
+CFLAGS=-g -Wall -Wextra -ansi -pedantic -I.
 DEPS = hellomake.h A.h
 LOCAL_SRC_FILES = hellomake.c hellofunc.c A.c
 

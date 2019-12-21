@@ -1,6 +1,6 @@
-//
-// Created by Steve Yoshimoto on 12/13/19.
-//
+/*
+Created by Steve Yoshimoto on 12/13/19.
+*/
 
 #include "hellofunc.h"
 #include "A.h"

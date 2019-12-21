@@ -4,11 +4,13 @@
 #include "A.h"
 
 int main() {
-    // call a function in another file
-//    sleep(30);
+    int x;
+/*
+    sleep(30);
+*/
     myPrintHelloMake();
 
-    int x = 30;
+    x = 30;
     printf("%d\n", x);
     foo();
 
