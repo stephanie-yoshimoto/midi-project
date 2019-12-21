@@ -1,12 +1,16 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-g -Wall -I.
 DEPS = hellomake.h A.h
+LOCAL_SRC_FILES = hellomake.c hellofunc.c A.c
+
+OBJS := $(addsuffix .o,$(basename $(LOCAL_SRC_FILES)))
+BIN = hellomake.out
 
 %.o: %.c $(DEPS)
-	$(CC) -c -g -Wall -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-hellomake.out: hellomake.o hellofunc.o A.o
-	$(CC) -o hellomake.out hellomake.o hellofunc.o A.o
+$(BIN): $(OBJS)
+	$(CC) -o $(BIN) $(OBJS)
 
 clean:
-	rm -f hellomake.out *.o *~ core
+	rm -f $(BIN) $(OBJS) *~ core
