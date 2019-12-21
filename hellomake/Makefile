@@ -5,8 +5,8 @@ DEPS = hellomake.h A.h
 %.o: %.c $(DEPS)
 	$(CC) -c -g -Wall -o $@ $< $(CFLAGS)
 
-hellomake: hellomake.o hellofunc.o A.o
-	$(CC) -o hellomake hellomake.o hellofunc.o A.o
+hellomake.out: hellomake.o hellofunc.o A.o
+	$(CC) -o hellomake.out hellomake.o hellofunc.o A.o
 
 clean:
-	rm -f hellomake *.o *~ core
+	rm -f hellomake.out *.o *~ core
