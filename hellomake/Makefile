@@ -1,16 +1,14 @@
 CC=gcc
 CFLAGS=-g -Wall -Wextra -ansi -pedantic -I.
 DEPS = hellomake.h A.h
-LOCAL_SRC_FILES = hellomake.c hellofunc.c A.c
-
-OBJS := $(addsuffix .o,$(basename $(LOCAL_SRC_FILES)))
+OBJS = hellomake.o hellofunc.o A.o
 BIN = hellomake.out
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BIN): $(OBJS)
-	$(CC) -o $(BIN) $(OBJS)
+	$(CC) -o $(BIN) $^
 
 clean:
 	rm -f $(BIN) $(OBJS) *~ core
