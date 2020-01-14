@@ -8,6 +8,7 @@ Created by Steve Yoshimoto on 12/13/19.
 void myPrintHelloMake(void) {
 
     printf("Hello makefiles!\n");
+    printf("another line\n");
 
     return;
 }
