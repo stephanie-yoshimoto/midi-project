@@ -25,7 +25,8 @@ int compute_hailstone(int starting_value, int limit) {
   for (i = 1; i < limit; i++) {
     if (current_value % 2 == 0) {
       current_value /= 2;
-    } else {
+    }
+    else {
       current_value = (3 * current_value) + 1;
     }
     g_hailstone_array[i] = current_value;
@@ -54,7 +55,8 @@ int check_hailstone(int limit) {
   for (i = 1; i < limit; i++) {
     if (value % 2 == 0) {
       temp = value / 2;
-    } else {
+    }
+    else {
       temp = (3 * value) + 1;
     }
 
