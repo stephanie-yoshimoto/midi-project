@@ -14,24 +14,22 @@
 
 int compute_hailstone(int starting_value, int limit) {
   int sum = starting_value;
-  int n = starting_value;
   int i = 0;
-  int temp = starting_value;
+  int current_value = starting_value;
 
   if ((starting_value <= 0) || (limit <= 0) || (limit > ARRAY_SIZE)) {
     return HAILSTONE_ERROR;
   }
 
-  g_hailstone_array[0] = n;
+  g_hailstone_array[0] = current_value;
   for (i = 1; i < limit; i++) {
-    if (n % 2 == 0) {
-      temp = n / 2;
+    if (current_value % 2 == 0) {
+      current_value /= 2;
     } else {
-      temp = (3 * n) + 1;
+      current_value = (3 * current_value) + 1;
     }
-    n = temp;
-    g_hailstone_array[i] = temp;
-    sum += temp;
+    g_hailstone_array[i] = current_value;
+    sum += current_value;
   }
 
   return sum;
