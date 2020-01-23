@@ -17,9 +17,13 @@ int compute_hailstone(int starting_value, int limit) {
   int i = 0;
   int current_value = starting_value;
 
+  /* performs checks for invalid input */
+
   if ((starting_value <= 0) || (limit <= 0) || (limit > ARRAY_SIZE)) {
     return HAILSTONE_ERROR;
   }
+
+  /* iterates through loop to find hailstone numbers */
 
   g_hailstone_array[0] = current_value;
   for (i = 1; i < limit; i++) {
@@ -27,8 +31,13 @@ int compute_hailstone(int starting_value, int limit) {
       current_value /= 2;
     }
     else {
+      /* current_value is an odd number */
+
       current_value = (3 * current_value) + 1;
     }
+
+    /* number put into array, current_value added to sum */
+
     g_hailstone_array[i] = current_value;
     sum += current_value;
   }
@@ -48,17 +57,26 @@ int check_hailstone(int limit) {
   int i = 0;
   int value = g_hailstone_array[0];
   int temp = 0;
+
+  /* performs checks for invalid input */
+
   if ((limit < 1) || (value < 1) || (limit > ARRAY_SIZE)) {
     return HAILSTONE_ERROR;
   }
+
+  /* loops through array, checks if element is valid */
 
   for (i = 1; i < limit; i++) {
     if (value % 2 == 0) {
       temp = value / 2;
     }
     else {
+      /* value is an odd number */
+
       temp = (3 * value) + 1;
     }
+
+    /* returns index if element does not match correct hailstone number */
 
     if (temp != g_hailstone_array[i]) {
       return i;
