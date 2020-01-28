@@ -21,3 +21,8 @@
 float get_average_sleep_hours(char *, int, int);
 int get_sleep_log(char *, char *);
 int compare_sleep_hours(char *, char *, char *);
+float get_average_calories(char *, int, int);
+int compare_activity_log(char *, char *, int, int, char *);
+
+
+#endif // HW2_H
