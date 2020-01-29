@@ -143,7 +143,7 @@ int get_sleep_log(char *in_file, char *out_file) {
   input_pointer = NULL;
   fclose(output_pointer);
   output_pointer = NULL;
-  return OK;
+  return 0;
 }
 
 int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
