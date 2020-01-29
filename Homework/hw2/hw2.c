@@ -20,15 +20,17 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   int returned_value = 1;
   FILE *file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
+    fclose(file_pointer);
     return FILE_READ_ERR;
   }
 
   returned_value = fscanf(file_pointer, "%[^\n]", name);
   if (returned_value == 0 || returned_value == -1) {
+    fclose(file_pointer);
     return NO_DATA_POINTS;
   }
 
-  while ((returned value = fscanf(file_pointer, "%d/%d/%d|%f|%f|%f\n",
+  while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%f|%f\n",
     &desired_month, &day, &desired_year, &sleep_hours, &moving_minutes,
     &workout_minutes)) == 6) {
     if (desired_year == year && desired_month == month) {
@@ -38,14 +40,43 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   }
 
   if (returned_value != 0 && returned_value != -1) {
+    fclose(file_pointer);
     return BAD_RECORD;
   }
 
+  fclose(file_pointer);
   return (total_hours / entries);
 }
 
 int get_sleep_log(char *in_file, char *out_file) {
-  return 0;
+  char name[MAX_NAME_LEN];
+  int year = 2019;
+  int month = 12;
+  int day = 0;
+  float sleep_hours = 0;
+  float moving_minutes = 0;
+  float workout_minutes = 0;
+  int returned_value = 1;
+  FILE *input_pointer = fopen(in_file, "r");
+  FILE *output_pointer = fopen(out_file, "w");
+  if (input_pointer == NULL || output_pointer == NULL) {
+    fclose(input_pointer);
+    fclose(output_pointer);
+    return FILE_READ_ERR;
+  }
+
+  returned_value = fscanf(input_pointer, "%[^\n]", name);
+  if (returned_value == 0 || returned_value == -1) {
+    fclose(input_pointer);
+    fclose(output_pointer);
+    return NO_DATA_POINTS;
+  }
+  else {
+    fprintf(output_pointer, "%s\n", name);
+  }
+
+
+  return OK;
 }
 
 int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
