@@ -21,12 +21,14 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   FILE *file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
     fclose(file_pointer);
+    file_pointer = NULL;
     return FILE_READ_ERR;
   }
 
   returned_value = fscanf(file_pointer, "%[^\n]", name);
   if (returned_value == 0 || returned_value == -1) {
     fclose(file_pointer);
+    file_pointer = NULL;
     return NO_DATA_POINTS;
   }
 
@@ -41,10 +43,12 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
 
   if (returned_value != 0 && returned_value != -1) {
     fclose(file_pointer);
+    file_pointer = NULL;
     return BAD_RECORD;
   }
 
   fclose(file_pointer);
+  file_pointer = NULL;
   return (total_hours / entries);
 }
 
@@ -66,6 +70,8 @@ int get_sleep_log(char *in_file, char *out_file) {
   if (input_pointer == NULL || output_pointer == NULL) {
     fclose(input_pointer);
     fclose(output_pointer);
+    input_pointer = NULL;
+    output_pointer = NULL;
     return FILE_READ_ERR;
   }
 
@@ -73,6 +79,7 @@ int get_sleep_log(char *in_file, char *out_file) {
   if (returned_value == 0 || returned_value == -1) {
     fclose(input_pointer);
     fclose(output_pointer);
+    input_pointer = NULL;
     return NO_DATA_POINTS;
   }
 
@@ -90,7 +97,34 @@ int get_sleep_log(char *in_file, char *out_file) {
   fprintf(output_pointer, "Name: %s, Month: %d, Year: %d\n", name, month,
     year);
   fprintf(output_pointer, "HOUR: 0 1 2 3 4 5 6 7 8 9 10\n");
+  fclose(input_pointer);
+  input_pointer = fopen(in_file, "r");
+  returned_value = fscanf(input_pointer, "%[^\n]", name);
+  if (returned_value == 0 || returned_value == -1) {
+    fclose(input_pointer);
+    fclose(output_pointer);
+    return NO_DATA_POINTS;
+  }
+
+  while ((returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month, &day, &temp_year, &sleep_hours, &moving_minutes,
+    &workout_minutes)) == 6) {
+    if (temp_month == month && temp_year == year) {
+      fprintf(output_pointer, "%-6d|", day);
+      total_hours += sleep_hours;
+      entries++;
+      while (sleep_hours > 0.5) {
+        fprintf(output_pointer, "-");
+        sleep_hours -= 0.5;
+      }
+      fprintf(output_pointer, "|\n");
+    }
+  }
+  fprintf(output_pointer, "Average Sleep Hours: %.2f hours", (total_hours /
+    entries));
+
 //  fprintf(output_pointer, "%-6d|\n", day);
+
   return OK;
 }
 
