@@ -113,6 +113,14 @@ int get_sleep_log(char *in_file, char *out_file) {
       fprintf(output_pointer, "%-6d|", day);
       total_hours += sleep_hours;
       entries++;
+      if (sleep_hours == 0) {
+        fprintf(output_pointer, "\n");
+        continue;
+      }
+      else if (sleep_hours > 10) {
+        fprintf(output_pointer, "--------------------\n");
+        continue;
+      }
       while (sleep_hours > 0.5) {
         fprintf(output_pointer, "-");
         sleep_hours -= 0.5;
@@ -120,11 +128,21 @@ int get_sleep_log(char *in_file, char *out_file) {
       fprintf(output_pointer, "|\n");
     }
   }
+  
+  if (returned_value != 0 && returned_value != -1) {
+    fclose(input_pointer);
+    input_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return BAD_RECORD;
+  }
+
   fprintf(output_pointer, "Average Sleep Hours: %.2f hours", (total_hours /
     entries));
-
-//  fprintf(output_pointer, "%-6d|\n", day);
-
+  fclose(input_pointer);
+  input_pointer = NULL;
+  fclose(output_pointer);
+  output_pointer = NULL;
   return OK;
 }
 
