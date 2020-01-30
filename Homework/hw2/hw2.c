@@ -226,10 +226,9 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month_2, &day, &temp_year_2, &sleep_hours_2, &moving_minutes,
     &workout_minutes);
-  while ((returned_value_1 == 6) || (returned_value_2 == 6)) {
+  while ((returned_value_1 == 6) && (returned_value_2 == 6)) {
     if ((temp_month_1 == month) && (temp_year_1 == year) &&
           (temp_month_1 == temp_month_2) && (temp_year_1 == temp_year_2)) {
-      //fprintf(output_pointer, "%-6d|", day);
       if (returned_value_1 == 6) {
         fprintf(output_pointer, "%-6d|", day);
         total_hours_1 += sleep_hours_1;
@@ -250,7 +249,6 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
       }
       else {
         fprintf(output_pointer, "%-6d|\n", day);
-        //fprintf(output_pointer, "\n");
       }
 
       if (returned_value_2 == 6) {
@@ -283,17 +281,8 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     &workout_minutes);
   }
 
-  if (((returned_value_1 != 0) && (returned_value_1 != -1)) ||
-    ((returned_value_2 != 0) && (returned_value_2 != -1))) {
-    fclose(in_1_pointer);
-    in_1_pointer = NULL;
-    fclose(in_2_pointer);
-    in_2_pointer = NULL;
-    fclose(output_pointer);
-    output_pointer = NULL;
-    return BAD_RECORD;
-  }
-
+  if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
+    ((returned_value_2 == 0) || (returned_value_2 == -1))) {
   fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours\n", name1,
     (total_hours_1 / entries_1));
   fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours", name2,
@@ -305,6 +294,19 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   fclose(output_pointer);
   output_pointer = NULL;
   return 0;
+  }
+  else if (((returned_value_1 == 0) || (returned_value_1 == -1)) ||
+    ((returned_value_2 == 0) || (returned_value_2 == -1))) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return RECORDS_MISMATCH;
+  }
+
+  return BAD_RECORD;
 }
 
 float get_average_calories(char *file_name, int year, int month) {
