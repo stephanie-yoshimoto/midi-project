@@ -356,8 +356,105 @@ float get_average_calories(char *file_name, int year, int month) {
   return calories_burned;
 }
 
-int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month, char *out_file) {
+int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
+  char *out_file) {
+  char name1[MAX_NAME_LEN];
+  char name2[MAX_NAME_LEN];
+  int temp_year_1 = 0;
+  int temp_year_2 = 0;
+  int temp_month_1 = 0;
+  int temp_month_2 = 0;
+  int day = 0;
+  float sleep_hours = 0;
+  float moving_mins_1 = 0;
+  float moving_mins_2 = 0;
+  float diff_in_mins = 0;
+  float workout_minutes = 0;
+  int returned_value_1 = 1;
+  int returned_value_2 = 1;
+  FILE *in_1_pointer = fopen(in_file_1, "r");
+  FILE *in_2_pointer = fopen(in_file_2, "r");
+  FILE *output_pointer = fopen(out_file, "w");
+  if ((in_1_pointer == NULL) || (in_2_pointer == NULL) ||
+    (output_pointer == NULL)) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return FILE_READ_ERR;
+  }
+
+  returned_value_1 = fscanf(in_1_pointer, "%[^\n]", name1);
+  returned_value_2 = fscanf(in_2_pointer, "%[^\n]", name2);
+  if ((returned_value_1 == 0) || (returned_value_1 == -1) ||
+    (returned_value_2 == 0) || (returned_value_2 == 0)) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return NO_DATA_POINTS;
+  }
+
+  fprintf(output_pointer, "Name: %s\nName: %s\nMonth: %d, Year: %d\n", name1,
+    name2, month, year);
+
+  returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_1, &day, &temp_year_1, &sleep_hours, &moving_mins_1,
+    &workout_minutes);
+  returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_2, &day, &temp_year_2, &sleep_hours, &moving_mins_2,
+    &workout_minutes);
+  while ((returned_value_1 == 6) && (returned_value_2 == 6)) {
+    if ((temp_month_1 == month) && (temp_month_2 == month) &&
+      (temp_year_1 == year) && (temp_year_2 == year)) {
+      fprintf(output_pointer, "%-2d: ", day);
+      if (moving_mins_1 == moving_mins_2) {
+        fprintf(output_pointer,
+        "%s and %s burned an equal amount of calories.\n", name1, name2);
+      }
+      else if (moving_mins_1 > moving_mins_2) {
+        fprintf(output_pointer, "%s burned %.2f more calories.\n", name1,
+          (moving_mins_1 - moving_mins_2));
+      }
+      else if (moving_mins_1 < moving_mins_2) {
+        fprintf(output_pointer, "%s burned %.2f more calories.\n", name2,
+          (moving_mins_2 - moving_mins_1));
+      }
+    }
+    returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_1, &day, &temp_year_1, &sleep_hours, &moving_mins_1,
+    &workout_minutes);
+    returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_2, &day, &temp_year_2, &sleep_hours, &moving_mins_2,
+    &workout_minutes);
+  }
+
+  if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
+    ((returned_value_2 == 0) || (returned_value_2 == -1))) {
+  fclose(in_1_pointer);
+  in_1_pointer = NULL;
+  fclose(in_2_pointer);
+  in_2_pointer = NULL;
+  fclose(output_pointer);
+  output_pointer = NULL;
   return 0;
+  }
+  else if (((returned_value_1 == 0) || (returned_value_1 == -1)) ||
+    ((returned_value_2 == 0) || (returned_value_2 == -1))) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return RECORDS_MISMATCH;
+  }
+
+  return BAD_RECORD;
 }
 
 
