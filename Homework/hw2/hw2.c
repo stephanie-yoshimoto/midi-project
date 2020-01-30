@@ -368,8 +368,10 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
   float sleep_hours = 0;
   float moving_mins_1 = 0;
   float moving_mins_2 = 0;
-  float diff_in_mins = 0;
-  float workout_minutes = 0;
+  float workout_mins_1 = 0;
+  float workout_mins_2 = 0;
+  float calories_burned_1 = 0;
+  float calories_burned_2 = 0;
   int returned_value_1 = 1;
   int returned_value_2 = 1;
   FILE *in_1_pointer = fopen(in_file_1, "r");
@@ -401,36 +403,37 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
 
   fprintf(output_pointer, "Name: %s\nName: %s\nMonth: %d, Year: %d\n", name1,
     name2, month, year);
-
   returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month_1, &day, &temp_year_1, &sleep_hours, &moving_mins_1,
-    &workout_minutes);
+    &workout_mins_1);
   returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month_2, &day, &temp_year_2, &sleep_hours, &moving_mins_2,
-    &workout_minutes);
+    &workout_mins_2);
   while ((returned_value_1 == 6) && (returned_value_2 == 6)) {
     if ((temp_month_1 == month) && (temp_month_2 == month) &&
       (temp_year_1 == year) && (temp_year_2 == year)) {
       fprintf(output_pointer, "%-2d: ", day);
-      if (moving_mins_1 == moving_mins_2) {
+      calories_burned_1 = (2.5 * moving_mins_1) + (11.3 * workout_mins_1);
+      calories_burned_2 = (2.5 * moving_mins_2) + (11.3 * workout_mins_2);
+      if (calories_burned_1 == calories_burned_2) {
         fprintf(output_pointer,
         "%s and %s burned an equal amount of calories.\n", name1, name2);
       }
-      else if (moving_mins_1 > moving_mins_2) {
+      else if (calories_burned_1 > calories_burned_2) {
         fprintf(output_pointer, "%s burned %.2f more calories.\n", name1,
-          (moving_mins_1 - moving_mins_2));
+          (calories_burned_1 - calories_burned_2));
       }
-      else if (moving_mins_1 < moving_mins_2) {
+      else if (calories_burned_1 < calories_burned_2) {
         fprintf(output_pointer, "%s burned %.2f more calories.\n", name2,
-          (moving_mins_2 - moving_mins_1));
+          (calories_burned_2 - calories_burned_1));
       }
     }
     returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month_1, &day, &temp_year_1, &sleep_hours, &moving_mins_1,
-    &workout_minutes);
+    &workout_mins_1);
     returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month_2, &day, &temp_year_2, &sleep_hours, &moving_mins_2,
-    &workout_minutes);
+    &workout_mins_2);
   }
 
   if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
