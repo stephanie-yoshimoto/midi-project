@@ -87,10 +87,15 @@ int get_sleep_log(char *in_file, char *out_file) {
     &temp_month, &day, &temp_year, &sleep_hours, &moving_minutes,
     &workout_minutes)) == 6) {
     if (temp_year >= year) {
-      year = temp_year;
-      if (temp_month >= month) {
+      if (temp_year > year) {
         month = temp_month;
       }
+      else {
+        if (temp_month > month) {
+          month = temp_month;
+        }
+      }
+      year = temp_year;
     }
   }
 
@@ -197,10 +202,15 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     &temp_month_1, &day, &temp_year_1, &sleep_hours_1, &moving_minutes,
     &workout_minutes)) == 6) {
     if (temp_year_1 >= year) {
-      year = temp_year_1;
-      if (temp_month_1 >= month) {
+      if (temp_year_1 > year) {
         month = temp_month_1;
       }
+      else {
+        if (temp_month_1 > month) {
+          month = temp_month_1;
+        }
+      }
+      year = temp_year_1;
     }
   }
 
