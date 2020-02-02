@@ -77,7 +77,7 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
     }
   }
 
-  if ((returned_value != 0) && (returned_value != -1)) {
+  if (returned_value != EOF) {
     fclose(file_pointer);
     file_pointer = NULL;
     return BAD_RECORD;
