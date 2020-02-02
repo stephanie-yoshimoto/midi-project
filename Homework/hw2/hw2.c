@@ -3,9 +3,14 @@
  */
 
 /* Add any includes here */
+#include "hw2.h"
+
 #include <stdio.h>
 
-#include "hw2.h"
+/*
+ * This function takes in the name of a file and opens it to collect the data
+ * for the individuals average sleep hours.
+ */
 
 float get_average_sleep_hours(char *file_name, int year, int month) {
   char name[MAX_NAME_LEN];
@@ -20,22 +25,53 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   int returned_value = 1;
   FILE *file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
-    fclose(file_pointer);
-    file_pointer = NULL;
     return FILE_READ_ERR;
   }
 
-  returned_value = fscanf(file_pointer, "%[^\n]", name);
+  if ((month < 1) || (month > 12)) {
+    fclose(file_pointer);
+    file_pointer = NULL;
+    return BAD_DATE;
+  }
+
+  returned_value = fscanf(file_pointer, "%40[^\n]s", name);
   if ((returned_value == 0) || (returned_value == -1)) {
     fclose(file_pointer);
     file_pointer = NULL;
     return NO_DATA_POINTS;
   }
 
+  returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &desired_month, &day, &desired_year, &sleep_hours, &moving_minutes,
+    &workout_minutes);
+  if (returned_value == 6) {
+    if ((day < 1) || (day > 31)) {
+      fclose(file_pointer);
+      file_pointer = NULL;
+      return BAD_DATE;
+    }
+
+    if ((desired_year == year) && (desired_month == month)) {
+      total_hours += sleep_hours;
+      entries++;
+    }
+  }
+  else {
+    fclose(file_pointer);
+    file_pointer = NULL;
+    return BAD_RECORD;
+  }
+
   while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%f|%f\n",
     &desired_month, &day, &desired_year, &sleep_hours, &moving_minutes,
     &workout_minutes)) == 6) {
-    if (desired_year == year && desired_month == month) {
+    if ((day < 1) || (day > 31)) {
+      fclose(file_pointer);
+      file_pointer = NULL;
+      return BAD_DATE;
+    }
+
+    if ((desired_year == year) && (desired_month == month)) {
       total_hours += sleep_hours;
       entries++;
     }
@@ -49,8 +85,17 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
 
   fclose(file_pointer);
   file_pointer = NULL;
+  if (entries == 0) {
+    return NO_DATA_POINTS;
+  }
   return (total_hours / entries);
-}
+} /* get_average_sleep_hours() */
+
+/*
+ * This function reads an input file and outputs the individual's sleep data
+ * per night in an output file, also recording the average hours of sleep for
+ * the most recent month.
+ */
 
 int get_sleep_log(char *in_file, char *out_file) {
   char name[MAX_NAME_LEN];
@@ -67,20 +112,48 @@ int get_sleep_log(char *in_file, char *out_file) {
   int returned_value = 1;
   FILE *input_pointer = fopen(in_file, "r");
   FILE *output_pointer = fopen(out_file, "w");
-  if ((input_pointer == NULL) || (output_pointer == NULL)) {
+  if (input_pointer == NULL) {
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return FILE_READ_ERR;
+  }
+  else if (output_pointer == NULL) {
+    fclose(input_pointer);
+    input_pointer = NULL;
+    return FILE_READ_ERR;
+  }
+
+  returned_value = fscanf(input_pointer, "%40[^\n]s", name);
+  if ((returned_value == 0) || (returned_value == -1)) {
     fclose(input_pointer);
     fclose(output_pointer);
     input_pointer = NULL;
     output_pointer = NULL;
-    return FILE_READ_ERR;
+    return NO_DATA_POINTS;
   }
 
-  returned_value = fscanf(input_pointer, "%[^\n]", name);
-  if (returned_value == 0 || returned_value == -1) {
+  returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month, &day, &temp_year, &sleep_hours, &moving_minutes,
+    &workout_minutes);
+  if (returned_value == 6) {
+    if (temp_year >= year) {
+      if (temp_year > year) {
+        month = temp_month;
+      }
+      else {
+        if (temp_month > month) {
+          month = temp_month;
+        }
+      }
+      year = temp_year;
+    }
+  }
+  else {
     fclose(input_pointer);
-    fclose(output_pointer);
     input_pointer = NULL;
-    return NO_DATA_POINTS;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return BAD_RECORD;
   }
 
   while ((returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%f|%f\n",
@@ -99,22 +172,38 @@ int get_sleep_log(char *in_file, char *out_file) {
     }
   }
 
+  if ((month < 1) || (month > 12)) {
+    fclose(input_pointer);
+    input_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return BAD_DATE;
+  }
+
   fprintf(output_pointer, "Name: %s, Month: %d, Year: %d\n", name, month,
     year);
   fprintf(output_pointer, "HOUR: 0 1 2 3 4 5 6 7 8 9 10\n");
   fclose(input_pointer);
+  input_pointer = NULL;
   input_pointer = fopen(in_file, "r");
-  returned_value = fscanf(input_pointer, "%[^\n]", name);
-  if ((returned_value == 0) || (returned_value == -1)) {
-    fclose(input_pointer);
+  if (input_pointer == NULL) {
     fclose(output_pointer);
-    return NO_DATA_POINTS;
+    output_pointer = NULL;
+    return FILE_READ_ERR;
   }
+  fscanf(input_pointer, "%*40[^\n]s");
 
   while ((returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%f|%f\n",
     &temp_month, &day, &temp_year, &sleep_hours, &moving_minutes,
     &workout_minutes)) == 6) {
     if ((temp_month == month) && (temp_year == year)) {
+      if ((day < 1) || (day > 31)) {
+        fclose(input_pointer);
+        input_pointer = NULL;
+        fclose(output_pointer);
+        output_pointer = NULL;
+        return BAD_DATE;
+      }
       fprintf(output_pointer, "%-6d|", day);
       total_hours += sleep_hours;
       entries++;
@@ -142,14 +231,19 @@ int get_sleep_log(char *in_file, char *out_file) {
     return BAD_RECORD;
   }
 
-  fprintf(output_pointer, "Average Sleep Hours: %.2f hours", (total_hours /
-    entries));
   fclose(input_pointer);
   input_pointer = NULL;
+  if (entries == 0) {
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return NO_DATA_POINTS;
+  }
+  fprintf(output_pointer, "Average Sleep Hours: %.2f hours", (total_hours /
+    entries));
   fclose(output_pointer);
   output_pointer = NULL;
   return 0;
-}
+} /* get_sleep_log() */
 
 int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   char name1[MAX_NAME_LEN];
