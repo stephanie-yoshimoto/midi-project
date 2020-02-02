@@ -223,7 +223,7 @@ int get_sleep_log(char *in_file, char *out_file) {
     }
   }
 
-  if ((returned_value != 0) && (returned_value != -1)) {
+  if (returned_value != EOF) {
     fclose(input_pointer);
     input_pointer = NULL;
     fclose(output_pointer);
@@ -244,6 +244,11 @@ int get_sleep_log(char *in_file, char *out_file) {
   output_pointer = NULL;
   return 0;
 } /* get_sleep_log() */
+
+/*
+ * This function compares the hours of sleep within two input files, recording
+ * the compared data in an output file.
+ */
 
 int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   char name1[MAX_NAME_LEN];
@@ -268,20 +273,31 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   FILE *in_1_pointer = fopen(in_file_1, "r");
   FILE *in_2_pointer = fopen(in_file_2, "r");
   FILE *output_pointer = fopen(out_file, "w");
-  if ((in_1_pointer == NULL) || (in_2_pointer == NULL) ||
-    (output_pointer == NULL)) {
-    fclose(in_1_pointer);
-    in_1_pointer = NULL;
+  if (in_1_pointer == NULL) {
     fclose(in_2_pointer);
     in_2_pointer = NULL;
     fclose(output_pointer);
     output_pointer = NULL;
     return FILE_READ_ERR;
   }
+  else if (in_2_pointer == NULL) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    return FILE_READ_ERR;
+  }
+  else if (output_pointer == NULL) {
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    return FILE_WRITE_ERR;
+  }
 
-  returned_value_1 = fscanf(in_1_pointer, "%[^\n]", name1);
-  returned_value_2 = fscanf(in_2_pointer, "%[^\n]", name2);
-  if ((returned_value_1 == 0) || (returned_value_1 == -1) || 
+  returned_value_1 = fscanf(in_1_pointer, "%40[^\n]s", name1);
+  returned_value_2 = fscanf(in_2_pointer, "%40[^\n]s", name2);
+  if ((returned_value_1 == 0) || (returned_value_1 == -1) ||
     (returned_value_2 == 0) || (returned_value_2 == 0)) {
     fclose(in_1_pointer);
     in_1_pointer = NULL;
@@ -313,8 +329,16 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   fprintf(output_pointer, "HOUR: 0 1 2 3 4 5 6 7 8 9 10\n");
   fclose(in_1_pointer);
   in_1_pointer = fopen(in_file_1, "r");
-  returned_value_1 = fscanf(in_1_pointer, "%[^\n]", name1);
-  if ((returned_value_1 == 0) || (returned_value_1 == -1)) {
+  fscanf(in_1_pointer, "%*40[^\n]s");
+
+  returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_1, &day, &temp_year_1, &sleep_hours_1, &moving_minutes,
+    &workout_minutes);
+  returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
+    &temp_month_2, &day, &temp_year_2, &sleep_hours_2, &moving_minutes,
+    &workout_minutes);
+  if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
+    ((returned_value_2 == 0) || (returned_value_2 == -1))) {
     fclose(in_1_pointer);
     in_1_pointer = NULL;
     fclose(in_2_pointer);
@@ -323,13 +347,6 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     output_pointer = NULL;
     return NO_DATA_POINTS;
   }
-
-  returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%f|%f\n",
-    &temp_month_1, &day, &temp_year_1, &sleep_hours_1, &moving_minutes,
-    &workout_minutes);
-  returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%f|%f\n",
-    &temp_month_2, &day, &temp_year_2, &sleep_hours_2, &moving_minutes,
-    &workout_minutes);
   while ((returned_value_1 == 6) && (returned_value_2 == 6)) {
     if ((temp_month_1 == month) && (temp_year_1 == year) &&
           (temp_month_1 == temp_month_2) && (temp_year_1 == temp_year_2)) {
@@ -339,7 +356,7 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
         entries_1++;
         if (sleep_hours_1 == 0) {
           fprintf(output_pointer, "\n");
-         }
+        }
         else if (sleep_hours_1 > 10) {
           fprintf(output_pointer, "--------------------\n");
         }
@@ -387,17 +404,17 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
 
   if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
     ((returned_value_2 == 0) || (returned_value_2 == -1))) {
-  fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours\n", name1,
+    fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours\n", name1,
     (total_hours_1 / entries_1));
-  fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours", name2,
+    fprintf(output_pointer, "Average Sleep Hours of %s: %.2f hours", name2,
     (total_hours_2 / entries_2));
-  fclose(in_1_pointer);
-  in_1_pointer = NULL;
-  fclose(in_2_pointer);
-  in_2_pointer = NULL;
-  fclose(output_pointer);
-  output_pointer = NULL;
-  return 0;
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return 0;
   }
   else if (((returned_value_1 == 0) || (returned_value_1 == -1)) ||
     ((returned_value_2 == 0) || (returned_value_2 == -1))) {
@@ -410,8 +427,19 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     return RECORDS_MISMATCH;
   }
 
+  fclose(in_1_pointer);
+  in_1_pointer = NULL;
+  fclose(in_2_pointer);
+  in_2_pointer = NULL;
+  fclose(output_pointer);
+  output_pointer = NULL;
   return BAD_RECORD;
-}
+} /* compare_sleep_hours() */
+
+/*
+ * This function calculates the average calories burned in the given year and
+ * monnth passed in, found in the input file.
+ */
 
 float get_average_calories(char *file_name, int year, int month) {
   FILE *file_pointer = fopen(file_name, "r");
@@ -420,45 +448,62 @@ float get_average_calories(char *file_name, int year, int month) {
   int temp_month = 0;
   int temp_year = 0;
   float sleep_hours = 0;
-  float temp_moving_mins = 0;
-  float total_moving_mins = 0;
-  float temp_workout_mins = 0;
-  float total_workout_mins = 0;
-  float calories_burned = 0;
+  int temp_moving_mins = 0;
+  int temp_workout_mins = 0;
+  float total_calories_burned = 0;
+  int entries = 0;
   int returned_value = 1;
   if (file_pointer == NULL) {
-    fclose(file_pointer);
-    file_pointer = NULL;
     return FILE_READ_ERR;
   }
 
-  returned_value = fscanf(file_pointer, "%[^\n]", name);
+  if ((month < 1) || (month > 12)) {
+    fclose(file_pointer);
+    file_pointer = NULL;
+    return BAD_DATE;
+  }
+
+  returned_value = fscanf(file_pointer, "%40[^\n]s", name);
   if ((returned_value == 0) || (returned_value == -1)) {
     fclose(file_pointer);
     file_pointer = NULL;
     return NO_DATA_POINTS;
   }
 
-  while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%f|%f\n",
+  while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%d|%d\n",
     &temp_month, &day, &temp_year, &sleep_hours, &temp_moving_mins,
     &temp_workout_mins)) == 6) {
-    if ((temp_month == month) && (temp_year == year)) {
-      total_moving_mins += temp_moving_mins;
-      total_workout_mins += temp_workout_mins;
+    if ((day < 1) || (day > 31) || (temp_month < 1) || (temp_month > 12)) {
+      fclose(file_pointer);
+      file_pointer = NULL;
+      return BAD_DATE;
     }
-  }
 
-  if ((returned_value != 0) && (returned_value != -1)) {
-    fclose(file_pointer);
-    file_pointer = NULL;
-    return BAD_RECORD;
+    if ((temp_month == month) && (temp_year == year)) {
+      total_calories_burned += (2.5 * temp_moving_mins) +
+        (11.3 * temp_workout_mins);
+      entries++;
+    }
   }
 
   fclose(file_pointer);
   file_pointer = NULL;
-  calories_burned = (2.5 * total_moving_mins) + (11.3 * total_workout_mins);
-  return calories_burned;
-}
+  if (returned_value != EOF) {
+    return BAD_RECORD;
+  }
+
+  if (entries == 0) {
+    return NO_DATA_POINTS;
+  }
+
+  return (total_calories_burned / entries);
+} /* get_average_calories() */
+
+/*
+ * This function compares the average calories burned for two individuals'
+ * data stored in different input files, then prints the compared results to
+ * an output file for specified month and year.
+ */
 
 int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
   char *out_file) {
@@ -483,17 +528,11 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
   FILE *output_pointer = fopen(out_file, "w");
   if ((in_1_pointer == NULL) || (in_2_pointer == NULL) ||
     (output_pointer == NULL)) {
-    fclose(in_1_pointer);
-    in_1_pointer = NULL;
-    fclose(in_2_pointer);
-    in_2_pointer = NULL;
-    fclose(output_pointer);
-    output_pointer = NULL;
     return FILE_READ_ERR;
   }
 
-  returned_value_1 = fscanf(in_1_pointer, "%[^\n]", name1);
-  returned_value_2 = fscanf(in_2_pointer, "%[^\n]", name2);
+  returned_value_1 = fscanf(in_1_pointer, "%40s\n", name1);
+  returned_value_2 = fscanf(in_2_pointer, "%40s\n", name2);
   if ((returned_value_1 == 0) || (returned_value_1 == -1) ||
     (returned_value_2 == 0) || (returned_value_2 == 0)) {
     fclose(in_1_pointer);
@@ -542,13 +581,13 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
 
   if (((returned_value_1 == 0) || (returned_value_1 == -1)) &&
     ((returned_value_2 == 0) || (returned_value_2 == -1))) {
-  fclose(in_1_pointer);
-  in_1_pointer = NULL;
-  fclose(in_2_pointer);
-  in_2_pointer = NULL;
-  fclose(output_pointer);
-  output_pointer = NULL;
-  return 0;
+    fclose(in_1_pointer);
+    in_1_pointer = NULL;
+    fclose(in_2_pointer);
+    in_2_pointer = NULL;
+    fclose(output_pointer);
+    output_pointer = NULL;
+    return 0;
   }
   else if (((returned_value_1 == 0) || (returned_value_1 == -1)) ||
     ((returned_value_2 == 0) || (returned_value_2 == -1))) {
@@ -562,7 +601,7 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
   }
 
   return BAD_RECORD;
-}
+} /* compare_activity_log() */
 
 
 /* Remember, you don't need a main function!
