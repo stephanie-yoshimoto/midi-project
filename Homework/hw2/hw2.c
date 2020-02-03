@@ -120,7 +120,7 @@ int get_sleep_log(char *in_file, char *out_file) {
   int returned_value = 1;
   FILE *input_pointer = NULL;
   FILE *output_pointer = NULL;
-  input_pointer = (in_file, "r");
+  input_pointer = fopen(in_file, "r");
   output_pointer = fopen(out_file, "w");
   if (input_pointer == NULL) {
     fclose(output_pointer);
