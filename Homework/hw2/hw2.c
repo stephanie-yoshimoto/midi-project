@@ -23,7 +23,8 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   float total_hours = 0;
   int entries = 0;
   int returned_value = 1;
-  FILE *file_pointer = fopen(file_name, "r");
+  FILE *file_pointer = NULL;
+  file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
     return FILE_READ_ERR;
   }
@@ -117,8 +118,10 @@ int get_sleep_log(char *in_file, char *out_file) {
   float total_hours = 0;
   float entries = 0;
   int returned_value = 1;
-  FILE *input_pointer = fopen(in_file, "r");
-  FILE *output_pointer = fopen(out_file, "w");
+  FILE *input_pointer = NULL;
+  FILE *output_pointer = NULL;
+  input_pointer = (in_file, "r");
+  output_pointer = fopen(out_file, "w");
   if (input_pointer == NULL) {
     fclose(output_pointer);
     output_pointer = NULL;
@@ -300,9 +303,12 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   float entries_2 = 0;
   int returned_value_1 = 1;
   int returned_value_2 = 1;
-  FILE *in_1_pointer = fopen(in_file_1, "r");
-  FILE *in_2_pointer = fopen(in_file_2, "r");
-  FILE *output_pointer = fopen(out_file, "w");
+  FILE *in_1_pointer = NULL;
+  FILE *in_2_pointer = NULL;
+  FILE *output_pointer = NULL;
+  in_1_pointer = fopen(in_file_1, "r");
+  in_2_pointer = fopen(in_file_2, "r");
+  output_pointer = fopen(out_file, "w");
   if (in_1_pointer == NULL) {
     fclose(in_2_pointer);
     in_2_pointer = NULL;
@@ -504,7 +510,6 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
  */
 
 float get_average_calories(char *file_name, int year, int month) {
-  FILE *file_pointer = fopen(file_name, "r");
   char name[MAX_NAME_LEN];
   int day = 0;
   int temp_month = 0;
@@ -515,6 +520,8 @@ float get_average_calories(char *file_name, int year, int month) {
   float total_calories_burned = 0;
   int entries = 0;
   int returned_value = 1;
+  FILE *file_pointer = NULL;
+  file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
     return FILE_READ_ERR;
   }
@@ -591,9 +598,12 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
   float calories_burned_2 = 0;
   int returned_value_1 = 1;
   int returned_value_2 = 1;
-  FILE *in_1_pointer = fopen(in_file_1, "r");
-  FILE *in_2_pointer = fopen(in_file_2, "r");
-  FILE *output_pointer = fopen(out_file, "w");
+  FILE *in_1_pointer = NULL;
+  FILE *in_2_pointer = NULL;
+  FILE *output_pointer = NULL;
+  in_1_pointer = fopen(in_file_1, "r");
+  in_2_pointer = fopen(in_file_2, "r");
+  output_pointer = fopen(out_file, "w");
   if (in_1_pointer == NULL) {
     fclose(in_2_pointer);
     in_2_pointer = NULL;
@@ -605,7 +615,7 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
     fclose(in_1_pointer);
     in_1_pointer = NULL;
     fclose(output_pointer);
-    output_pointer = NULL; 
+    output_pointer = NULL;
     return FILE_READ_ERR;
   }
   else if (output_pointer == NULL) {
