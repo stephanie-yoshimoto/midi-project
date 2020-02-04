@@ -299,10 +299,6 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   fclose(in_1_pointer);
   in_1_pointer = fopen(in_file_1, "r");
   fscanf(in_1_pointer, "%*40[^\n]s");
-
-  /* checks to see if name is too long by testing if next inputs are */
-  /* correctly formatted */
-
   returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month_1, &day, &temp_year_1, &sleep_hours_1);
   returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%*f|%*f\n",
@@ -498,14 +494,10 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
     return FILE_WRITE_ERR;
   }
 
-  returned_value_1 = fscanf(in_1_pointer, "%40[^\n]s", name1);
-  returned_value_2 = fscanf(in_2_pointer, "%40[^\n]s", name2);
+  fscanf(in_1_pointer, "%40[^\n]s", name1);
+  fscanf(in_2_pointer, "%40[^\n]s", name2);
   fprintf(output_pointer, "Name: %s\nName: %s\nMonth: %d, Year: %d\n", name1,
     name2, month, year);
-
-  /* checks to see if name is too long by testing if next inputs are */
-  /* correctly formatted */
-
   returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%*f|%f|%f\n",
     &temp_month_1, &day, &temp_year_1, &moving_mins_1, &workout_mins_1);
   returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%*f|%f|%f\n",
