@@ -2,12 +2,11 @@
  * Last updated January 29, 2020
  */
 
-/* Add any includes here */
 #include "hw3.h"
 #include <stdio.h>
 #include <string.h>
 
-int g_dealership_count;
+int g_dealership_count = 0;
 char g_dealerships[MAX_RECORDS][MAX_NAME_LEN];
 char g_salespeople[MAX_RECORDS][MAX_NAME_LEN];
 int g_prices[MAX_RECORDS][NUM_PRICE_COLS];
@@ -33,15 +32,10 @@ int read_tables(char *file_name) {
     return FILE_READ_ERROR;
   }
 
-  returned_value = fscanf(file_ptr,
-    "%40[^\n#]s%40[^\n#]s%d#%d#%d#%d#%d#%d#%d#%d#%f", dealership, salesperson,
-    &sedan_price, &suv_price, &truck_price, &motorcycle_price, &sedan_sales,
-    &suv_sales, &truck_sales, &motorcycle_sales, &commission);
-
   while ((returned_value = fscanf(file_ptr,
-    "%40[^\n#]s%40[^\n]s#%d#%d#%d#%d#%d#%d#%d#%d#%f", dealership, salesperson,
+    "%40[^\n#]#%40[^\n#]#%d#%d#%d#%d#%d#%d#%d#%d#%f", dealership, salesperson,
     &sedan_price, &suv_price, &truck_price, &motorcycle_price, &sedan_sales,
-    &suv_sales, &truck_sales, &motorcycle_sales, &commission)) == 1) {
+    &suv_sales, &truck_sales, &motorcycle_sales, &commission)) == 11) {
     g_dealership_count++;
     for (i = 0; i < MAX_RECORDS; i++) {
       if (g_dealerships[i] == NULL) {
@@ -166,11 +160,36 @@ int calculate_revenue(char *dealership) {
 } /* calculate_revenue() */
 
 float employee_salary(char *salesperson) {
-  return OK;
+  int i = 0;
+  int salary = 0;
+  for (i = 0; i < MAX_RECORDS; i++) {
+    if (strcmp(&g_salespeople[i][0], salesperson) == 0) {
+      salary = calculate_revenue(&g_dealerships[i][0]) * g_sales[i][4];
+      break;
+    }
+  }
+
+  if (salary == 0) {
+    return NO_SUCH_NAME;
+  }
+  return salary;
 } /* employee_salary() */
 
 float calculate_max_salary() {
-  return OK;
+  int i = 0;
+  float max_salary = 0;
+  float temp_salary = 0;
+  for (i = 0; i < MAX_RECORDS; i++) {
+    temp_salary = employee_salary(&g_salespeople[i][0]);
+    if (temp_salary > max_salary) {
+      max_salary = temp_salary;
+    }
+  }
+
+  if (max_salary == 0) {
+
+  }
+  return max_salary;
 } /* calculate_max_salary() */
 
 int show_most_common_sale(char *out_file) {
