@@ -3,6 +3,7 @@
  */
 
 #include "hw2.h"
+
 #include <stdio.h>
 
 /*
@@ -40,21 +41,21 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
   if ((month < 1) || (month > 12)) {
     return BAD_DATE;
   }
-  char name[MAX_NAME_LEN];
-  int day = 0;
-  int desired_year = year;
-  int desired_month = month;
-  float sleep_hours = 0;
-  float total_hours = 0;
-  int entries = 0;
-  int returned_value = 1;
+
   FILE *file_pointer = NULL;
   file_pointer = fopen(file_name, "r");
   if (file_pointer == NULL) {
     return FILE_READ_ERR;
   }
 
-  returned_value = fscanf(file_pointer, "%40[^\n]s", name);
+  char name[MAX_NAME_LEN];
+  int returned_value = fscanf(file_pointer, "%40[^\n]s", name);
+  int day = 0;
+  int desired_year = year;
+  int desired_month = month;
+  float sleep_hours = 0;
+  float total_hours = 0;
+  int entries = 0;
   while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &desired_month, &day, &desired_year, &sleep_hours)) == 4) {
     if ((day < 1) || (day > 31)) {
@@ -89,16 +90,6 @@ float get_average_sleep_hours(char *file_name, int year, int month) {
  */
 
 int get_sleep_log(char *in_file, char *out_file) {
-  char name[MAX_NAME_LEN];
-  int year = 0;
-  int temp_year = 0;
-  int month = 0;
-  int temp_month = 0;
-  int day = 0;
-  float sleep_hours = 0;
-  float total_hours = 0;
-  float entries = 0;
-  int returned_value = 1;
   FILE *input_pointer = NULL;
   FILE *output_pointer = NULL;
   input_pointer = fopen(in_file, "r");
@@ -114,7 +105,8 @@ int get_sleep_log(char *in_file, char *out_file) {
     return FILE_READ_ERR;
   }
 
-  returned_value = fscanf(input_pointer, "%40[^\n]s", name);
+  char name[MAX_NAME_LEN];
+  int returned_value = fscanf(input_pointer, "%40[^\n]s", name);
   if ((returned_value == 0) || (returned_value == -1)) {
     fclose(input_pointer);
     fclose(output_pointer);
@@ -123,6 +115,13 @@ int get_sleep_log(char *in_file, char *out_file) {
     return NO_DATA_POINTS;
   }
 
+  int year = 0;
+  int month = 0;
+  int temp_year = 0;
+  int temp_month = 0;
+  int day = 0;
+  float sleep_hours = 0;
+  float total_hours = 0;
   while ((returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month, &day, &temp_year, &sleep_hours)) == 4) {
     /* finds the most recent month and year */
@@ -166,6 +165,7 @@ int get_sleep_log(char *in_file, char *out_file) {
   }
   fscanf(input_pointer, "%*40[^\n]s");
 
+  float entries = 0;
   while ((returned_value = fscanf(input_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month, &day, &temp_year, &sleep_hours)) == 4) {
     if ((temp_month == month) && (temp_year == year)) {
@@ -214,23 +214,6 @@ int get_sleep_log(char *in_file, char *out_file) {
  */
 
 int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
-  char name1[MAX_NAME_LEN];
-  char name2[MAX_NAME_LEN];
-  int year = 0;
-  int temp_year_1 = 0;
-  int temp_year_2 = 0;
-  int month = 0;
-  int temp_month_1 = 0;
-  int temp_month_2 = 0;
-  int day = 0;
-  float sleep_hours_1 = 0;
-  float sleep_hours_2 = 0;
-  float total_hours_1 = 0;
-  float total_hours_2 = 0;
-  float entries_1 = 0;
-  float entries_2 = 0;
-  int returned_value_1 = 1;
-  int returned_value_2 = 1;
   FILE *in_1_pointer = NULL;
   FILE *in_2_pointer = NULL;
   FILE *output_pointer = NULL;
@@ -259,8 +242,10 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     return FILE_WRITE_ERR;
   }
 
-  returned_value_1 = fscanf(in_1_pointer, "%40[^\n]s", name1);
-  returned_value_2 = fscanf(in_2_pointer, "%40[^\n]s", name2);
+  char name1[MAX_NAME_LEN];
+  char name2[MAX_NAME_LEN];
+  int returned_value_1 = fscanf(in_1_pointer, "%40[^\n]s", name1);
+  int returned_value_2 = fscanf(in_2_pointer, "%40[^\n]s", name2);
   if ((returned_value_1 == EOF) || (returned_value_2 == EOF)) {
     fclose(in_1_pointer);
     in_1_pointer = NULL;
@@ -273,6 +258,12 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
 
   /* finds most recent month and year */
 
+  int year = 0;
+  int month = 0;
+  int temp_year_1 = 0;
+  int day = 0;
+  int temp_month_1 = 0;
+  float sleep_hours_1 = 0;
   while ((returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month_1, &day, &temp_year_1, &sleep_hours_1)) == 4) {
     if (temp_year_1 >= year) {
@@ -301,6 +292,10 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
   fscanf(in_1_pointer, "%*40[^\n]s");
   returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month_1, &day, &temp_year_1, &sleep_hours_1);
+
+  int temp_year_2 = 0;
+  int temp_month_2 = 0;
+  float sleep_hours_2 = 0;
   returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%f|%*f|%*f\n",
     &temp_month_2, &day, &temp_year_2, &sleep_hours_2);
   if ((returned_value_1 == EOF) && (returned_value_2 == EOF)) {
@@ -312,6 +307,11 @@ int compare_sleep_hours(char *in_file_1, char *in_file_2, char *out_file) {
     output_pointer = NULL;
     return NO_DATA_POINTS;
   }
+
+  float entries_1 = 0;
+  float entries_2 = 0;
+  float total_hours_1 = 0;
+  float total_hours_2 = 0;
   while ((returned_value_1 == 4) && (returned_value_2 == 4)) {
     if ((temp_month_1 == month) && (temp_year_1 == year) &&
           (temp_month_1 == temp_month_2) && (temp_year_1 == temp_year_2)) {
@@ -391,6 +391,12 @@ float get_average_calories(char *file_name, int year, int month) {
     return BAD_DATE;
   }
 
+  FILE *file_pointer = NULL;
+  file_pointer = fopen(file_name, "r");
+  if (file_pointer == NULL) {
+    return FILE_READ_ERR;
+  }
+
   char name[MAX_NAME_LEN];
   int day = 0;
   int temp_month = 0;
@@ -399,14 +405,7 @@ float get_average_calories(char *file_name, int year, int month) {
   int temp_workout_mins = 0;
   float total_calories_burned = 0;
   int entries = 0;
-  int returned_value = 1;
-  FILE *file_pointer = NULL;
-  file_pointer = fopen(file_name, "r");
-  if (file_pointer == NULL) {
-    return FILE_READ_ERR;
-  }
-
-  returned_value = fscanf(file_pointer, "%40[^\n]s", name);
+  int returned_value = fscanf(file_pointer, "%40[^\n]s", name);
   while ((returned_value = fscanf(file_pointer, "%d/%d/%d|%*f|%d|%d\n",
     &temp_month, &day, &temp_year, &temp_moving_mins,
     &temp_workout_mins)) == 5) {
@@ -451,21 +450,6 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
     return BAD_DATE;
   }
 
-  char name1[MAX_NAME_LEN];
-  char name2[MAX_NAME_LEN];
-  int temp_year_1 = 0;
-  int temp_year_2 = 0;
-  int temp_month_1 = 0;
-  int temp_month_2 = 0;
-  int day = 0;
-  float moving_mins_1 = 0;
-  float moving_mins_2 = 0;
-  float workout_mins_1 = 0;
-  float workout_mins_2 = 0;
-  float calories_burned_1 = 0;
-  float calories_burned_2 = 0;
-  int returned_value_1 = 1;
-  int returned_value_2 = 1;
   FILE *in_1_pointer = NULL;
   FILE *in_2_pointer = NULL;
   FILE *output_pointer = NULL;
@@ -494,13 +478,24 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
     return FILE_WRITE_ERR;
   }
 
+  char name1[MAX_NAME_LEN];
+  char name2[MAX_NAME_LEN];
+  int temp_year_1 = 0;
+  int temp_year_2 = 0;
+  int temp_month_1 = 0;
+  int temp_month_2 = 0;
+  int day = 0;
+  float moving_mins_1 = 0;
+  float moving_mins_2 = 0;
+  float workout_mins_1 = 0;
+  float workout_mins_2 = 0;
   fscanf(in_1_pointer, "%40[^\n]s", name1);
   fscanf(in_2_pointer, "%40[^\n]s", name2);
   fprintf(output_pointer, "Name: %s\nName: %s\nMonth: %d, Year: %d\n", name1,
     name2, month, year);
-  returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%*f|%f|%f\n",
+  int returned_value_1 = fscanf(in_1_pointer, "%d/%d/%d|%*f|%f|%f\n",
     &temp_month_1, &day, &temp_year_1, &moving_mins_1, &workout_mins_1);
-  returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%*f|%f|%f\n",
+  int returned_value_2 = fscanf(in_2_pointer, "%d/%d/%d|%*f|%f|%f\n",
     &temp_month_2, &day, &temp_year_2, &moving_mins_2, &workout_mins_2);
   if ((returned_value_1 == EOF) && (returned_value_2 == EOF)) {
     fclose(in_1_pointer);
@@ -527,8 +522,8 @@ int compare_activity_log(char *in_file_1, char *in_file_2, int year, int month,
       /* prints formatting for file, calculates calories per person per day */
 
       fprintf(output_pointer, "%-2d: ", day);
-      calories_burned_1 = (2.5 * moving_mins_1) + (11.3 * workout_mins_1);
-      calories_burned_2 = (2.5 * moving_mins_2) + (11.3 * workout_mins_2);
+      float calories_burned_1 = (2.5 * moving_mins_1) + (11.3 * workout_mins_1);
+      float calories_burned_2 = (2.5 * moving_mins_2) + (11.3 * workout_mins_2);
 
       /* compares calories to see which person burned more, outputs data */
       /* to file */
