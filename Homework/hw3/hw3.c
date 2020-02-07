@@ -36,7 +36,7 @@ int read_tables(char *file_name) {
   while ((returned_value = fscanf(file_ptr,
     "%39[^\n#]#%39[^\n#]#%d#%d#%d#%d#%d#%d#%d#%d#%f\n", dealership, salesperson,
     &sedan_price, &suv_price, &truck_price, &motorcycle_price, &sedan_sales,
-    &suv_sales, &truck_sales, &motorcycle_sales, &commission) == 11)) {
+    &suv_sales, &truck_sales, &motorcycle_sales, &commission)) == 11) {
     read_this_iteration++;
     int i = 0;
     for (i = 0; i < MAX_RECORDS; i++) {
@@ -45,20 +45,12 @@ int read_tables(char *file_name) {
         break;
       }
     }
-    if (i == MAX_RECORDS) {
-      returned_value = 12;
-      break;
-    }
 
     for (i = 0; i < MAX_RECORDS; i++) {
       if (g_salespeople[i][0] == '\0') {
         strcpy(g_salespeople[i], salesperson);
         break;
       }
-    }
-    if (i == MAX_RECORDS) {
-      returned_value = 12;
-      break;
     }
 
     for (i = 0; i < MAX_RECORDS; i++) {
@@ -70,10 +62,6 @@ int read_tables(char *file_name) {
         g_prices[i][3] = motorcycle_price;
         break;
       }
-    }
-    if (i == MAX_RECORDS) {
-      returned_value = 12;
-      break;
     }
 
     for (i = 0; i < MAX_RECORDS; i++) {
@@ -87,29 +75,20 @@ int read_tables(char *file_name) {
         break;
       }
     }
-    if (i == MAX_RECORDS) {
-      returned_value = 12;
-      break;
-    }
   }
 
   g_dealership_count = read_this_iteration;
   fclose(file_ptr);
   file_ptr = NULL;
-  if (returned_value == 12) {
+  if (read_this_iteration > MAX_RECORDS) {
     return OUT_OF_BOUNDS;
   }
-  else if ((read_this_iteration == 0) && ((returned_value == 0) ||
-    (returned_value == -1))) {
+  else if ((read_this_iteration == 0) && (returned_value == EOF)) {
     return NO_DATA_POINTS;
   }
-  else if ((returned_value != 0) && (returned_value != -1)) {
+  else if (returned_value != EOF) {
     return RECORD_ERROR;
   }
-  /*else if ((read_this_iteration != 0) && ((returned_value == EOF))) {
-    return OK;
-  }*/
-
   return read_this_iteration;
 } /* read_tables() */
 
@@ -344,7 +323,7 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   return OK;
 } /* write_tables() */
 
-int main() {
+/*int main() {
   read_tables("no_data.txt");
   read_tables("test_data_files/Bogus_826");
   read_tables("test_data_files/Empty_712");
@@ -357,4 +336,4 @@ int main() {
   calculate_revenue("Lafayette Motor Vehicles");
   calculate_revenue("does not exist");
   return 0;
-}
+}*/
