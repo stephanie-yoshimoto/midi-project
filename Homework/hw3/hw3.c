@@ -13,6 +13,49 @@ char g_salespeople[MAX_RECORDS][MAX_NAME_LEN];
 int g_prices[MAX_RECORDS][NUM_PRICE_COLS];
 int g_sales[MAX_RECORDS][NUM_SALES_COLS];
 
+/*
+ * This function clears the global arrays if the input file passed in to
+ * read_tables() contains invalid data.
+ */
+
+void clear_records() {
+  for (int i = 0; i < MAX_RECORDS; i++) {
+    if (g_dealerships[i][0] != '\0') {
+      for (int j = 0; j < MAX_NAME_LEN; j++) {
+        g_dealerships[i][j] = '\0';
+      }
+    }
+
+    if (g_salespeople[i][0] != '\0') {
+      for (int j = 0; j < MAX_NAME_LEN; j++) {
+        g_salespeople[i][j] = '\0';
+      }
+    }
+
+    if ((g_prices[i][0] != 0) || (g_prices[i][1] != 0) || (g_prices[i][2] !=
+      0) || (g_prices[i][3] != 0)) {
+      g_prices[i][0] = 0;
+      g_prices[i][1] = 0;
+      g_prices[i][2] = 0;
+      g_prices[i][3] = 0;
+    }
+
+    if ((g_sales[i][0] != 0) || (g_sales[i][1] != 0) || (g_sales[i][2] !=
+      0) || (g_sales[i][3] != 0) || (g_sales[i][4] != 0)) {
+      g_sales[i][0] = 0;
+      g_sales[i][1] = 0;
+      g_sales[i][2] = 0;
+      g_sales[i][3] = 0;
+      g_sales[i][4] = 0;
+    }
+  }
+} /* clear_records() */
+
+/*
+ * Reads input from given file name into global arrays, returns appropriate
+ * error code if any errors encountered.
+ */
+
 int read_tables(char *file_name) {
   FILE *file_ptr = NULL;
   file_ptr = fopen(file_name, "r");
@@ -81,16 +124,23 @@ int read_tables(char *file_name) {
   fclose(file_ptr);
   file_ptr = NULL;
   if (read_this_iteration > MAX_RECORDS) {
+    clear_records();
     return OUT_OF_BOUNDS;
   }
   else if ((read_this_iteration == 0) && (returned_value == EOF)) {
+    clear_records();
     return NO_DATA_POINTS;
   }
   else if (returned_value != EOF) {
+    clear_records();
     return RECORD_ERROR;
   }
   return read_this_iteration;
 } /* read_tables() */
+
+/*
+ * Prints total car sales for each dealership to the output file.
+ */
 
 int show_total_sales(char *out_file) {
   FILE *file_ptr = NULL;
@@ -112,7 +162,12 @@ int show_total_sales(char *out_file) {
   }
 
   return OK;
-} /* show_total_scores() */
+} /* show_total_sales() */
+
+/*
+ * Writes the average car price for each dealership to output file, with each
+ * car price rounded to two decimal places.
+ */
 
 int show_average_prices(char *out_file) {
   FILE *file_ptr = NULL;
@@ -135,6 +190,11 @@ int show_average_prices(char *out_file) {
   }
   return OK;
 } /* show_average_prices() */
+
+/*
+ * Calculates the total revenue for specified dealership, where revenue is the
+ * sum of the price of each car multiplied by the number of sales.
+ */
 
 int calculate_revenue(char *dealership) {
   int revenue = 0;
@@ -323,17 +383,10 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   return OK;
 } /* write_tables() */
 
-/*int main() {
-  read_tables("no_data.txt");
-  read_tables("test_data_files/Bogus_826");
-  read_tables("test_data_files/Empty_712");
-  read_tables("test_data_files/Input_303");
-  read_tables("test_data_files/Long_983");
-  show_total_sales("output.txt");
-  show_average_prices("output.txt");
-  show_most_common_sale("output.txt");
+int main() {
+  read_tables("example.txt");
+  employee_salary("Purdue Fast Sales");
+  calculate_max_salary();
   write_tables("output.txt", 4, 1, 3);
-  calculate_revenue("Lafayette Motor Vehicles");
-  calculate_revenue("does not exist");
   return 0;
-}*/
+}
