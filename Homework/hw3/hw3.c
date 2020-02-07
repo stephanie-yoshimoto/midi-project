@@ -216,12 +216,18 @@ int calculate_revenue(char *dealership) {
   return revenue;
 } /* calculate_revenue() */
 
+/*
+ * Calculates the salary of specified salesperson by multiplying revenue of
+ * the employee's dealership by the salesperson's commission.
+ */
+
 float employee_salary(char *salesperson) {
   int salary = 0;
   for (int i = 0; (g_dealerships[i][0] != '\0') && (g_salespeople[i][0] !=
     '\0') && (i < MAX_RECORDS); i++) {
     if (strcmp(&g_salespeople[i][0], salesperson) == 0) {
-      salary = calculate_revenue(&g_dealerships[i][0]) * g_sales[i][4];
+      float commission = g_sales[i][4] / (float) 100;
+      salary = calculate_revenue(&g_dealerships[i][0]) * commission;
       break;
     }
   }
@@ -234,6 +240,10 @@ float employee_salary(char *salesperson) {
   }
   return salary;
 } /* employee_salary() */
+
+/*
+ * Finds the maximum salary out of all salespeople.
+ */
 
 float calculate_max_salary() {
   float max_salary = 0;
@@ -249,6 +259,10 @@ float calculate_max_salary() {
   }
   return max_salary;
 } /* calculate_max_salary() */
+
+/*
+ * Displays the most common sale per dealership in specified output file.
+ */
 
 int show_most_common_sale(char *out_file) {
   FILE *file_ptr = NULL;
@@ -269,7 +283,7 @@ int show_most_common_sale(char *out_file) {
         vehicle_most_sold = -1;
       }
     }
-    char *most_common_sale;
+    char most_common_sale[14];
     switch (vehicle_most_sold) {
       case -1: {
         most_common_sale = "More than one";
@@ -307,7 +321,7 @@ int show_most_common_sale(char *out_file) {
     return NO_DATA_POINTS;
   }
   return OK;
-} /* show_most_common_salary() */
+} /* show_most_common_sale() */
 
 int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   if ((table_index < 1) || (table_index > 4)) {
@@ -383,10 +397,8 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   return OK;
 } /* write_tables() */
 
-int main() {
+/*int main() {
   read_tables("example.txt");
-  employee_salary("Purdue Fast Sales");
-  calculate_max_salary();
   write_tables("output.txt", 4, 1, 3);
   return 0;
-}
+}*/
