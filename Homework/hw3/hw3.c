@@ -283,7 +283,7 @@ int show_most_common_sale(char *out_file) {
         vehicle_most_sold = -1;
       }
     }
-    char most_common_sale[14];
+    char *most_common_sale = "";
     switch (vehicle_most_sold) {
       case -1: {
         most_common_sale = "More than one";
@@ -305,11 +305,6 @@ int show_most_common_sale(char *out_file) {
         most_common_sale = "Motorcycle";
         break;
       }
-      default: {
-        fclose(file_ptr);
-        file_ptr = NULL;
-        return RECORD_ERROR;
-      }
     }
     fprintf(file_ptr, "%s: %s\n", g_dealerships[i], most_common_sale);
     vehicle_most_sold = -1;
@@ -322,6 +317,12 @@ int show_most_common_sale(char *out_file) {
   }
   return OK;
 } /* show_most_common_sale() */
+
+/*
+ * Writes the specified data in start and end columns for specified table to
+ * output file, separated by commas. If the table index is either 1 or 2, the
+ * entire row is printed to the output file.
+ */
 
 int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   if ((table_index < 1) || (table_index > 4)) {
@@ -339,6 +340,10 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     (NUM_SALES_COLS - 1)))) {
     return INVALID_COLUMN;
   }
+  else if (((table_index == 1) || (table_index == 2)) && ((start_col != 0)
+    || (end_col != 0))) {
+    return INVALID_COLUMN;
+  }
 
   FILE *file_ptr = NULL;
   file_ptr = fopen(out_file, "w");
@@ -346,47 +351,48 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     return FILE_WRITE_ERROR;
   }
 
-  for (int i = 0; (g_dealerships[i][0] != '\0') && (g_salespeople[i][0] !=
-    '\0') && (i < MAX_RECORDS); i++) {
-    for (int j = start_col; j <= end_col; j++) {
-      switch (table_index) {
-        case 1: {
-          if (g_dealerships[i][j]) {
-            fprintf(file_ptr, "%c", g_dealerships[i][j]);
-          }
-          else {
-            fclose(file_ptr);
-            file_ptr = NULL;
-            return RECORD_ERROR;
-          }
-          break;
+  switch (table_index) {
+    case 1: {
+      for (int i = 0; g_dealerships[i][0] != '\0'; i++) {
+        for (int j = 0; g_dealerships[i][j] != '\0'; j++) {
+          fprintf(file_ptr, "%c", g_dealerships[i][j]);
         }
-        case 2: {
-          if (g_salespeople[i][j]) {
-            fprintf(file_ptr, "%c", g_salespeople[i][j]);
-          }
-          else {
-            fclose(file_ptr);
-            file_ptr = NULL;
-            return RECORD_ERROR;
-          }
-          break;
-        }
-        case 3: {
-          fprintf(file_ptr, "%d", g_prices[i][j]);
-          break;
-        }
-        case 4: {
-          fprintf(file_ptr, "%d", g_sales[i][j]);
-          break;
-        }
+        fprintf(file_ptr, "\n");
       }
-
-      if (j != end_col) {
-        fprintf(file_ptr, ",");
-      }
+      break;
     }
-    fprintf(file_ptr, "\n");
+    case 2: {
+      for (int i = 0; g_salespeople[i][0] != '\0'; i++) {
+        for (int j = 0; g_salespeople[i][j] != '\0'; j++) {
+          fprintf(file_ptr, "%c", g_salespeople[i][j]);
+        }
+        fprintf(file_ptr, "\n");
+      }
+      break;
+    }
+  }
+
+  if ((table_index == 3) || (table_index == 4)) {
+    for (int i = 0; (g_dealerships[i][0] != '\0') && (g_salespeople[i][0] !=
+    '\0') && (i < MAX_RECORDS); i++) {
+      for (int j = start_col; j <= end_col; j++) {
+        switch (table_index) {
+          case 3: {
+            fprintf(file_ptr, "%d", g_prices[i][j]);
+            break;
+          }
+          case 4: {
+            fprintf(file_ptr, "%d", g_sales[i][j]);
+            break;
+          }
+        }
+
+        if (j != end_col) {
+          fprintf(file_ptr, ",");
+        }
+      }
+      fprintf(file_ptr, "\n");
+    }
   }
 
   fclose(file_ptr);
@@ -396,9 +402,3 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   }
   return OK;
 } /* write_tables() */
-
-/*int main() {
-  read_tables("example.txt");
-  write_tables("output.txt", 4, 1, 3);
-  return 0;
-}*/
