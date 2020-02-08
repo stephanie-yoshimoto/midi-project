@@ -73,7 +73,7 @@ int read_tables(char *file_name) {
   int suv_sales = 0;
   int truck_sales = 0;
   int motorcycle_sales = 0;
-  float commission = 0.0f;
+  float commission = 0.0;
   int returned_value = 0;
   int read_this_iteration = 0;
   while ((returned_value = fscanf(file_ptr,
@@ -132,6 +132,8 @@ int read_tables(char *file_name) {
     return NO_DATA_POINTS;
   }
   else if (returned_value != EOF) {
+    /* encountered unexpected data type in input file */
+
     clear_records();
     return RECORD_ERROR;
   }
@@ -152,6 +154,9 @@ int show_total_sales(char *out_file) {
   for (int i = 0; (g_dealerships[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     int total_sales = g_sales[i][0] + g_sales[i][1] + g_sales[i][2] +
       g_sales[i][3];
+
+    /* prints total sales for dealership to output file */
+
     fprintf(file_ptr, "%s: %d\n", g_dealerships[i], total_sales);
   }
 
@@ -179,6 +184,9 @@ int show_average_prices(char *out_file) {
   for (int i = 0; (g_dealerships[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     int total_prices = g_prices[i][0] + g_prices[i][1] + g_prices[i][2] +
       g_prices[i][3];
+
+    /* prints average sale per dealership to output file */
+
     fprintf(file_ptr, "%s: %.2f\n", g_dealerships[i], (total_prices /
       (float) 4));
   }
@@ -200,6 +208,8 @@ int calculate_revenue(char *dealership) {
   int revenue = 0;
   for (int i = 0; (g_dealerships[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     if (strcmp(&g_dealerships[i][0], dealership) == 0) {
+      /* dealership in global array matches dealership parameter*/
+
       revenue = (g_prices[i][0] * g_sales[i][0]) + (g_prices[i][1] *
         g_sales[i][1]) + (g_prices[i][2] * g_sales[i][2]) + (g_prices[i][3] *
         g_sales[i][3]);
@@ -211,6 +221,9 @@ int calculate_revenue(char *dealership) {
     return NO_DATA_POINTS;
   }
   else if (revenue == 0) {
+    /* iterated through g_dealerships, could not find dealership parameter */
+    /* so revenue was never changed */
+
     return NO_SUCH_NAME;
   }
   return revenue;
@@ -222,12 +235,14 @@ int calculate_revenue(char *dealership) {
  */
 
 float employee_salary(char *salesperson) {
-  int salary = 0;
+  float salary = 0.0;
+  int salary_changed = 0;
   for (int i = 0; (g_dealerships[i][0] != '\0') && (g_salespeople[i][0] !=
     '\0') && (i < MAX_RECORDS); i++) {
     if (strcmp(&g_salespeople[i][0], salesperson) == 0) {
       float commission = g_sales[i][4] / (float) 100;
       salary = calculate_revenue(&g_dealerships[i][0]) * commission;
+      salary_changed = 1;
       break;
     }
   }
@@ -235,7 +250,10 @@ float employee_salary(char *salesperson) {
   if (g_dealership_count == 0) {
     return NO_DATA_POINTS;
   }
-  else if (salary == 0) {
+  else if (salary_changed == 0) {
+    /* iterated through g_salespeople, could not find salesperson parameter */
+    /* so salary was never changed */
+
     return NO_SUCH_NAME;
   }
   return salary;
@@ -250,6 +268,9 @@ float calculate_max_salary() {
   for (int i = 0; (g_salespeople[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     float temp_salary = employee_salary(&g_salespeople[i][0]);
     if (temp_salary > max_salary) {
+      /* the maximum salary value is changed if the recently calculated */
+      /* salary is greater */
+
       max_salary = temp_salary;
     }
   }
@@ -276,10 +297,14 @@ int show_most_common_sale(char *out_file) {
   for (int i = 0; (g_dealerships[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     for (int j = 0; j < 4; j++) {
       if (g_sales[i][j] > largest_value) {
+        /* current array element is larger than current most common sale */
+
         vehicle_most_sold = j;
         largest_value = g_sales[i][j];
       }
       else if (g_sales[i][j] == largest_value) {
+        /* more than one vehicle is most sold by dealership */
+
         vehicle_most_sold = -1;
       }
     }
@@ -307,6 +332,9 @@ int show_most_common_sale(char *out_file) {
       }
     }
     fprintf(file_ptr, "%s: %s\n", g_dealerships[i], most_common_sale);
+
+    /* resets values for next iteration through g_dealerships */
+
     vehicle_most_sold = -1;
     largest_value = -1;
   }
@@ -342,6 +370,8 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   }
   else if (((table_index == 1) || (table_index == 2)) && ((start_col != 0)
     || (end_col != 0))) {
+    /* for char* arrays, there is only one column, which should be column 0 */
+
     return INVALID_COLUMN;
   }
 
@@ -352,6 +382,8 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   }
 
   switch (table_index) {
+    /* prints char* arrays if table_index is 1 or 2 */
+
     case 1: {
       for (int i = 0; g_dealerships[i][0] != '\0'; i++) {
         for (int j = 0; g_dealerships[i][j] != '\0'; j++) {
@@ -377,6 +409,8 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     '\0') && (i < MAX_RECORDS); i++) {
       for (int j = start_col; j <= end_col; j++) {
         switch (table_index) {
+          /* prints each specified element up to ending column in tables 3/4 */
+
           case 3: {
             fprintf(file_ptr, "%d", g_prices[i][j]);
             break;
