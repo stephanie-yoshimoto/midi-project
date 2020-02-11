@@ -32,16 +32,17 @@ void clear_records() {
       }
     }
 
-    if ((g_prices[i][0] != 0) || (g_prices[i][1] != 0) || (g_prices[i][2] !=
-      0) || (g_prices[i][3] != 0)) {
+    if ((g_prices[i][0] != 0) || (g_prices[i][1] != 0) ||
+        (g_prices[i][2] != 0) || (g_prices[i][3] != 0)) {
       g_prices[i][0] = 0;
       g_prices[i][1] = 0;
       g_prices[i][2] = 0;
       g_prices[i][3] = 0;
     }
 
-    if ((g_sales[i][0] != 0) || (g_sales[i][1] != 0) || (g_sales[i][2] !=
-      0) || (g_sales[i][3] != 0) || (g_sales[i][4] != 0)) {
+    if ((g_sales[i][0] != 0) || (g_sales[i][1] != 0) ||
+        (g_sales[i][2] != 0) || (g_sales[i][3] != 0) ||
+        (g_sales[i][4] != 0)) {
       g_sales[i][0] = 0;
       g_sales[i][1] = 0;
       g_sales[i][2] = 0;
@@ -57,9 +58,9 @@ void clear_records() {
  */
 
 int read_tables(char *file_name) {
-  FILE *file_ptr = NULL;
-  file_ptr = fopen(file_name, "r");
-  if (file_ptr == NULL) {
+  FILE *in_file_ptr = NULL;
+  in_file_ptr = fopen(file_name, "r");
+  if (in_file_ptr == NULL) {
     return FILE_READ_ERROR;
   }
 
@@ -76,7 +77,7 @@ int read_tables(char *file_name) {
   float commission = 0.0;
   int returned_value = 0;
   int read_this_iteration = 0;
-  while ((returned_value = fscanf(file_ptr,
+  while ((returned_value = fscanf(in_file_ptr,
     "%39[^\n#]#%39[^\n#]#%d#%d#%d#%d#%d#%d#%d#%d#%f\n", dealership, salesperson,
     &sedan_price, &suv_price, &truck_price, &motorcycle_price, &sedan_sales,
     &suv_sales, &truck_sales, &motorcycle_sales, &commission)) == 11) {
@@ -98,7 +99,7 @@ int read_tables(char *file_name) {
 
     for (i = 0; i < MAX_RECORDS; i++) {
       if ((g_prices[i][0] == 0) && (g_prices[i][1] == 0) &&
-        (g_prices[i][2] == 0) && (g_prices[i][3] == 0)) {
+          (g_prices[i][2] == 0) && (g_prices[i][3] == 0)) {
         g_prices[i][0] = sedan_price;
         g_prices[i][1] = suv_price;
         g_prices[i][2] = truck_price;
@@ -109,7 +110,7 @@ int read_tables(char *file_name) {
 
     for (i = 0; i < MAX_RECORDS; i++) {
       if ((g_sales[i][0] == 0) && (g_sales[i][1] == 0) &&
-      (g_sales[i][2] == 0) && (g_sales[i][3] == 0)) {
+          (g_sales[i][2] == 0) && (g_sales[i][3] == 0)) {
         g_sales[i][0] = sedan_sales;
         g_sales[i][1] = suv_sales;
         g_sales[i][2] = truck_sales;
@@ -121,8 +122,8 @@ int read_tables(char *file_name) {
   }
 
   g_dealership_count = read_this_iteration;
-  fclose(file_ptr);
-  file_ptr = NULL;
+  fclose(in_file_ptr);
+  in_file_ptr = NULL;
   if (read_this_iteration > MAX_RECORDS) {
     clear_records();
     return OUT_OF_BOUNDS;
@@ -145,9 +146,9 @@ int read_tables(char *file_name) {
  */
 
 int show_total_sales(char *out_file) {
-  FILE *file_ptr = NULL;
-  file_ptr = fopen(out_file, "w");
-  if (file_ptr == NULL) {
+  FILE *out_file_ptr = NULL;
+  out_file_ptr = fopen(out_file, "w");
+  if (out_file_ptr == NULL) {
     return FILE_WRITE_ERROR;
   }
 
@@ -157,11 +158,11 @@ int show_total_sales(char *out_file) {
 
     /* prints total sales for dealership to output file */
 
-    fprintf(file_ptr, "%s: %d\n", g_dealerships[i], total_sales);
+    fprintf(out_file_ptr, "%s: %d\n", g_dealerships[i], total_sales);
   }
 
-  fclose(file_ptr);
-  file_ptr = NULL;
+  fclose(out_file_ptr);
+  out_file_ptr = NULL;
   if (g_dealership_count == 0) {
     return NO_DATA_POINTS;
   }
@@ -175,9 +176,9 @@ int show_total_sales(char *out_file) {
  */
 
 int show_average_prices(char *out_file) {
-  FILE *file_ptr = NULL;
-  file_ptr = fopen(out_file, "w");
-  if (file_ptr == NULL) {
+  FILE *out_file_ptr = NULL;
+  out_file_ptr = fopen(out_file, "w");
+  if (out_file_ptr == NULL) {
     return FILE_WRITE_ERROR;
   }
 
@@ -187,12 +188,12 @@ int show_average_prices(char *out_file) {
 
     /* prints average sale per dealership to output file */
 
-    fprintf(file_ptr, "%s: %.2f\n", g_dealerships[i], (total_prices /
+    fprintf(out_file_ptr, "%s: %.2f\n", g_dealerships[i], (total_prices /
       (float) 4));
   }
 
-  fclose(file_ptr);
-  file_ptr = NULL;
+  fclose(out_file_ptr);
+  out_file_ptr = NULL;
   if (g_dealership_count == 0) {
     return NO_DATA_POINTS;
   }
@@ -264,7 +265,7 @@ float employee_salary(char *salesperson) {
  */
 
 float calculate_max_salary() {
-  float max_salary = 0;
+  float max_salary = 0.0;
   for (int i = 0; (g_salespeople[i][0] != '\0') && (i < MAX_RECORDS); i++) {
     float temp_salary = employee_salary(&g_salespeople[i][0]);
     if (temp_salary > max_salary) {
@@ -275,7 +276,7 @@ float calculate_max_salary() {
     }
   }
 
-  if (max_salary == 0) {
+  if (max_salary == 0.0) {
     return NO_DATA_POINTS;
   }
   return max_salary;
@@ -286,9 +287,9 @@ float calculate_max_salary() {
  */
 
 int show_most_common_sale(char *out_file) {
-  FILE *file_ptr = NULL;
-  file_ptr = fopen(out_file, "w");
-  if (file_ptr == NULL) {
+  FILE *out_file_ptr = NULL;
+  out_file_ptr = fopen(out_file, "w");
+  if (out_file_ptr == NULL) {
     return FILE_WRITE_ERROR;
   }
 
@@ -331,15 +332,15 @@ int show_most_common_sale(char *out_file) {
         break;
       }
     }
-    fprintf(file_ptr, "%s: %s\n", g_dealerships[i], most_common_sale);
+    fprintf(out_file_ptr, "%s: %s\n", g_dealerships[i], most_common_sale);
 
     /* resets values for next iteration through g_dealerships */
 
     vehicle_most_sold = -1;
     largest_value = -1;
   }
-  fclose(file_ptr);
-  file_ptr = NULL;
+  fclose(out_file_ptr);
+  out_file_ptr = NULL;
   if (g_dealership_count == 0) {
     return NO_DATA_POINTS;
   }
@@ -357,27 +358,27 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     return INVALID_TABLE_INDEX;
   }
   else if ((end_col < start_col) || (start_col < 0) ||
-    (end_col > MAX_NAME_LEN)) {
+           (end_col > MAX_NAME_LEN)) {
     return INVALID_COLUMN;
   }
   else if ((table_index == 3) && ((start_col < 0) || (end_col >
-    (NUM_PRICE_COLS - 1)))) {
+           (NUM_PRICE_COLS - 1)))) {
     return INVALID_COLUMN;
   }
   else if ((table_index == 4) && ((start_col < 0) || (end_col >
-    (NUM_SALES_COLS - 1)))) {
+           (NUM_SALES_COLS - 1)))) {
     return INVALID_COLUMN;
   }
-  else if (((table_index == 1) || (table_index == 2)) && ((start_col != 0)
-    || (end_col != 0))) {
+  else if (((table_index == 1) || (table_index == 2)) &&
+           ((start_col != 0) || (end_col != 0))) {
     /* for char* arrays, there is only one column, which should be column 0 */
 
     return INVALID_COLUMN;
   }
 
-  FILE *file_ptr = NULL;
-  file_ptr = fopen(out_file, "w");
-  if (file_ptr == NULL) {
+  FILE *out_file_ptr = NULL;
+  out_file_ptr = fopen(out_file, "w");
+  if (out_file_ptr == NULL) {
     return FILE_WRITE_ERROR;
   }
 
@@ -387,18 +388,18 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     case 1: {
       for (int i = 0; g_dealerships[i][0] != '\0'; i++) {
         for (int j = 0; g_dealerships[i][j] != '\0'; j++) {
-          fprintf(file_ptr, "%c", g_dealerships[i][j]);
+          fprintf(out_file_ptr, "%c", g_dealerships[i][j]);
         }
-        fprintf(file_ptr, "\n");
+        fprintf(out_file_ptr, "\n");
       }
       break;
     }
     case 2: {
       for (int i = 0; g_salespeople[i][0] != '\0'; i++) {
         for (int j = 0; g_salespeople[i][j] != '\0'; j++) {
-          fprintf(file_ptr, "%c", g_salespeople[i][j]);
+          fprintf(out_file_ptr, "%c", g_salespeople[i][j]);
         }
-        fprintf(file_ptr, "\n");
+        fprintf(out_file_ptr, "\n");
       }
       break;
     }
@@ -412,25 +413,25 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
           /* prints each specified element up to ending column in tables 3/4 */
 
           case 3: {
-            fprintf(file_ptr, "%d", g_prices[i][j]);
+            fprintf(out_file_ptr, "%d", g_prices[i][j]);
             break;
           }
           case 4: {
-            fprintf(file_ptr, "%d", g_sales[i][j]);
+            fprintf(out_file_ptr, "%d", g_sales[i][j]);
             break;
           }
         }
 
         if (j != end_col) {
-          fprintf(file_ptr, ",");
+          fprintf(out_file_ptr, ",");
         }
       }
-      fprintf(file_ptr, "\n");
+      fprintf(out_file_ptr, "\n");
     }
   }
 
-  fclose(file_ptr);
-  file_ptr = NULL;
+  fclose(out_file_ptr);
+  out_file_ptr = NULL;
   if (g_dealership_count == 0) {
     return NO_DATA_POINTS;
   }
