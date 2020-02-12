@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DEALERSHIPS (1)
+#define SALESPEOPLE (2)
+#define PRICES (3)
+#define SALES (4)
+
 int g_dealership_count = 0;
 char g_dealerships[MAX_RECORDS][MAX_NAME_LEN];
 char g_salespeople[MAX_RECORDS][MAX_NAME_LEN];
@@ -354,22 +359,22 @@ int show_most_common_sale(char *out_file) {
  */
 
 int write_tables(char *out_file, int table_index, int start_col, int end_col) {
-  if ((table_index < 1) || (table_index > 4)) {
+  if ((table_index < DEALERSHIPS) || (table_index > SALES)) {
     return INVALID_TABLE_INDEX;
   }
   else if ((end_col < start_col) || (start_col < 0) ||
            (end_col > MAX_NAME_LEN)) {
     return INVALID_COLUMN;
   }
-  else if ((table_index == 3) && ((start_col < 0) || (end_col >
+  else if ((table_index == PRICES) && ((start_col < 0) || (end_col >
            (NUM_PRICE_COLS - 1)))) {
     return INVALID_COLUMN;
   }
-  else if ((table_index == 4) && ((start_col < 0) || (end_col >
+  else if ((table_index == SALES) && ((start_col < 0) || (end_col >
            (NUM_SALES_COLS - 1)))) {
     return INVALID_COLUMN;
   }
-  else if (((table_index == 1) || (table_index == 2)) &&
+  else if (((table_index == DEALERSHIPS) || (table_index == SALESPEOPLE)) &&
            ((start_col != 0) || (end_col != 0))) {
     /* for char* arrays, there is only one column, which should be column 0 */
 
@@ -385,7 +390,7 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
   switch (table_index) {
     /* prints char* arrays if table_index is 1 or 2 */
 
-    case 1: {
+    case DEALERSHIPS: {
       for (int i = 0; g_dealerships[i][0] != '\0'; i++) {
         for (int j = 0; g_dealerships[i][j] != '\0'; j++) {
           fprintf(out_file_ptr, "%c", g_dealerships[i][j]);
@@ -394,7 +399,7 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
       }
       break;
     }
-    case 2: {
+    case SALESPEOPLE: {
       for (int i = 0; g_salespeople[i][0] != '\0'; i++) {
         for (int j = 0; g_salespeople[i][j] != '\0'; j++) {
           fprintf(out_file_ptr, "%c", g_salespeople[i][j]);
@@ -405,18 +410,18 @@ int write_tables(char *out_file, int table_index, int start_col, int end_col) {
     }
   }
 
-  if ((table_index == 3) || (table_index == 4)) {
+  if ((table_index == PRICES) || (table_index == SALES)) {
     for (int i = 0; (g_dealerships[i][0] != '\0') && (g_salespeople[i][0] !=
     '\0') && (i < MAX_RECORDS); i++) {
       for (int j = start_col; j <= end_col; j++) {
         switch (table_index) {
           /* prints each specified element up to ending column in tables 3/4 */
 
-          case 3: {
+          case PRICES: {
             fprintf(out_file_ptr, "%d", g_prices[i][j]);
             break;
           }
-          case 4: {
+          case SALES: {
             fprintf(out_file_ptr, "%d", g_sales[i][j]);
             break;
           }
