@@ -93,7 +93,7 @@ complex_t exp_complex(complex_t complex_num) {
 int mandelbrot(complex_t complex_num) {
   int calculations = 0;
   double dot_product = 0.0;
-  complex_t z;
+  complex_t z = NULL;
   z.x = 0.0;
   z.y = 0.0;
   while (dot_product < 4.0) {
