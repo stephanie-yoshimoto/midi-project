@@ -6,7 +6,7 @@
 
 #include <math.h>
 
-#define MAX_MAGNITUDE (4.0)
+#define MAX_DOT_PRODUCT (4.0)
 
 /*
  * Adds two complex numbers' parts and returns the sum.
@@ -97,7 +97,7 @@ int mandelbrot(complex_t complex_num) {
   int calculations = 0;
   double dot_product = 0.0;
   complex_t z = {0.0, 0.0};
-  while (dot_product < MAX_MAGNITUDE) {
+  while (dot_product < MAX_DOT_PRODUCT) {
     z = add_complex(mul_complex(z, z), complex_num);
     dot_product = dot_complex(z, z);
     calculations++;
