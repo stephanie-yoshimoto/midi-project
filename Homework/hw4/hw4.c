@@ -6,6 +6,8 @@
 
 #include <math.h>
 
+#define MAX_MAGNITUDE (4.0)
+
 /*
  * Adds two complex numbers' parts and returns the sum.
  */
@@ -87,14 +89,15 @@ complex_t exp_complex(complex_t complex_num) {
 
 /*
  * Generates a Mandelbrot set for a complex number, returns iterations
- * necessary until magnitude is larger than 2.0.
+ * necessary until dot product of a complex number and itself is greater
+ * than 4.0.
  */
 
 int mandelbrot(complex_t complex_num) {
   int calculations = 0;
   double dot_product = 0.0;
   complex_t z = {0.0, 0.0};
-  while (dot_product < 4.0) {
+  while (dot_product < MAX_MAGNITUDE) {
     z = add_complex(mul_complex(z, z), complex_num);
     dot_product = dot_complex(z, z);
     calculations++;
