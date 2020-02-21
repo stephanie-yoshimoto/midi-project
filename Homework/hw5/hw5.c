@@ -14,26 +14,34 @@
  * Performs the assertion checks to check if employee fields are valid.
  */
 
-int check_valid_employee(employee_t employee) {
+bool check_valid_employee(employee_t employee) {
+  
+  
   int last_char = strlen(employee.first_name);
   if (employee.first_name[last_char] != '\0') {
-    assert(false);
+    return false;
   }
   last_char = strlen(employee.last_name);
   if (employee.last_name[last_char] != '\0') {
-    assert(false);
+    return false;
   }
+
+  bool valid_entry = false;
   for (int i = 0; i < N_DAYS; i++) {
     for (int j = 0; j < N_HOURS; j++) {
-      bool valid_entry = ((employee.schedule[i][j] == 'A') ||
-                          (employee.schedule[i][j] == 'B'));
-      assert((employee.id_number == FREE_OFFICE) || ((employee.id_number > 0) &&
-             ((employee.title == TECHNICIAN) || (employee.title == MANAGER) ||
-             (employee.title == SALESPERSON)) && (employee.salary > 0) &&
-             (valid_entry)));
+      valid_entry = ((employee.schedule[i][j] == 'A') ||
+                     (employee.schedule[i][j] == 'B'));
+      if (valid_entry == false) {
+        if (employee.id_number != FREE_OFFICE) {
+          return false;
+        }
+      }
     }
   }
-  return OK;
+  return ((employee.id_number == FREE_OFFICE) || ((employee.id_number > 0) &&
+         ((employee.title == TECHNICIAN) || (employee.title == MANAGER) ||
+         (employee.title == SALESPERSON)) && (employee.salary > 0) &&
+         (valid_entry)));
 } /* check_valid_employee() */
 
 /*
@@ -68,7 +76,8 @@ employee_t read_employee(FILE *in_file_ptr, int employee_record_num) {
 
 int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
   assert((in_file_ptr != NULL) && (file_position >= 0) &&
-         (check_valid_employee(employee) == OK));
+         (employee.first_name));
+
   int returned_value = fseek(in_file_ptr, 0, SEEK_END);
   if (returned_value != 0) {
     return WRITE_ERR;
@@ -95,7 +104,7 @@ int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
  */
 
 int hire_employee(FILE *file_ptr, employee_t employee) {
-  assert((file_ptr != NULL) && (check_valid_employee(employee) == OK));
+  assert((file_ptr != NULL) && (check_valid_employee(employee)));
   employee_t read_employee = BAD_EMPLOYEE;
   int returned_value = fseek(file_ptr, 0, SEEK_SET);
   if (returned_value != 0) {
@@ -169,6 +178,9 @@ int fire_employee(FILE *in_file_ptr, employee_t employee) {
 float percent_occupancy(FILE *in_file_ptr, float salary) {
   assert((in_file_ptr != NULL) && (salary >= 0.0));
   int returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
   employee_t read_employee = BAD_EMPLOYEE;
   int total_employees = 0;
   while (true) {
@@ -180,6 +192,8 @@ float percent_occupancy(FILE *in_file_ptr, float salary) {
     if (read_employee.id_number != FREE_OFFICE) {
       total_employees++;
     }
+
+    /*total_employees++;*/
   }
 
   int employees_with_greater_salary = 0;
@@ -201,7 +215,8 @@ float percent_occupancy(FILE *in_file_ptr, float salary) {
     }
   }
 
-  return (float) ((employees_with_greater_salary / total_employees) * 100);
+  return (((float) employees_with_greater_salary / (float) total_employees) *
+          ((float) 100));
 } /* percent_occupancy() */
 
 /*
@@ -215,7 +230,7 @@ float average_salary_by_title(FILE *in_file_ptr, enum title_t title) {
   if (returned_value != 0) {
     return NO_EMPLOYEE;
   }
-  float employees_with_same_title = 0;
+  int employees_with_same_title = 0;
   float cumulative_salaries = 0.0;
   employee_t read_employee = BAD_EMPLOYEE;
   while (true) {
@@ -224,8 +239,7 @@ float average_salary_by_title(FILE *in_file_ptr, enum title_t title) {
       break;
     }
 
-    if ((read_employee.id_number != FREE_OFFICE) && (read_employee.title ==
-        title)) {
+    if (read_employee.title == title) {
       employees_with_same_title++;
     }
   }
@@ -250,7 +264,7 @@ float average_salary_by_title(FILE *in_file_ptr, enum title_t title) {
     }
   }
 
-  return (cumulative_salaries / employees_with_same_title);
+  return (cumulative_salaries / (float) employees_with_same_title);
 } /* average_salary_by_title() */
 
 employee_t find_employee_by_id(FILE *in_file_ptr, int id_number) {
@@ -316,6 +330,7 @@ int give_raise(FILE *file_ptr, int id_number, float salary_increase) {
     if (read_employee.id_number == id_number) {
       read_employee.salary += salary_increase;
       if (read_employee.salary <= 0) {
+        read_employee.salary -= salary_increase;
         return fire_employee(file_ptr, read_employee);
       }
 
@@ -341,20 +356,24 @@ int schedule_meeting(FILE *in_file_ptr, int id_number_1, int id_number_2) {
     return NO_EMPLOYEE;
   }
 
+  bool found_employees = false;
   while (true) {
     employee_t employee_1 = BAD_EMPLOYEE;
     employee_t employee_2 = BAD_EMPLOYEE;
     returned_value = fread(&employee_1, sizeof(employee_t), 1, in_file_ptr);
     if (returned_value != 1) {
+      found_employees = false;
       break;
     }
     returned_value = fread(&employee_2, sizeof(employee_t), 1, in_file_ptr);
     if (returned_value != 1) {
+      found_employees = false;
       break;
     }
 
     if ((employee_1.id_number == id_number_1) && (employee_2.id_number ==
         id_number_2)) {
+      found_employees = true;
       for (int i = 0; i < N_DAYS; i++) {
         for (int j = 0; j < N_HOURS; j++) {
           if ((employee_1.schedule[i][j] == 'A') &&
@@ -363,7 +382,11 @@ int schedule_meeting(FILE *in_file_ptr, int id_number_1, int id_number_2) {
           }
         }
       }
+      return NO_OVERLAP;
     }
+  }
+  if (found_employees == false) {
+    return NO_EMPLOYEE;
   }
   return NO_OVERLAP;
 } /* schedule_meeting() */
@@ -377,11 +400,12 @@ int schedule_meeting(FILE *in_file_ptr, int id_number_1, int id_number_2) {
     fwrite(&employee, sizeof(employee_t), 1, fp);
   }
 
+  FILE *fp2 = fopen("test_data_files/Input_322", "r+");
   employee_t employee = {34, "John", "Purdue", TECHNICIAN, 100.00, ""};
   write_employee(fp, employee, 100);
   hire_employee(fp, employee);
   fire_employee(fp, employee);
-  percent_occupancy(fp, 50);
+  percent_occupancy(fp2, 731084.437500);
   average_salary_by_title(fp, TECHNICIAN);
   return 0;
 }*/
