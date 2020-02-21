@@ -151,14 +151,27 @@ int fire_employee(FILE *in_file_ptr, employee_t employee) {
   return NO_EMPLOYEE;
 } /* fire_employee() */
 
+/*
+ * Finds percentages of offices occupied in which the salary of the employee is
+ * greater than parameter.
+ */
+
 float percent_occupancy(FILE *in_file_ptr, float salary) {
   assert((in_file_ptr != NULL) && (salary >= 0.0));
-  int returned_value = fseek(in_file_ptr, 0, SEEK_END);
-  if (returned_value != 0) {
-    return NO_EMPLOYEE;
+  int returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  employee_t read_employee = BAD_EMPLOYEE;
+  int total_employees = 0;
+  while (true) {
+    returned_value = fread(&read_employee, sizeof(employee_t), 1, in_file_ptr);
+    if (returned_value != 1) {
+      break;
+    }
+
+    if (read_employee.id_number != FREE_OFFICE) {
+      total_employees++;
+    }
   }
-  long file_length = ftell(in_file_ptr);
-  int employees = (file_length / sizeof(employee_t));
+
   int employees_with_greater_salary = 0;
   returned_value = fseek(in_file_ptr, 0, SEEK_SET);
   if (returned_value != 0) {
@@ -166,7 +179,6 @@ float percent_occupancy(FILE *in_file_ptr, float salary) {
   }
 
   while (true) {
-    employee_t read_employee = BAD_EMPLOYEE;
     returned_value = fread(&read_employee, sizeof(employee_t), 1, in_file_ptr);
     if (returned_value != 1) {
       /* EOF is reached */
@@ -179,11 +191,56 @@ float percent_occupancy(FILE *in_file_ptr, float salary) {
     }
   }
 
-  return (float) ((employees_with_greater_salary / employees) * 100);
+  return (float) ((employees_with_greater_salary / total_employees) * 100);
 } /* percent_occupancy() */
 
+/*
+ * Calculates average salary earned per employee specified by title.
+ */
+
 float average_salary_by_title(FILE *in_file_ptr, enum title_t title) {
-  return 0.0;
+  assert((in_file_ptr != NULL) && ((title == TECHNICIAN) || (title ==
+          MANAGER) || (title == SALESPERSON)));
+  int returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
+  float employees_with_same_title = 0;
+  float cumulative_salaries = 0.0;
+  employee_t read_employee = BAD_EMPLOYEE;
+  while (true) {
+    returned_value = fread(&read_employee, sizeof(employee_t), 1, in_file_ptr);
+    if (returned_value != 1) {
+      break;
+    }
+
+    if ((read_employee.id_number != FREE_OFFICE) && (read_employee.title ==
+        title)) {
+      employees_with_same_title++;
+    }
+  }
+
+  if (employees_with_same_title == 0) {
+    return NO_EMPLOYEE;
+  }
+
+  returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
+
+  while (true) {
+    returned_value = fread(&read_employee, sizeof(employee_t), 1, in_file_ptr);
+    if (returned_value != 1) {
+      break;
+    }
+
+    if (read_employee.title == title) {
+      cumulative_salaries += read_employee.salary;
+    }
+  }
+
+  return (cumulative_salaries / employees_with_same_title);
 } /* average_salary_by_title() */
 
 employee_t find_employee_by_id(FILE *in_file_ptr, int id_number) {
@@ -215,7 +272,9 @@ int main() {
   employee_t employee = {34, "John", "Purdue", TECHNICIAN, 100.00, ""};
   /*read_employee(fp, 0);
   write_employee(fp, employee, 100);
-  hire_employee(fp, employee);*/
+  hire_employee(fp, employee);
   fire_employee(fp, employee);
+  percent_occupancy(fp, 50);*/
+  average_salary_by_title(fp, TECHNICIAN);
   return 0;
 }
