@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 int check_valid_employee(employee_t employee) {
@@ -16,9 +17,9 @@ int check_valid_employee(employee_t employee) {
       bool valid_entry = ((employee.schedule[i][j] == 'A') ||
                           (employee.schedule[i][j] == 'B'));
       assert((employee.id_number == FREE_OFFICE) || ((employee.id_number > 0) &&
-         ((employee.title == TECHNICIAN) || (employee.title == MANAGER) ||
-         (employee.title == SALESPERSON)) && (employee.salary > 0) &&
-         (valid_entry)));
+             ((employee.title == TECHNICIAN) || (employee.title == MANAGER) ||
+             (employee.title == SALESPERSON)) && (employee.salary > 0) &&
+             (valid_entry)));
     }
   }
   return OK;
@@ -27,7 +28,7 @@ int check_valid_employee(employee_t employee) {
 employee_t read_employee(FILE *in_file_ptr, int employee) {
   assert((in_file_ptr != NULL) && (employee >= 0));
   for (int i = 1; i <= employee; i++) {
-    employee_t read_employee = {0, "", "", TECHNICIAN, 0.0, ""};
+    employee_t read_employee = BAD_EMPLOYEE;
     int returned_value = fread(&read_employee, sizeof(employee_t), 1,
                               in_file_ptr);
     if (returned_value != 1) {
@@ -44,8 +45,12 @@ employee_t read_employee(FILE *in_file_ptr, int employee) {
 int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
   assert((in_file_ptr != NULL) && (file_position >= 0) &&
          (check_valid_employee(employee) == OK));
-  int returned_value = fwrite(&employee, file_position * sizeof(employee_t), 1,
-                              in_file_ptr);
+  int returned_value = fseek(in_file_ptr, file_position, SEEK_SET);
+  if (returned_value != 0) {
+    return WRITE_ERR;
+  }
+  returned_value = fwrite(&employee, file_position * sizeof(employee_t), 1,
+                          in_file_ptr);
   if (returned_value != 1) {
     return WRITE_ERR;
   }
@@ -54,7 +59,7 @@ int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
 
 int hire_employee(FILE *file_ptr, employee_t employee) {
   assert((file_ptr != NULL) && (check_valid_employee(employee) == OK));
-  employee_t read_employee = {0, "", "", TECHNICIAN, 0.0, ""};
+  employee_t read_employee = BAD_EMPLOYEE;
   while (true) {
     int returned_value = fread(&read_employee, sizeof(employee_t), 1, file_ptr);
     if (returned_value != 1) {
@@ -62,21 +67,79 @@ int hire_employee(FILE *file_ptr, employee_t employee) {
     }
 
     if (read_employee.id_number == FREE_OFFICE) {
+      returned_value = fseek(file_ptr, -1 * sizeof(employee_t), SEEK_CUR);
+      if (returned_value != 0) {
+        return WRITE_ERR;
+      }
       returned_value = fwrite(&employee, sizeof(employee_t), 1, file_ptr);
-      if (returned_value != -1) {
+      if (returned_value != 1) {
         return WRITE_ERR;
       }
       return employee.id_number;
     }
   }
+  return NO_OFFICE;
 } /* hire_employee() */
 
 int fire_employee(FILE *in_file_ptr, employee_t employee) {
+  assert((in_file_ptr != NULL) && (check_valid_employee(employee)));
+  employee_t read_employee = BAD_EMPLOYEE;
+  while (true) {
+    int returned_value = fread(&read_employee, sizeof(employee_t), 1,
+      in_file_ptr);
+    if (returned_value != 1) {
+      return NO_EMPLOYEE;
+    }
+
+    if ((read_employee.id_number == employee.id_number) &&
+        (strcmp(read_employee.first_name, employee.first_name) == 0) &&
+        (strcmp(read_employee.last_name, employee.last_name) == 0)) {
+      int id_number = read_employee.id_number;
+      read_employee.id_number = FREE_OFFICE;
+      returned_value = fseek(in_file_ptr, -1 * sizeof(employee_t), SEEK_CUR);
+      if (returned_value != 0) {
+        return WRITE_ERR;
+      }
+      returned_value = fwrite(&read_employee, sizeof(employee_t), 1,
+        in_file_ptr);
+      if (returned_value != 1) {
+        return WRITE_ERR;
+      }
+      return id_number;
+    }
+  }
   return OK;
 } /* fire_employee() */
 
-float percent_occupancy(FILE *file_in_ptr, float salary) {
-  return 0.0;
+float percent_occupancy(FILE *in_file_ptr, float salary) {
+  assert((in_file_ptr != NULL) && (salary >= 0.0));
+  int returned_value = fseek(in_file_ptr, 0, SEEK_END);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
+  long file_length = ftell(in_file_ptr);
+  int employees = (file_length / sizeof(employee_t));
+  int employees_with_greater_salary = 0;
+  returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
+
+  while (true) {
+    employee_t read_employee = BAD_EMPLOYEE;
+    returned_value = fread(&read_employee, sizeof(employee_t), 1, in_file_ptr);
+    if (returned_value != 1) {
+      /* EOF is reached */
+
+      break;
+    }
+
+    if (read_employee.salary > salary) {
+      employees_with_greater_salary++;
+    }
+  }
+
+  return (float) ((employees_with_greater_salary / employees) * 100);
 } /* percent_occupancy() */
 
 float average_salary_by_title(FILE *in_file_ptr, enum title_t title) {
@@ -99,3 +162,8 @@ int give_raise(FILE *in_file_ptr, int id_number, float salary_increase) {
 int schedule_meeting(FILE *in_file_ptr, int id_number_1, int id_number_2) {
   return OK;
 } /* schedule_meeting() */
+
+/*int main() {
+  printf("%lu\n", sizeof(employee_t));
+  return 0;
+}*/
