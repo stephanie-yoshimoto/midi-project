@@ -9,9 +9,19 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * Performs the assertion checks to check if employee fields are valid.
+ */
+
 int check_valid_employee(employee_t employee) {
-  assert((strlen(employee.first_name) == (sizeof(employee.first_name) - 1)) &&
-         (strlen(employee.last_name) == (sizeof(employee.last_name) - 1)));
+  int last_char = strlen(employee.first_name);
+  if (employee.first_name[last_char + 1] != '\0') {
+    assert(false);
+  }
+  last_char = strlen(employee.last_name);
+  if (employee.last_name[last_char + 1] != '\0') {
+    assert(false);
+  }
   for (int i = 0; i < N_DAYS; i++) {
     for (int j = 0; j < N_HOURS; j++) {
       bool valid_entry = ((employee.schedule[i][j] == 'A') ||
@@ -25,22 +35,35 @@ int check_valid_employee(employee_t employee) {
   return OK;
 } /* check_valid_employee() */
 
-employee_t read_employee(FILE *in_file_ptr, int employee) {
-  assert((in_file_ptr != NULL) && (employee >= 0));
-  for (int i = 1; i <= employee; i++) {
+/*
+ * Reads the employee record specified by second parameter, returns employee
+ * if found.
+ */
+
+employee_t read_employee(FILE *in_file_ptr, int employee_record_num) {
+  assert((in_file_ptr != NULL) && (employee_record_num >= 0));
+  int returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return BAD_EMPLOYEE;
+  }
+  for (int i = 0; i <= employee_record_num; i++) {
     employee_t read_employee = BAD_EMPLOYEE;
-    int returned_value = fread(&read_employee, sizeof(employee_t), 1,
-                              in_file_ptr);
+    returned_value = fread(&read_employee, sizeof(employee_t), 1,
+                           in_file_ptr);
     if (returned_value != 1) {
       return BAD_EMPLOYEE;
     }
 
-    if (i == employee) {
+    if (i == employee_record_num) {
       return read_employee;
     }
   }
   return BAD_EMPLOYEE;
 } /* read_employee() */
+
+/*
+ * Writes specified employee information to specified file position.
+ */
 
 int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
   assert((in_file_ptr != NULL) && (file_position >= 0) &&
@@ -49,7 +72,7 @@ int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
   if (returned_value != 0) {
     return WRITE_ERR;
   }
-  returned_value = fwrite(&employee, file_position * sizeof(employee_t), 1,
+  returned_value = fwrite(&employee, sizeof(employee_t), 1,
                           in_file_ptr);
   if (returned_value != 1) {
     return WRITE_ERR;
@@ -57,11 +80,19 @@ int write_employee(FILE *in_file_ptr, employee_t employee, int file_position) {
   return OK;
 } /* write_employee() */
 
+/*
+ * Searches file for first free office, adds employee to file at location.
+ */
+
 int hire_employee(FILE *file_ptr, employee_t employee) {
   assert((file_ptr != NULL) && (check_valid_employee(employee) == OK));
   employee_t read_employee = BAD_EMPLOYEE;
+  int returned_value = fseek(file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_OFFICE;
+  }
   while (true) {
-    int returned_value = fread(&read_employee, sizeof(employee_t), 1, file_ptr);
+    returned_value = fread(&read_employee, sizeof(employee_t), 1, file_ptr);
     if (returned_value != 1) {
       return NO_OFFICE;
     }
@@ -81,11 +112,20 @@ int hire_employee(FILE *file_ptr, employee_t employee) {
   return NO_OFFICE;
 } /* hire_employee() */
 
+/*
+ * Searches for specified employee, fires employee by setting id_number to
+ * FREE_OFFICE.
+ */
+
 int fire_employee(FILE *in_file_ptr, employee_t employee) {
   assert((in_file_ptr != NULL) && (check_valid_employee(employee)));
   employee_t read_employee = BAD_EMPLOYEE;
+  int returned_value = fseek(in_file_ptr, 0, SEEK_SET);
+  if (returned_value != 0) {
+    return NO_EMPLOYEE;
+  }
   while (true) {
-    int returned_value = fread(&read_employee, sizeof(employee_t), 1,
+    returned_value = fread(&read_employee, sizeof(employee_t), 1,
       in_file_ptr);
     if (returned_value != 1) {
       return NO_EMPLOYEE;
@@ -101,14 +141,14 @@ int fire_employee(FILE *in_file_ptr, employee_t employee) {
         return WRITE_ERR;
       }
       returned_value = fwrite(&read_employee, sizeof(employee_t), 1,
-        in_file_ptr);
+                              in_file_ptr);
       if (returned_value != 1) {
         return WRITE_ERR;
       }
       return id_number;
     }
   }
-  return OK;
+  return NO_EMPLOYEE;
 } /* fire_employee() */
 
 float percent_occupancy(FILE *in_file_ptr, float salary) {
@@ -163,7 +203,19 @@ int schedule_meeting(FILE *in_file_ptr, int id_number_1, int id_number_2) {
   return OK;
 } /* schedule_meeting() */
 
-/*int main() {
+int main() {
   printf("%lu\n", sizeof(employee_t));
+  FILE *fp = fopen("output.txt", "w+");
+  for (int i = 0; i < 10; i++) {
+    employee_t employee = {34, "John", "Purdue", TECHNICIAN, 100.00, ""};
+    fseek(fp, 0, SEEK_END);
+    fwrite(&employee, sizeof(employee_t), 1, fp);
+  }
+
+  employee_t employee = {34, "John", "Purdue", TECHNICIAN, 100.00, ""};
+  /*read_employee(fp, 0);
+  write_employee(fp, employee, 100);
+  hire_employee(fp, employee);*/
+  fire_employee(fp, employee);
   return 0;
-}*/
+}
