@@ -29,8 +29,8 @@ int read_passwords(char *filename) {
   password_t temp_password = {"", "", ""};
   int returned_value = 0;
   while (feof(in_file_ptr) == 0) {
-    returned_value = fscanf(in_file_ptr, "%[^&\n]&%[^&\n]&%[^\n]\n", buffer_1,
-                            buffer_2, buffer_3);
+    returned_value = fscanf(in_file_ptr, "%49[^&\n]&%49[^&\n]&%49[^\n]\n",
+                            buffer_1, buffer_2, buffer_3);
     if (returned_value != 3) {
       if (feof(in_file_ptr) == 0) {
         fclose(in_file_ptr);
@@ -86,8 +86,7 @@ int locate_spies(char **spies, int strings_in_array) {
       if (strcmp(spies[j], g_password_array[i].code_name) == 0) {
         if ((strstr(g_password_array[i].passcode_value, "rooster") != NULL) ||
             ((strncmp("the", g_password_array[i].passcode_name, 3) == 0) &&
-            (*strstr(g_password_array[i].passcode_name, "soup") ==
-            (g_password_array->passcode_name[7]))) ||
+            (strstr(g_password_array[i].passcode_name, "soup") != NULL)) ||
             (strlen(g_password_array[i].passcode_value) <
             (strlen(g_password_array[i].passcode_name)))) {
           spy_count++;
@@ -98,7 +97,3 @@ int locate_spies(char **spies, int strings_in_array) {
   }
   return spy_count;
 } /* locate_spies() */
-
-int main() {
-  read_passwords("sample.txt");
-}
