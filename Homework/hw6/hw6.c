@@ -28,13 +28,13 @@ int read_passwords(char *filename) {
   char temp_code_name[MAX_NAME_LEN] = "";
   char temp_passcode_name[MAX_NAME_LEN] = "";
   char temp_passcode_val[MAX_NAME_LEN] = "";
-  char buffer_1[MAX_BUFF_LEN] = "";
-  char buffer_2[MAX_BUFF_LEN] = "";
-  char buffer_3[MAX_BUFF_LEN] = "";
+  char buffer_code_name[MAX_BUFF_LEN] = "";
+  char buffer_passcode_name[MAX_BUFF_LEN] = "";
+  char buffer_passcode_value[MAX_BUFF_LEN] = "";
   password_t temp_password = {"", "", ""};
   while (feof(in_file_ptr) == 0) {
-    if (fscanf(in_file_ptr, "%49[^&\n]&%49[^&\n]&%49[^\n]\n", buffer_1,
-        buffer_2, buffer_3) != 3) {
+    if (fscanf(in_file_ptr, "%49[^&\n]&%49[^&\n]&%49[^\n]\n",
+        buffer_code_name, buffer_passcode_name, buffer_passcode_value) != 3) {
       if (feof(in_file_ptr) == 0) {
         /* not at end of file, but did not read records correctly */
 
@@ -45,8 +45,9 @@ int read_passwords(char *filename) {
       break;
     }
 
-    if ((strlen(buffer_1) > MAX_BUFF_LEN) || (strlen(buffer_2) >
-        MAX_BUFF_LEN) || (strlen(buffer_3) > MAX_BUFF_LEN)) {
+    if ((strlen(buffer_code_name) > MAX_BUFF_LEN) ||
+        (strlen(buffer_passcode_name) > MAX_BUFF_LEN) ||
+        (strlen(buffer_passcode_value) > MAX_BUFF_LEN)) {
       fclose(in_file_ptr);
       in_file_ptr = NULL;
       return BAD_RECORD;
@@ -61,11 +62,11 @@ int read_passwords(char *filename) {
     /* passed checks, copy into temporary variables to be put into struct */
     /* terminating with NUL character */
 
-    strncpy(temp_code_name, buffer_1, MAX_NAME_LEN - 1);
+    strncpy(temp_code_name, buffer_code_name, MAX_NAME_LEN - 1);
     temp_code_name[MAX_NAME_LEN - 1] = '\0';
-    strncpy(temp_passcode_name, buffer_2, MAX_NAME_LEN - 1);
+    strncpy(temp_passcode_name, buffer_passcode_name, MAX_NAME_LEN - 1);
     temp_passcode_name[MAX_NAME_LEN - 1] = '\0';
-    strncpy(temp_passcode_val, buffer_3, MAX_NAME_LEN - 1);
+    strncpy(temp_passcode_val, buffer_passcode_value, MAX_NAME_LEN - 1);
     temp_passcode_val[MAX_NAME_LEN - 1] = '\0';
 
     strcpy(temp_password.code_name, temp_code_name);
