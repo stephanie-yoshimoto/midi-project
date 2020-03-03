@@ -139,7 +139,6 @@ void connect_members() {
 int isolate_spy(password_t *potential_spy) {
   assert(potential_spy != NULL);
   int records_changed = 0;
-  int already_counted = 0;
   int the_soup = 0;
 
   if (strncmp("the", potential_spy->passcode_name, 3) == 0) {
@@ -159,23 +158,18 @@ int isolate_spy(password_t *potential_spy) {
       if (strcmp(g_password_array[j].next_member, potential_spy->code_name) ==
           0) {
         strcpy(g_password_array[j].next_member, potential_spy->next_member);
-        records_changed++;
-        already_counted = 1;
       }
 
       if (g_password_array[j].next_member_ptr == potential_spy) {
         g_password_array[j].next_member_ptr = potential_spy->next_member_ptr;
-        if (strcmp(g_password_array[j].next_member_ptr->code_name,
-            g_password_array[j].code_name) == 0) {
+        if ((g_password_array[j].next_member_ptr != NULL) &&
+            (strcmp(g_password_array[j].next_member_ptr->code_name,
+            g_password_array[j].code_name) == 0)) {
           g_password_array[j].next_member_ptr = NULL;
         }
 
-        if (!already_counted) {
-          records_changed++;
-        }
+        records_changed++;
       }
-
-      already_counted = 0;
     }
     potential_spy->next_member_ptr = NULL;
   }
@@ -240,3 +234,9 @@ int send_message(password_t *sender, password_t *recipient) {
 
   return spy_count;
 } /* send_message() */
+
+/*int main() {
+  read_passwords("test_data_files/InputFile_991");
+  password_t spy = {"klnvj", "vklvsj", "ljwfw", "wfwlg"};
+  isolate_spy(&spy);
+}*/
