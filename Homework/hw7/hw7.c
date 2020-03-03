@@ -215,6 +215,8 @@ int send_message(password_t *sender, password_t *recipient) {
 
       if (g_password_array[i].next_member_ptr != NULL) {
         if (strcmp(member_to_find, recipient->code_name) == 0) {
+          /* reached the recipient from the sender */
+
           break;
         }
         else {
@@ -227,16 +229,10 @@ int send_message(password_t *sender, password_t *recipient) {
         }
       }
       else {
-        return MESSAGE_NOT_SENT;
+        break;
       }
     }
   }
 
   return spy_count;
 } /* send_message() */
-
-/*int main() {
-  read_passwords("test_data_files/InputFile_991");
-  password_t spy = {"klnvj", "vklvsj", "ljwfw", "wfwlg"};
-  isolate_spy(&spy);
-}*/
