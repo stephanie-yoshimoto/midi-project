@@ -120,12 +120,11 @@ void connect_members() {
       if (strcmp(g_password_array[j].code_name, find_member) == 0) {
         if (i != j) {
           g_password_array[i].next_member_ptr = &g_password_array[j];
-          break;
         }
         else {
           g_password_array[i].next_member_ptr = NULL;
-          break;
         }
+        break;
       }
     }
   }
@@ -139,7 +138,7 @@ void connect_members() {
 int isolate_spy(password_t *potential_spy) {
   assert(potential_spy != NULL);
   int records_changed = 0;
-  int the_soup = 0;
+  int the_soup_check = 0;
 
   if (strncmp("the", potential_spy->passcode_name, 3) == 0) {
     int i = strlen(potential_spy->passcode_name) - 1;
@@ -147,12 +146,12 @@ int isolate_spy(password_t *potential_spy) {
         (potential_spy->passcode_name[i - 1] == 'u') &&
         (potential_spy->passcode_name[i - 2] == 'o') &&
         (potential_spy->passcode_name[i - 3] == 's')) {
-      the_soup = 1;
+      the_soup_check = 1;
     }
   }
 
   if ((strstr(potential_spy->passcode_value, "rooster") != NULL) ||
-      (the_soup) || (strlen(potential_spy->passcode_value) <
+      (the_soup_check) || (strlen(potential_spy->passcode_value) <
       strlen(potential_spy->passcode_name))) {
     for (int j = 0; j < MAX_PASSWORDS; j++) {
       if (strcmp(g_password_array[j].next_member, potential_spy->code_name) ==
@@ -191,24 +190,24 @@ int send_message(password_t *sender, password_t *recipient) {
     return MESSAGE_NOT_SENT;
   }
 
-  int spy_count = 0;
   char member_to_find[MAX_NAME_LEN] = "";
   strcpy(member_to_find, sender->code_name);
+  int spy_count = 0;
   for (int i = 0; (i < MAX_PASSWORDS) && (i < g_password_count); i++) {
     if (strcmp(g_password_array[i].code_name, member_to_find) == 0) {
-      int the_soup = 0;
+      int the_soup_check = 0;
       if (strncmp("the", g_password_array[i].passcode_name, 3) == 0) {
         int j = strlen(g_password_array[i].passcode_name) - 1;
         if ((g_password_array[i].passcode_name[j] == 'p') &&
             (g_password_array[i].passcode_name[j - 1] == 'u') &&
             (g_password_array[i].passcode_name[j - 2] == 'o') &&
             (g_password_array[i].passcode_name[j - 3] == 's')) {
-          the_soup = 1;
+          the_soup_check = 1;
         }
       }
 
       if ((strstr(g_password_array[i].passcode_value, "rooster") != NULL) ||
-          (the_soup) || (strlen(g_password_array[i].passcode_value) <
+          (the_soup_check) || (strlen(g_password_array[i].passcode_value) <
           strlen(g_password_array[i].passcode_name))) {
         spy_count++;
       }
@@ -223,8 +222,13 @@ int send_message(password_t *sender, password_t *recipient) {
           strcpy(member_to_find,
                  g_password_array[i].next_member_ptr->code_name);
           if (strcmp(member_to_find, sender->code_name) == 0) {
+            /* possible infinite loop (next member to find is sender) */
+
             return MESSAGE_NOT_SENT;
           }
+
+          /* resets i to begin searching at beginning of global array */
+
           i = -1;
         }
       }
