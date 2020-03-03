@@ -44,16 +44,11 @@ int read_passwords(char *filename) {
   }
 
   int passwords_read = 0;
-  char temp_code_name[MAX_NAME_LEN] = "";
-  char temp_passcode_name[MAX_NAME_LEN] = "";
-  char temp_passcode_val[MAX_NAME_LEN] = "";
-  char temp_next_member[MAX_NAME_LEN] = "";
-  char buffer_code_name[MAX_BUFF_LEN] = "";
-  char buffer_passcode_name[MAX_BUFF_LEN] = "";
-  char buffer_passcode_value[MAX_BUFF_LEN] = "";
-  char buffer_next_member[MAX_BUFF_LEN] = "";
-  password_t temp_password = {"", "", "", "", NULL};
   while (feof(in_file_ptr) == 0) {
+    char buffer_code_name[MAX_BUFF_LEN] = "";
+    char buffer_passcode_name[MAX_BUFF_LEN] = "";
+    char buffer_passcode_value[MAX_BUFF_LEN] = "";
+    char buffer_next_member[MAX_BUFF_LEN] = "";
     if (fscanf(in_file_ptr, "%49[^&\n]&%49[^&\n]&%49[^&\n]&%49[^\n]\n",
         buffer_code_name, buffer_passcode_name, buffer_passcode_value,
         buffer_next_member) != 4) {
@@ -85,6 +80,10 @@ int read_passwords(char *filename) {
     /* passed checks, copy into temporary variables to be put into struct */
     /* terminating with NUL character */
 
+    char temp_code_name[MAX_NAME_LEN] = "";
+    char temp_passcode_name[MAX_NAME_LEN] = "";
+    char temp_passcode_val[MAX_NAME_LEN] = "";
+    char temp_next_member[MAX_NAME_LEN] = "";
     strncpy(temp_code_name, buffer_code_name, MAX_NAME_LEN - 1);
     temp_code_name[MAX_NAME_LEN - 1] = '\0';
     strncpy(temp_passcode_name, buffer_passcode_name, MAX_NAME_LEN - 1);
@@ -94,6 +93,7 @@ int read_passwords(char *filename) {
     strncpy(temp_next_member, buffer_next_member, MAX_NAME_LEN - 1);
     temp_next_member[MAX_NAME_LEN - 1] = '\0';
 
+    password_t temp_password = {"", "", "", "", NULL};
     strcpy(temp_password.code_name, temp_code_name);
     strcpy(temp_password.passcode_name, temp_passcode_name);
     strcpy(temp_password.passcode_value, temp_passcode_val);
@@ -113,8 +113,8 @@ int read_passwords(char *filename) {
  */
 
 void connect_members() {
-  char find_member[MAX_NAME_LEN] = "";
   for (int i = 0; i < MAX_PASSWORDS; i++) {
+    char find_member[MAX_NAME_LEN] = "";
     strcpy(find_member, g_password_array[i].next_member);
     for (int j = 0; j < MAX_PASSWORDS; j++) {
       if (strcmp(g_password_array[j].code_name, find_member) == 0) {
@@ -137,19 +137,19 @@ void connect_members() {
 
 int isolate_spy(password_t *potential_spy) {
   assert(potential_spy != NULL);
-  int records_changed = 0;
-  int the_soup_check = 0;
 
+  int the_soup_check = 0;
   if (strncmp("the", potential_spy->passcode_name, 3) == 0) {
-    int i = strlen(potential_spy->passcode_name) - 1;
-    if ((potential_spy->passcode_name[i] == 'p') &&
-        (potential_spy->passcode_name[i - 1] == 'u') &&
-        (potential_spy->passcode_name[i - 2] == 'o') &&
-        (potential_spy->passcode_name[i - 3] == 's')) {
+    int last_char = strlen(potential_spy->passcode_name) - 1;
+    if ((potential_spy->passcode_name[last_char] == 'p') &&
+        (potential_spy->passcode_name[last_char - 1] == 'u') &&
+        (potential_spy->passcode_name[last_char - 2] == 'o') &&
+        (potential_spy->passcode_name[last_char - 3] == 's')) {
       the_soup_check = 1;
     }
   }
 
+  int records_changed = 0;
   if ((strstr(potential_spy->passcode_value, "rooster") != NULL) ||
       (the_soup_check) || (strlen(potential_spy->passcode_value) <
       strlen(potential_spy->passcode_name))) {
@@ -197,11 +197,11 @@ int send_message(password_t *sender, password_t *recipient) {
     if (strcmp(g_password_array[i].code_name, member_to_find) == 0) {
       int the_soup_check = 0;
       if (strncmp("the", g_password_array[i].passcode_name, 3) == 0) {
-        int j = strlen(g_password_array[i].passcode_name) - 1;
-        if ((g_password_array[i].passcode_name[j] == 'p') &&
-            (g_password_array[i].passcode_name[j - 1] == 'u') &&
-            (g_password_array[i].passcode_name[j - 2] == 'o') &&
-            (g_password_array[i].passcode_name[j - 3] == 's')) {
+        int last_char = strlen(g_password_array[i].passcode_name) - 1;
+        if ((g_password_array[i].passcode_name[last_char] == 'p') &&
+            (g_password_array[i].passcode_name[last_char - 1] == 'u') &&
+            (g_password_array[i].passcode_name[last_char - 2] == 'o') &&
+            (g_password_array[i].passcode_name[last_char - 3] == 's')) {
           the_soup_check = 1;
         }
       }
@@ -237,6 +237,5 @@ int send_message(password_t *sender, password_t *recipient) {
       }
     }
   }
-
   return spy_count;
 } /* send_message() */
