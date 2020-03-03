@@ -25,14 +25,10 @@ int read_passwords(char *filename) {
   }
 
   int passwords_read = 0;
-  char temp_code_name[MAX_NAME_LEN] = "";
-  char temp_passcode_name[MAX_NAME_LEN] = "";
-  char temp_passcode_val[MAX_NAME_LEN] = "";
-  char buffer_code_name[MAX_BUFF_LEN] = "";
-  char buffer_passcode_name[MAX_BUFF_LEN] = "";
-  char buffer_passcode_value[MAX_BUFF_LEN] = "";
-  password_t temp_password = {"", "", ""};
   while (feof(in_file_ptr) == 0) {
+    char buffer_code_name[MAX_BUFF_LEN] = "";
+    char buffer_passcode_name[MAX_BUFF_LEN] = "";
+    char buffer_passcode_value[MAX_BUFF_LEN] = "";
     if (fscanf(in_file_ptr, "%49[^&\n]&%49[^&\n]&%49[^\n]\n",
         buffer_code_name, buffer_passcode_name, buffer_passcode_value) != 3) {
       if (feof(in_file_ptr) == 0) {
@@ -62,6 +58,9 @@ int read_passwords(char *filename) {
     /* passed checks, copy into temporary variables to be put into struct */
     /* terminating with NUL character */
 
+    char temp_code_name[MAX_NAME_LEN] = "";
+    char temp_passcode_name[MAX_NAME_LEN] = "";
+    char temp_passcode_val[MAX_NAME_LEN] = "";
     strncpy(temp_code_name, buffer_code_name, MAX_NAME_LEN - 1);
     temp_code_name[MAX_NAME_LEN - 1] = '\0';
     strncpy(temp_passcode_name, buffer_passcode_name, MAX_NAME_LEN - 1);
@@ -69,6 +68,7 @@ int read_passwords(char *filename) {
     strncpy(temp_passcode_val, buffer_passcode_value, MAX_NAME_LEN - 1);
     temp_passcode_val[MAX_NAME_LEN - 1] = '\0';
 
+    password_t temp_password = {"", "", ""};
     strcpy(temp_password.code_name, temp_code_name);
     strcpy(temp_password.passcode_name, temp_passcode_name);
     strcpy(temp_password.passcode_value, temp_passcode_val);
@@ -98,10 +98,19 @@ int locate_spies(char **spies, int strings_in_array) {
   for (int i = 0; i < MAX_PASSWORDS; i++) {
     for (int j = 0; j < strings_in_array; j++) {
       if (strcmp(spies[j], g_password_array[i].code_name) == 0) {
+        int the_soup_check = 0;
+        if (strncmp("the", g_password_array[i].passcode_name, 3) == 0) {
+          int last_char = strlen(g_password_array[i].passcode_name) - 1;
+          if ((g_password_array[i].passcode_name[last_char] == 'p') &&
+              (g_password_array[i].passcode_name[last_char - 1] == 'u') &&
+              (g_password_array[i].passcode_name[last_char - 2] == 'o') &&
+              (g_password_array[i].passcode_name[last_char - 3] == 's')) {
+            the_soup_check = 1;
+          }
+        }
+
         if ((strstr(g_password_array[i].passcode_value, "rooster") != NULL) ||
-            ((strncmp("the", g_password_array[i].passcode_name, 3) == 0) &&
-            (strstr(g_password_array[i].passcode_name, "soup") != NULL)) ||
-            (strlen(g_password_array[i].passcode_value) <
+            (the_soup_check) || (strlen(g_password_array[i].passcode_value) <
             strlen(g_password_array[i].passcode_name))) {
           spy_count++;
 
