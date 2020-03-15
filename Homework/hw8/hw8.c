@@ -7,19 +7,19 @@
 #include <assert.h>
 #include <malloc_debug.h>
 #include <stdio.h>
-/*#include <stdlib.h>*/
 #include <string.h>
 
 operation_t *add_new_operation(operation_t *list, char *new_text,
                                int line_num) {
   assert((new_text != NULL) && (line_num >= 0));
   operation_t *new_operation = malloc(sizeof(operation_t));
-  assert(new_operation);/*
+  assert(new_operation);
   char *text = malloc(strlen(new_text) + 1);
   assert(text);
   new_operation->line_num = line_num;
   new_operation->new_text = text;
   strcpy(new_operation->new_text, new_text);
+  new_operation->next_operation = NULL;
   operation_t *temp = list;
   while (temp != NULL) {
     if (temp->next_operation == NULL) {
@@ -29,7 +29,7 @@ operation_t *add_new_operation(operation_t *list, char *new_text,
     else {
       temp = temp->next_operation;
     }
-  }*/
+  }
   return new_operation;
 } /* add_new_operation() */
 
@@ -104,13 +104,13 @@ operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
 void redo_n_operations(operation_t *list_1, operation_t *list_2,
                        int operations) {
   assert((list_1) && (list_2) && (operations >= 0));
-  /*operation_t *temp = list_2;
+  operation_t *temp = list_2;
   int operations_list_2 = 0;
   while (temp) {
     operations_list_2++;
     temp = temp->next_operation;
   }
-  assert(operations <= operations_list_2);
+  assert(operations <= operations_list_2);/*
 
   while (list_1->next_operation) {
     list_1 = list_1->next_operation;
