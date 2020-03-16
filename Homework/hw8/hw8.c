@@ -71,23 +71,37 @@ operation_t *get_nth_operation(operation_t *list, int nth_operation) {
 
 operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
   assert((list) && (nth_operation >= 0));
-  /*int current_operation = 0;
+  int current_operation = 1;
+  operation_t *head = list;
   while (list) {
-    printf("%d %s\n", list->line_num, list->new_text);*/
-    /*if (current_operation == nth_operation - 1) {
+    if (current_operation == nth_operation) {
       operation_t *prev = NULL;
       operation_t *next = NULL;
       operation_t *current = list;
-      printf("\n%d %s\n", current->line_num, current->new_text);
-      printf("%d %s\n", current->next_operation->line_num,
-             current->next_operation->new_text);
       while (current) {
         next = current->next_operation;
         current->next_operation = prev;
         prev = current;
         current = next;
       }
-      return prev;
+
+      operation_t *temp = prev;
+      while (prev) {
+        if (!prev->next_operation) {
+          break;
+        }
+        else if (!prev->next_operation->next_operation) {
+          prev->next_operation = NULL;
+          break;
+        }
+        else {
+          prev = prev->next_operation;
+        }
+      }
+      return temp;
+    }
+    else if ((nth_operation == 0) && (head->next_operation == NULL)) {
+      return list;
     }
 
     current_operation++;
@@ -97,7 +111,7 @@ operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
     else {
       list = list->next_operation;
     }
-  }*/
+  }
   return NULL;
 } /* undo_nth_operation() */
 
@@ -107,19 +121,24 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
   operation_t *temp = list_2;
   int operations_list_2 = 0;
   while (temp) {
+    /* count operations in list 2 */
+
     operations_list_2++;
     temp = temp->next_operation;
   }
-  assert(operations <= operations_list_2);/*
+  assert(operations <= operations_list_2);
 
   while (list_1->next_operation) {
+    /* traverse until end of list 1 to add operations onto */
+
     list_1 = list_1->next_operation;
   }
 
-  int index = operations_list_2 - operations;
+  int nth_operation = operations_list_2 - operations;
   int current_position = 0;
+  operation_t *head_list_2 = list_2;
   while (list_2) {
-    if (current_position == index) {
+    if (current_position == nth_operation) {
       operation_t *prev = NULL;
       operation_t *next = NULL;
       operation_t *current = list_2;
@@ -130,12 +149,28 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
         current = next;
       }
       list_1->next_operation = prev;
+
+      while (prev) {
+        if (!prev->next_operation) {
+          break;
+        }
+        else if (!prev->next_operation->next_operation) {
+          prev->next_operation = NULL;
+          break;
+        }
+        else {
+          prev = prev->next_operation;
+        }
+      }
+      return;
+    }
+    else if ((nth_operation == 0) && (head_list_2->next_operation == NULL)) {
       return;
     }
 
     current_position++;
     list_2 = list_2->next_operation;
-  }*/
+  }
 } /* redo_n_operations() */
 
 void free_list(operation_t *list) {
@@ -195,7 +230,7 @@ operation_t *doc_last_line(operation_t *list) {
 
 operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
   assert((list_1) && (list_2));
-  operation_t *head = list_1;
+  operation_t *head = list_1;/*
   operation_t *temp = list_1;
   while (1) {
     if (list_2) {
@@ -209,7 +244,7 @@ operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
     if (list_2 == NULL) {
       break;
     }
-  }
+  }*/
   return head;
 } /* interleave_operations() */
 
