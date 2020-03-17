@@ -5,6 +5,7 @@
 #include "hw8.h"
 
 #include <assert.h>
+#include <malloc.h>
 #include <malloc_debug.h>
 #include <stdio.h>
 #include <string.h>
