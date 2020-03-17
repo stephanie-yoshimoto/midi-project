@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * Allocates new operation struct and adds struct to end of list.
+ */
+
 operation_t *add_new_operation(operation_t *list, char *new_text,
                                int line_num) {
   assert((new_text != NULL) && (line_num >= 0));
@@ -32,6 +36,10 @@ operation_t *add_new_operation(operation_t *list, char *new_text,
   return new_operation;
 } /* add_new_operation() */
 
+/*
+ * Traverses list to find amount of operations in list.
+ */
+
 int list_len(operation_t *list) {
   if (list == NULL) {
     return 0;
@@ -43,6 +51,10 @@ int list_len(operation_t *list) {
   }
   return num_operations;
 } /* list_len() */
+
+/*
+ * Finds operation in list at nth index.
+ */
 
 operation_t *get_nth_operation(operation_t *list, int nth_operation) {
   assert((list) && (nth_operation >= 0));
@@ -57,6 +69,10 @@ operation_t *get_nth_operation(operation_t *list, int nth_operation) {
   }
   return NULL;
 } /* get_nth_operation() */
+
+/*
+ * Reverses list at nth index to undo operations.
+ */
 
 operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
   assert((list) && (nth_operation >= 0));
@@ -99,6 +115,11 @@ operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
   return NULL;
 } /* undo_nth_operation() */
 
+/*
+ * Appends operations from second list onto first, removes operations from
+ * second list.
+ */
+
 void redo_n_operations(operation_t *list_1, operation_t *list_2,
                        int operations) {
   assert((list_1) && (list_2) && (operations >= 0));
@@ -116,20 +137,21 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
     /* traverse until end of list 1 to add operations onto */
 
     list_1 = list_1->next_operation;
-  }/*
+  }
 
-  int nth_operation = operations_list_2 - operations;
   int current_position = 0;
-  operation_t *head_list_2 = list_2;
-  operation_t *head_list_1 = list_1;
   while (list_2) {
-    if ((nth_operation == 0) && (head_list_2->next_operation == NULL)) {
+    int nth_operation = operations_list_2 - operations;
+    if ((operations == 1) && (operations_list_2 == 1)) {
+      list_1->next_operation = list_2;
+      list_2->next_operation = NULL;
       return;
     }
     else if (current_position == nth_operation - 1) {
       operation_t *prev = NULL;
       operation_t *next = NULL;
       operation_t *current = list_2->next_operation;
+      list_2->next_operation = NULL;
       while (current) {
         next = current->next_operation;
         current->next_operation = prev;
@@ -137,48 +159,17 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
         current = next;
       }
       list_1->next_operation = prev;
-
-      for (int i = 0; i < nth_operation; i++) {
-        if (i == nth_operation - 1) {
-          list_2->next_operation = NULL;
-        }
-        else {
-          list_2 = list_2->next_operation;
-        }
-      }
-      while (head_list_2) {
-        if (!head_list_2->next_operation) {
-          break;
-        }
-        else if (!head_list_2->next_operation->next_operation) {
-          head_list_2->next_operation = NULL;
-          break;
-        }
-        else {
-          head_list_2 = head_list_2->next_operation;
-        }
-      }
-
-      printf("%d %s\n\n", list_1->line_num, list_1->new_text);
-      while (prev) {
-        if (!prev->next_operation) {
-          break;
-        }
-        else if (!prev->next_operation->next_operation) {
-          prev->next_operation = NULL;
-          break;
-        }
-        else {
-          prev = prev->next_operation;
-        }
-      }
       return;
     }
 
     current_position++;
     list_2 = list_2->next_operation;
-  }*/
+  }
 } /* redo_n_operations() */
+
+/*
+ * Frees operations in given list.
+ */
 
 void free_list(operation_t *list) {
   while (list) {
@@ -191,6 +182,10 @@ void free_list(operation_t *list) {
   }
   list = NULL;
 } /* free_list() */
+
+/*
+ * Returns a pointer to last operation in input list.
+ */
 
 operation_t *doc_last_line(operation_t *list) {
   assert(list);
