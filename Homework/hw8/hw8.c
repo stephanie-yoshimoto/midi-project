@@ -84,26 +84,24 @@ operation_t *undo_nth_operation(operation_t *list, int nth_operation) {
     }
     else if ((current_operation == nth_operation) || (nth_operation == 0)) {
       operation_t *prev = NULL;
-      operation_t *next = NULL;
       operation_t *current = list;
       while (current) {
-        next = current->next_operation;
+        operation_t *next = current->next_operation;
         current->next_operation = prev;
         prev = current;
         current = next;
       }
 
       operation_t *temp = prev;
-      while (prev) {
-        if (!prev->next_operation) {
-          break;
-        }
-        else if (!prev->next_operation->next_operation) {
-          prev->next_operation = NULL;
-          break;
-        }
-        else {
-          prev = prev->next_operation;
+      if (nth_operation != 0) {
+        while (prev) {
+          if (!prev->next_operation->next_operation) {
+            prev->next_operation = NULL;
+            break;
+          }
+          else {
+            prev = prev->next_operation;
+          }
         }
       }
       return temp;
@@ -139,7 +137,7 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
     list_1 = list_1->next_operation;
   }
 
-  int current_position = 0;
+  int current_position = 1;
   while (list_2) {
     int nth_operation = operations_list_2 - operations;
     if ((operations == 1) && (operations_list_2 == 1)) {
@@ -147,13 +145,12 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
       list_2->next_operation = NULL;
       return;
     }
-    else if (current_position == nth_operation - 1) {
+    else if (current_position == nth_operation) {
       operation_t *prev = NULL;
-      operation_t *next = NULL;
       operation_t *current = list_2->next_operation;
       list_2->next_operation = NULL;
       while (current) {
-        next = current->next_operation;
+        operation_t *next = current->next_operation;
         current->next_operation = prev;
         prev = current;
         current = next;
@@ -217,52 +214,19 @@ operation_t *doc_last_line(operation_t *list) {
 
 operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
   assert((list_1) && (list_2));
-  operation_t *head = list_1;/*
-  head->next_operation = list_2;
-  operation_t *temp = head->next_operation;
-  list_1 = list_1->next_operation;
-  list_2 = list_2->next_operation;*/
-  /*while (list_1) {
-    printf("%d %s\n", list_1->line_num, list_1->new_text);
-    list_1 = list_1->next_operation;
+  operation_t *head = list_1;
+  while ((list_1) && (list_2)) {
+    operation_t *temp_1 = list_1->next_operation;
+    operation_t *temp_2 = list_2->next_operation;
+
+    list_1->next_operation = list_2;
+    if (temp_1) {
+      list_2->next_operation = temp_1;
+    }
+
+    list_1 = temp_1;
+    list_2 = temp_2;
   }
-  printf("\n");
-  while (list_2) {
-    printf("%d %s\n", list_2->line_num, list_2->new_text);
-    list_2 = list_2->next_operation;
-  }*/
-
-  /*while ((list_1) && (list_2)) {
-    if (list_1) {
-      temp->next_operation = list_1;
-      temp = temp->next_operation;
-    }
-    if (list_2) {
-      temp->next_operation = list_2;
-      temp = temp->next_operation;
-    }
-    list_1 = list_1->next_operation;
-    list_2 = list_2->next_operation;
-  }*/
-
-  /*while (1) {
-    if (list_1) {
-      printf("%d %s\n", list_1->line_num, list_1->new_text);
-      temp = list_1;
-      temp->next_operation = list_1;
-      list_1 = list_1->next_operation;
-    }
-    if (list_2) {
-      printf("%d %s\n", list_2->line_num, list_2->new_text);
-      temp = list_2;
-      temp->next_operation = list_1;
-      list_2 = list_2->next_operation;
-    }
-
-    if ((!list_1) && (!list_2)) {
-      break;
-    }
-  }*/
   return head;
 } /* interleave_operations() */
 
