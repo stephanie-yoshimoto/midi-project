@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_CHARS (200)
+
 /*
  * Allocates new operation struct and adds struct to end of list.
  */
@@ -239,7 +241,7 @@ int write_document(char *file_name, operation_t *list) {
     return NON_WRITABLE_FILE;
   }
   int operations_written = 0;
-  /*operation_t *temp = list;
+  operation_t *temp = list;
   while (temp) {
     if (fseek(file_ptr_out, 0, SEEK_SET) == 0) {
       int lines_read = 0;
@@ -251,7 +253,21 @@ int write_document(char *file_name, operation_t *list) {
           break;
         }
         else {
-          fwrite("\n", 1, 1, file_ptr_out);
+          char temp_new_text[MAX_CHARS] = "";
+          int returned_value =
+            fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
+          if (returned_value != 0) {
+            fclose(file_ptr_out);
+            file_ptr_out = NULL;
+            return operations_written;
+          }
+
+          if ((strcmp("\n", temp_new_text) != 0) && (*temp_new_text)) {
+            fwrite(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
+          }
+          else {
+            fwrite("\n", 1, 1, file_ptr_out);
+          }
         }
       }
 
@@ -263,14 +279,31 @@ int write_document(char *file_name, operation_t *list) {
           return operations_written;
         }
         for (int i = lines_read; i <= temp->line_num; i++) {
+          char temp_new_text[MAX_CHARS] = "";
+          int returned_value =
+              fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
+          if (returned_value != 0) {
+            fclose(file_ptr_out);
+            file_ptr_out = NULL;
+            return operations_written;
+          }
+
           if (i == temp->line_num) {
+            if (strcmp("\n", temp_new_text) != 0) {
+              operations_written--;
+            }
             fwrite(temp->new_text, strlen(temp->new_text), 1, file_ptr_out);
             fwrite("\n", 1, 1, file_ptr_out);
             operations_written++;
             break;
           }
           else {
-            fwrite("\n", 1, 1, file_ptr_out);
+            if ((strcmp("\n", temp_new_text) != 0) && (*temp_new_text)) {
+              fwrite(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
+            }
+            else {
+              fwrite("\n", 1, 1, file_ptr_out);
+            }
           }
         }
       }
@@ -281,7 +314,7 @@ int write_document(char *file_name, operation_t *list) {
       return operations_written;
     }
     temp = temp->next_operation;
-  }*/
+  }
   fclose(file_ptr_out);
   file_ptr_out = NULL;
   return operations_written;
