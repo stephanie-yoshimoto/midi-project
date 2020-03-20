@@ -243,25 +243,34 @@ int write_document(char *file_name, operation_t *list) {
   int operations_written = 0;
   operation_t *temp = list;
   while (temp) {
+    int lines_read = 0;
     if (fseek(file_ptr_out, 0, SEEK_SET) == 0) {
-      int lines_read = 0;
+      int returned_value = fseek(file_ptr_out, 0, SEEK_SET);
+      if (returned_value != 0) {
+        fclose(file_ptr_out);
+        file_ptr_out = NULL;
+        return operations_written;
+      }
       for (lines_read = 0; feof(file_ptr_out) == 0; lines_read++) {
+        char temp_new_text[MAX_CHARS] = "";
+        returned_value =
+            fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
+        if (returned_value != 0) {
+          fclose(file_ptr_out);
+          file_ptr_out = NULL;
+          return operations_written;
+        }
+
         if (lines_read == temp->line_num) {
+          if ((strcmp("\n", temp_new_text) != 0) && (operations_written != 0)) {
+            operations_written--;
+          }
           fwrite(temp->new_text, strlen(temp->new_text), 1, file_ptr_out);
           fwrite("\n", 1, 1, file_ptr_out);
           operations_written++;
           break;
         }
         else {
-          char temp_new_text[MAX_CHARS] = "";
-          int returned_value =
-            fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
-          if (returned_value != 0) {
-            fclose(file_ptr_out);
-            file_ptr_out = NULL;
-            return operations_written;
-          }
-
           if ((strcmp("\n", temp_new_text) != 0) && (*temp_new_text)) {
             fwrite(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
           }
@@ -280,7 +289,7 @@ int write_document(char *file_name, operation_t *list) {
         }
         for (int i = lines_read; i <= temp->line_num; i++) {
           char temp_new_text[MAX_CHARS] = "";
-          int returned_value =
+          returned_value =
               fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
           if (returned_value != 0) {
             fclose(file_ptr_out);
@@ -289,7 +298,8 @@ int write_document(char *file_name, operation_t *list) {
           }
 
           if (i == temp->line_num) {
-            if (strcmp("\n", temp_new_text) != 0) {
+            if ((strcmp("\n", temp_new_text) != 0) &&
+                (operations_written != 0)) {
               operations_written--;
             }
             fwrite(temp->new_text, strlen(temp->new_text), 1, file_ptr_out);
