@@ -240,74 +240,41 @@ int write_document(char *file_name, operation_t *list) {
   if (!file_ptr_out) {
     return NON_WRITABLE_FILE;
   }
-  fclose(file_ptr_out);
-  file_ptr_out = NULL;
-  file_ptr_out = fopen(file_name, "r");
-  int operations_written = 0;
-  if (!file_ptr_out) {
-    return operations_written;
-  }
 
+  int lines_in_file = 0;
+  operation_t *temp = list;
   while (list) {
-    char file_contents[MAX_FILE_LEN] = "";
-    int lines_read = 0;
-    int returned_value = -1;
-    while ((feof(file_ptr_out) == 0) || (lines_read <= list->line_num)) {
-      char temp_text[MAX_CHARS] = "";
-      returned_value = fscanf(file_ptr_out, "%199s\n", temp_text);
-      if ((returned_value != 1) && (*temp_text)) {
-        fclose(file_ptr_out);
-        file_ptr_out = NULL;
-        return operations_written;
-      }
-
-      if (lines_read == list->line_num) {
-        strcat(file_contents, list->new_text);
-        char previous_text[MAX_CHARS] = "";
-        returned_value = fscanf(file_ptr_out, "%199s\n", previous_text);
-        if ((returned_value != 1) && (*previous_text)) {
-          fclose(file_ptr_out);
-          file_ptr_out = NULL;
-          return operations_written;
-        }
-
-        if (strlen(previous_text) != 0) {
-          /* string is not empty, text was written previously */
-
-          operations_written--;
-        }
-        operations_written++;
-      }
-      else {
-        strcat(file_contents, temp_text);
-      }
-
-      strcat(file_contents, "\n");
-      lines_read++;
-    }
-
-    fclose(file_ptr_out);
-    file_ptr_out = NULL;
-    file_ptr_out = fopen(file_name, "w");
-    if (!file_ptr_out) {
-      fclose(file_ptr_out);
-      file_ptr_out = NULL;
-      return operations_written;
-    }
-    else {
-      fprintf(file_ptr_out, "%s", file_contents);
-      fclose(file_ptr_out);
-      file_ptr_out = NULL;
-      file_ptr_out = fopen(file_name, "r");
-      if (!file_ptr_out) {
-        fclose(file_ptr_out);
-        file_ptr_out = NULL;
-        return operations_written;
-      }
+    if (list->line_num > lines_in_file) {
+      lines_in_file = list->line_num;
     }
     list = list->next_operation;
   }
 
+  operation_t *sorted_list[lines_in_file];
+  for (int i = 0; i < lines_in_file; i++) {
+    sorted_list[i] = NULL;
+  }
+
+  while (temp) {
+    sorted_list[temp->line_num - 1] = temp;
+    temp = temp->next_operation;
+  }
+
+  char file_contents[MAX_FILE_LEN] = "";
+  int operations_written = 0;
+  for (int i = 0; i < lines_in_file; i++) {
+    if (!sorted_list[i]) {
+      strcat(file_contents, "\n");
+      continue;
+    }
+
+    strcat(file_contents, "\n");
+    strcat(file_contents, (sorted_list[i])->new_text);
+    operations_written++;
+    strcat(file_contents, "\n");
+  }
+
+  fprintf(file_ptr_out, "%s", file_contents);
   fclose(file_ptr_out);
   file_ptr_out = NULL;
   return operations_written;
@@ -315,12 +282,20 @@ int write_document(char *file_name, operation_t *list) {
 
 /*int main() {
   operation_t *temp = malloc(sizeof(operation_t));
+  operation_t *temp_2 = malloc(sizeof(operation_t));
   temp->line_num = 2;
+  temp_2->line_num = 3;
   char *hello = "hello";
+  char *hello2 = "hello2";
   temp->new_text = malloc(sizeof(strlen(hello) + 1));
   strcpy(temp->new_text, hello);
-  temp->next_operation = NULL;
+  temp_2->new_text = malloc(sizeof(strlen(hello) + 1));
+  strcpy(temp_2->new_text, hello2);
+  temp->next_operation = temp_2;
+  temp_2->next_operation = NULL;
   printf("%d\n", write_document("output.txt", temp));
+  free(temp_2->new_text);
+  free(temp_2);
   free(temp->new_text);
   free(temp);
   return 0;
