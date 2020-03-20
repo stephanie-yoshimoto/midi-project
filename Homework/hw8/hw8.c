@@ -6,11 +6,11 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <stdio.h>
 #include <string.h>
 
 #define MAX_CHARS (200)
+#define MAX_FILE_LEN (5000)
 
 /*
  * Allocates new operation struct and adds struct to end of list.
@@ -236,96 +236,92 @@ operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
 int write_document(char *file_name, operation_t *list) {
   assert((file_name) && (list));
   FILE *file_ptr_out = NULL;
-  file_ptr_out = fopen(file_name, "wb");
+  file_ptr_out = fopen(file_name, "w");
   if (!file_ptr_out) {
     return NON_WRITABLE_FILE;
   }
+  fclose(file_ptr_out);
+  file_ptr_out = NULL;
+  file_ptr_out = fopen(file_name, "r");
   int operations_written = 0;
-  operation_t *temp = list;
-  while (temp) {
+  if (!file_ptr_out) {
+    return operations_written;
+  }
+
+  while (list) {
+    char file_contents[MAX_FILE_LEN] = "";
     int lines_read = 0;
-    if (fseek(file_ptr_out, 0, SEEK_SET) == 0) {
-      int returned_value = fseek(file_ptr_out, 0, SEEK_SET);
-      if (returned_value != 0) {
+    int returned_value = -1;
+    while ((feof(file_ptr_out) == 0) || (lines_read <= list->line_num)) {
+      char temp_text[MAX_CHARS] = "";
+      returned_value = fscanf(file_ptr_out, "%199s\n", temp_text);
+      if ((returned_value != 1) && (*temp_text)) {
         fclose(file_ptr_out);
         file_ptr_out = NULL;
         return operations_written;
       }
-      for (lines_read = 0; feof(file_ptr_out) == 0; lines_read++) {
-        char temp_new_text[MAX_CHARS] = "";
-        returned_value =
-            fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
-        if (returned_value != 0) {
+
+      if (lines_read == list->line_num) {
+        strcat(file_contents, list->new_text);
+        char previous_text[MAX_CHARS] = "";
+        returned_value = fscanf(file_ptr_out, "%199s\n", previous_text);
+        if ((returned_value != 1) && (*previous_text)) {
           fclose(file_ptr_out);
           file_ptr_out = NULL;
           return operations_written;
         }
 
-        if (lines_read == temp->line_num) {
-          if ((strcmp("\n", temp_new_text) != 0) && (operations_written != 0)) {
-            operations_written--;
-          }
-          fwrite(temp->new_text, strlen(temp->new_text), 1, file_ptr_out);
-          fwrite("\n", 1, 1, file_ptr_out);
-          operations_written++;
-          break;
+        if (strlen(previous_text) != 0) {
+          /* string is not empty, text was written previously */
+
+          operations_written--;
         }
-        else {
-          if ((strcmp("\n", temp_new_text) != 0) && (*temp_new_text)) {
-            fwrite(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
-          }
-          else {
-            fwrite("\n", 1, 1, file_ptr_out);
-          }
-        }
+        operations_written++;
+      }
+      else {
+        strcat(file_contents, temp_text);
       }
 
-      if ((feof(file_ptr_out)) && (lines_read <= temp->line_num)) {
-        int returned_value = fseek(file_ptr_out, -1, SEEK_END);
-        if (returned_value != 0) {
-          fclose(file_ptr_out);
-          file_ptr_out = NULL;
-          return operations_written;
-        }
-        for (int i = lines_read; i <= temp->line_num; i++) {
-          char temp_new_text[MAX_CHARS] = "";
-          returned_value =
-              fread(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
-          if (returned_value != 0) {
-            fclose(file_ptr_out);
-            file_ptr_out = NULL;
-            return operations_written;
-          }
-
-          if (i == temp->line_num) {
-            if ((strcmp("\n", temp_new_text) != 0) &&
-                (operations_written != 0)) {
-              operations_written--;
-            }
-            fwrite(temp->new_text, strlen(temp->new_text), 1, file_ptr_out);
-            fwrite("\n", 1, 1, file_ptr_out);
-            operations_written++;
-            break;
-          }
-          else {
-            if ((strcmp("\n", temp_new_text) != 0) && (*temp_new_text)) {
-              fwrite(temp_new_text, strlen(temp_new_text), 1, file_ptr_out);
-            }
-            else {
-              fwrite("\n", 1, 1, file_ptr_out);
-            }
-          }
-        }
-      }
+      strcat(file_contents, "\n");
+      lines_read++;
     }
-    else {
+
+    fclose(file_ptr_out);
+    file_ptr_out = NULL;
+    file_ptr_out = fopen(file_name, "w");
+    if (!file_ptr_out) {
       fclose(file_ptr_out);
       file_ptr_out = NULL;
       return operations_written;
     }
-    temp = temp->next_operation;
+    else {
+      fprintf(file_ptr_out, "%s", file_contents);
+      fclose(file_ptr_out);
+      file_ptr_out = NULL;
+      file_ptr_out = fopen(file_name, "r");
+      if (!file_ptr_out) {
+        fclose(file_ptr_out);
+        file_ptr_out = NULL;
+        return operations_written;
+      }
+    }
+    list = list->next_operation;
   }
+
   fclose(file_ptr_out);
   file_ptr_out = NULL;
   return operations_written;
 } /* write_document() */
+
+/*int main() {
+  operation_t *temp = malloc(sizeof(operation_t));
+  temp->line_num = 2;
+  char *hello = "hello";
+  temp->new_text = malloc(sizeof(strlen(hello) + 1));
+  strcpy(temp->new_text, hello);
+  temp->next_operation = NULL;
+  printf("%d\n", write_document("output.txt", temp));
+  free(temp->new_text);
+  free(temp);
+  return 0;
+}*/
