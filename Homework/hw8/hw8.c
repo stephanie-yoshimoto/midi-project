@@ -262,14 +262,19 @@ int write_document(char *file_name, operation_t *list) {
 
   char file_contents[MAX_FILE_LEN] = "";
   int operations_written = 0;
+  int first_line = 1;
   for (int i = 0; i < lines_in_file; i++) {
     if (!sorted_list[i]) {
       strcat(file_contents, "\n");
       continue;
     }
 
-    strcat(file_contents, "\n");
+    if (first_line == 1) {
+      strcat(file_contents, "\n");
+      first_line = 0;
+    }
     strcat(file_contents, (sorted_list[i])->new_text);
+    printf("%d ", sorted_list[i]->line_num);
     operations_written++;
     strcat(file_contents, "\n");
   }
