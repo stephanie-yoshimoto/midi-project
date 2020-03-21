@@ -5,11 +5,12 @@
 #include "hw8.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_FILE_LEN (5000)
+#define TRUE (1)
 
 /*
  * Allocates new operation struct and adds struct to end of list.
@@ -17,7 +18,7 @@
 
 operation_t *add_new_operation(operation_t *list, char *new_text,
                                int line_num) {
-  assert((new_text != NULL) && (line_num >= 0));
+  assert((new_text) && (line_num >= 0));
   operation_t *new_operation = malloc(sizeof(operation_t));
   assert(new_operation);
   char *text = malloc(strlen(new_text) + 1);
@@ -43,9 +44,6 @@ operation_t *add_new_operation(operation_t *list, char *new_text,
  */
 
 int list_len(operation_t *list) {
-  if (list == NULL) {
-    return 0;
-  }
   int num_operations = 0;
   while (list) {
     num_operations++;
@@ -143,11 +141,15 @@ void redo_n_operations(operation_t *list_1, operation_t *list_2,
   while (list_2) {
     int nth_operation = operations_list_2 - operations;
     if ((operations == 1) && (operations_list_2 == 1)) {
+      /* only one operation in each linked list */
+
       list_1->next_operation = list_2;
       list_2->next_operation = NULL;
       return;
     }
     else if (current_position == nth_operation) {
+      /* reverse list 2, append to end of list 1 */
+
       operation_t *prev = NULL;
       operation_t *current = list_2->next_operation;
       list_2->next_operation = NULL;
@@ -214,12 +216,19 @@ operation_t *doc_last_line(operation_t *list) {
   return NULL;
 } /* doc_last_line() */
 
+/*
+ * Interleaves two linked lists, appends extra elements to end of first list.
+ */
+
 operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
   assert((list_1) && (list_2));
   operation_t *head = list_1;
-  while ((list_1) && (list_2)) {
+  while (TRUE) {
     operation_t *temp_1 = list_1->next_operation;
     operation_t *temp_2 = list_2->next_operation;
+
+    /* connects list 1 element to list 2, then connects list 2 element to */
+    /* node after list 1 */
 
     list_1->next_operation = list_2;
     if (temp_1) {
@@ -228,9 +237,17 @@ operation_t *interleave_operations(operation_t *list_1, operation_t *list_2) {
 
     list_1 = temp_1;
     list_2 = temp_2;
+    if ((!list_1) || (!list_2)) {
+      break;
+    }
   }
   return head;
 } /* interleave_operations() */
+
+/*
+ * Outputs new texts from operation_t list to file at line number specified by
+ * operation_t node.
+ */
 
 int write_document(char *file_name, operation_t *list) {
   assert((file_name) && (list));
@@ -243,39 +260,39 @@ int write_document(char *file_name, operation_t *list) {
   int lines_in_file = 0;
   operation_t *temp = list;
   while (list) {
+    /* finds largest line_num in operation_t linked list */
+
     if (list->line_num > lines_in_file) {
       lines_in_file = list->line_num;
     }
     list = list->next_operation;
   }
 
-  operation_t *sorted_list[lines_in_file];
-  for (int i = 0; i < lines_in_file; i++) {
+  /* creates array of struct pointers, initializes elements to null */
+
+  operation_t *sorted_list[lines_in_file + 1];
+  for (int i = 0; i < lines_in_file + 1; i++) {
     sorted_list[i] = NULL;
   }
 
   while (temp) {
-    sorted_list[temp->line_num - 1] = temp;
+    sorted_list[temp->line_num] = temp;
     temp = temp->next_operation;
   }
 
-  char file_contents[MAX_FILE_LEN] = "";
+  char file_contents[(int) USHRT_MAX] = "";
   int operations_written = 0;
-  int first_line = 1;
-  for (int i = 0; i < lines_in_file; i++) {
+  for (int i = 0; i < lines_in_file + 1; i++) {
     if (!sorted_list[i]) {
+      /* no element at i, will print new line in file */
+
       strcat(file_contents, "\n");
       continue;
     }
 
-    if (first_line == 1) {
-      strcat(file_contents, "\n");
-      first_line = 0;
-    }
     strcat(file_contents, (sorted_list[i])->new_text);
-    printf("%d ", sorted_list[i]->line_num);
-    operations_written++;
     strcat(file_contents, "\n");
+    operations_written++;
   }
 
   fprintf(file_ptr_out, "%s", file_contents);
@@ -283,24 +300,3 @@ int write_document(char *file_name, operation_t *list) {
   file_ptr_out = NULL;
   return operations_written;
 } /* write_document() */
-
-/*int main() {
-  operation_t *temp = malloc(sizeof(operation_t));
-  operation_t *temp_2 = malloc(sizeof(operation_t));
-  temp->line_num = 2;
-  temp_2->line_num = 3;
-  char *hello = "hello";
-  char *hello2 = "hello2";
-  temp->new_text = malloc(sizeof(strlen(hello) + 1));
-  strcpy(temp->new_text, hello);
-  temp_2->new_text = malloc(sizeof(strlen(hello) + 1));
-  strcpy(temp_2->new_text, hello2);
-  temp->next_operation = temp_2;
-  temp_2->next_operation = NULL;
-  printf("%d\n", write_document("output.txt", temp));
-  free(temp_2->new_text);
-  free(temp_2);
-  free(temp->new_text);
-  free(temp);
-  return 0;
-}*/
