@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_CHARS (200)
 #define MAX_FILE_LEN (5000)
 
 /*
