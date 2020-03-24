@@ -10,7 +10,7 @@
 #include <string.h>
 
 commit_t *create_commit(char *name, float time, char *hash) {
-  assert((name) && ((time >= 0.0) || (time < 24.0)) && (hash));
+  assert((name) && ((time >= 0.0) && (time < 24.0)) && (hash));
 
   entry_t *entry = NULL;
   entry = malloc(sizeof(entry_t));
@@ -66,14 +66,21 @@ void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
       /* traverse until hash is found in list */
 
       if (strcmp(current->data->hash, hash) == 0) {
-        current = current->next_commit;
-        if (current->prev_commit) {
-          current->prev_commit->next_commit = insert_node;
+        if (current->next_commit) {
+          current = current->next_commit;
+          if (current->prev_commit) {
+            current->prev_commit->next_commit = insert_node;
+          }
+          insert_node->prev_commit = current->prev_commit;
+          insert_node->next_commit = current;
+          current->prev_commit = insert_node;
+          return;
         }
-        insert_node->prev_commit = current->prev_commit;
-        insert_node->next_commit = current;
-        current->prev_commit = insert_node;
-        return;
+        else {
+          insert_node->prev_commit = current;
+          insert_node->next_commit = NULL;
+          current->next_commit = insert_node;
+        }
       }
       current = current->next_commit;
     }
@@ -140,39 +147,83 @@ int remove_all_commits_by_author(commit_t *head, char *author_name) {
 } /* remove_all_commits_by_author() */
 
 commit_t *repair_log(commit_t *head, commit_t *tail) {
+  assert((head) && (tail));
+  commit_t *head_copy = head;
+  commit_t *tail_copy = tail;
+
+  while (head != tail) {
+    if (!head->next_commit) {
+      while (tail) {
+        if (tail->prev_commit == head) {
+          head->next_commit = tail;
+          return head;
+        }
+        else {
+          tail = tail->prev_commit;
+        }
+      }
+    }
+    head = head->next_commit;
+  }
+
+  head = head_copy;
+  tail = tail_copy;
+  while (tail != head) {
+    if (!tail->prev_commit) {
+      while (head) {
+        if (head->next_commit == tail) {
+          tail->prev_commit = head;
+          return tail;
+        }
+        else {
+          head = head->next_commit;
+        }
+      }
+    }
+    tail = tail->prev_commit;
+  }
+
   return NULL;
 } /* repair_log() */
 
 commit_t *disconnect_loop(commit_t *head) {
+  assert(head);
+  commit_t *current = head;
+  while (current) {
+    if (current->next_commit == head) {
+      current->next_commit = NULL;
+      head->prev_commit = NULL;
+      return current;
+    }
+    current = current->next_commit;
+  }
   return NULL;
 } /* disconnect_loop() */
 
-void free_commit(commit_t *entry) {
-  if (entry) {
-    free(entry->data->author);
-    entry->data->author = NULL;
-    free(entry->data->hash);
-    entry->data->hash = NULL;
-    commit_t *temp = entry;
-    while (entry->next_commit) {
-      /* free next nodes */
-
-      entry = entry->next_commit;
-      free(entry->data->author);
-      entry->data->author = NULL;
-      free(entry->data->hash);
-      entry->data->hash = NULL;
-      entry->prev_commit = NULL;
+void free_commit(commit_t *commit) {
+  if (commit) {
+    free(commit->data->author);
+    commit->data->author = NULL;
+    free(commit->data->hash);
+    commit->data->hash = NULL;
+    free(commit);
+    commit = NULL;
+    /*commit_t *temp = commit;
+    while (commit->next_commit) {
+      commit = commit->next_commit;
+      free(commit->data->author);
+      commit->data->author = NULL;
+      free(commit->data->hash);
+      commit->data->hash = NULL;
+      commit->prev_commit = NULL;
     }
     while (temp->prev_commit) {
-      /* free previous nodes */
-
-      entry = entry->prev_commit;
-      free(entry->data->author);
-      entry->data->author = NULL;
-      free(entry->data->hash);
-      entry->data->hash = NULL;
-      entry->next_commit = NULL;
-    }
+      commit = commit->prev_commit;
+      free(commit->data->author);
+      commit->data->author = NULL;
+      free(commit->data->hash);
+      commit->data->hash = NULL;
+      commit->next_commit = NULL;
+    }*/
   }
 } /* free_commit() */
