@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+/*
+ * Creates a commit struct using malloc and given parameters.
+ */
+
 commit_t *create_commit(char *name, float time, char *hash) {
   assert((name) && ((time >= 0.0) && (time < 24.0)) && (hash));
 
@@ -37,6 +41,10 @@ commit_t *create_commit(char *name, float time, char *hash) {
   return commit;
 } /* create_commit() */
 
+/*
+ * Finds commit node that has specified hash.
+ */
+
 commit_t *find_commit(commit_t *head, char *hash_key) {
   assert((head) && (hash_key));
   commit_t *current = head;
@@ -50,6 +58,10 @@ commit_t *find_commit(commit_t *head, char *hash_key) {
   }
   return temp;
 } /* find_commit() */
+
+/*
+ * Finds node with corresponding hash, inserts node after node with hash.
+ */
 
 void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
   assert((head) && (insert_node) && (hash));
@@ -95,6 +107,10 @@ void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
   }
 } /* insert_commit() */
 
+/*
+ * Removes commit node with specific hash.
+ */
+
 commit_t *remove_commit(commit_t *head, char *hash) {
   assert((head) && (hash));
   commit_t *removed_node = NULL;
@@ -117,6 +133,10 @@ commit_t *remove_commit(commit_t *head, char *hash) {
   }
   return removed_node;
 } /* remove_commit() */
+
+/*
+ * Removes all commit nodes that have matching author name.
+ */
 
 int remove_all_commits_by_author(commit_t *head, char *author_name) {
   assert((head) && (author_name));
@@ -146,6 +166,11 @@ int remove_all_commits_by_author(commit_t *head, char *author_name) {
   }
   return nodes_deleted;
 } /* remove_all_commits_by_author() */
+
+/*
+ * Fixes commit log where previous or next commit is null, reconnects nodes
+ * correctly.
+ */
 
 commit_t *repair_log(commit_t *head, commit_t *tail) {
   assert((head) && (tail));
@@ -187,16 +212,21 @@ commit_t *repair_log(commit_t *head, commit_t *tail) {
   return NULL;
 } /* repair_log() */
 
+/*
+ * Finds infinite loop in commit log, adjusts so that loop between nodes is
+ * disconnected.
+ */
+
 commit_t *disconnect_loop(commit_t *head) {
   assert(head);
   commit_t *current = head;
-  if (current->next_commit == head) {
-    current->next_commit = NULL;
-    return current;
-  }/*
-  commit_t *fast_ptr = head->next_commit;
+  commit_t *head_copy = head;
   while (current) {
-    if (current->next_commit == head) {
+    head = head_copy;
+
+    /* check if node connects to head of list or to itself */
+
+    if ((current->next_commit == head) || (current->next_commit == current)) {
       current->next_commit = NULL;
       if (head->prev_commit) {
         head->prev_commit = NULL;
@@ -204,20 +234,27 @@ commit_t *disconnect_loop(commit_t *head) {
       return current;
     }
 
-    current = current->next_commit;
-    if (current->next_commit) {
-      fast_ptr = current->next_commit;
+    /* checks if node connects to any part of list */
+
+    while (head != current) {
+      if (head == current->next_commit) {
+        current->next_commit = NULL;
+        if (current->prev_commit) {
+          current->prev_commit = NULL;
+        }
+        return current;
+      }
+      head = head->next_commit;
     }
 
-    if (current == fast_ptr) {
-      head->prev_commit->next_commit = NULL;
-      commit_t *temp = head->prev_commit;
-      head->prev_commit = NULL;
-      return temp;
-    }
-  }*/
+    current = current->next_commit;
+  }
   return NULL;
 } /* disconnect_loop() */
+
+/*
+ * Frees commit struct, next struct if connected to itself.
+ */
 
 void free_commit(commit_t *commit) {
   if (commit) {
