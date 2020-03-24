@@ -221,53 +221,15 @@ commit_t *disconnect_loop(commit_t *head) {
 
 void free_commit(commit_t *commit) {
   if (commit) {
-    commit_t *temp = commit;
-    commit_t *next = commit->next_commit;
-    commit_t *prev = commit->prev_commit;
-    if ((prev == next) && (prev)) {
-      free(prev->data->author);
-      prev->data->author = NULL;
-      free(prev->data->hash);
-      prev->data->hash = NULL;
-      free(prev->data);
-      prev->data = NULL;
-      free(prev);
-      prev = NULL;
-      printf("lkw;bvnf\n");
+    if ((!commit->next_commit) || (commit == commit->next_commit)) {
+      free(commit->data->author);
+      commit->data->author = NULL;
+      free(commit->data->hash);
+      commit->data->hash = NULL;
+      free(commit->data);
+      commit->data = NULL;
+      free(commit);
+      commit = NULL;
     }
-printf("slgnvwn\n");
-    while ((temp) && (prev != next)) {
-      if (temp->data) {
-        free(temp->data->author);
-        temp->data->author = NULL;
-        free(temp->data->hash);
-        temp->data->hash = NULL;
-        free(temp->data);
-        temp->data = NULL;
-      }
-      free(temp->prev_commit->next_commit);
-      temp->prev_commit->next_commit = NULL;
-      free(temp->prev_commit);
-      temp->prev_commit = NULL;
-
-      temp = temp->prev_commit;
-      free(temp->data->author);
-      temp->data->author = NULL;
-      free(temp->data->hash);
-      temp->data->hash = NULL;
-      free(temp->next_commit->prev_commit);
-      temp->next_commit->prev_commit = NULL;
-      free(temp->next_commit);
-      temp->next_commit = NULL;
-    }
-
-    free(commit->data->author);
-    commit->data->author = NULL;
-    free(commit->data->hash);
-    commit->data->hash = NULL;
-    free(commit->data);
-    commit->data = NULL;
-    free(commit);
-    commit = NULL;
   }
 } /* free_commit() */
