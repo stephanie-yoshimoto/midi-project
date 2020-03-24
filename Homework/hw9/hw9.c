@@ -79,7 +79,8 @@ void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
         else {
           insert_node->prev_commit = current;
           insert_node->next_commit = NULL;
-          current->next_commit = insert_node;
+          insert_node->prev_commit->next_commit = insert_node;
+          return;
         }
       }
       current = current->next_commit;
@@ -189,41 +190,84 @@ commit_t *repair_log(commit_t *head, commit_t *tail) {
 commit_t *disconnect_loop(commit_t *head) {
   assert(head);
   commit_t *current = head;
+  if (current->next_commit == head) {
+    current->next_commit = NULL;
+    return current;
+  }/*
+  commit_t *fast_ptr = head->next_commit;
   while (current) {
     if (current->next_commit == head) {
       current->next_commit = NULL;
-      head->prev_commit = NULL;
+      if (head->prev_commit) {
+        head->prev_commit = NULL;
+      }
       return current;
     }
+
     current = current->next_commit;
-  }
+    if (current->next_commit) {
+      fast_ptr = current->next_commit;
+    }
+
+    if (current == fast_ptr) {
+      head->prev_commit->next_commit = NULL;
+      commit_t *temp = head->prev_commit;
+      head->prev_commit = NULL;
+      return temp;
+    }
+  }*/
   return NULL;
 } /* disconnect_loop() */
 
 void free_commit(commit_t *commit) {
   if (commit) {
+    commit_t *temp = commit;
+    commit_t *next = commit->next_commit;
+    commit_t *prev = commit->prev_commit;
+    if ((prev == next) && (prev)) {
+      free(prev->data->author);
+      prev->data->author = NULL;
+      free(prev->data->hash);
+      prev->data->hash = NULL;
+      free(prev->data);
+      prev->data = NULL;
+      free(prev);
+      prev = NULL;
+      printf("lkw;bvnf\n");
+    }
+printf("slgnvwn\n");
+    while ((temp) && (prev != next)) {
+      if (temp->data) {
+        free(temp->data->author);
+        temp->data->author = NULL;
+        free(temp->data->hash);
+        temp->data->hash = NULL;
+        free(temp->data);
+        temp->data = NULL;
+      }
+      free(temp->prev_commit->next_commit);
+      temp->prev_commit->next_commit = NULL;
+      free(temp->prev_commit);
+      temp->prev_commit = NULL;
+
+      temp = temp->prev_commit;
+      free(temp->data->author);
+      temp->data->author = NULL;
+      free(temp->data->hash);
+      temp->data->hash = NULL;
+      free(temp->next_commit->prev_commit);
+      temp->next_commit->prev_commit = NULL;
+      free(temp->next_commit);
+      temp->next_commit = NULL;
+    }
+
     free(commit->data->author);
     commit->data->author = NULL;
     free(commit->data->hash);
     commit->data->hash = NULL;
+    free(commit->data);
+    commit->data = NULL;
     free(commit);
     commit = NULL;
-    /*commit_t *temp = commit;
-    while (commit->next_commit) {
-      commit = commit->next_commit;
-      free(commit->data->author);
-      commit->data->author = NULL;
-      free(commit->data->hash);
-      commit->data->hash = NULL;
-      commit->prev_commit = NULL;
-    }
-    while (temp->prev_commit) {
-      commit = commit->prev_commit;
-      free(commit->data->author);
-      commit->data->author = NULL;
-      free(commit->data->hash);
-      commit->data->hash = NULL;
-      commit->next_commit = NULL;
-    }*/
   }
 } /* free_commit() */
