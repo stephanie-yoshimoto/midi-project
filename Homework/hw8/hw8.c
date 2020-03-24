@@ -19,9 +19,11 @@
 operation_t *add_new_operation(operation_t *list, char *new_text,
                                int line_num) {
   assert((new_text) && (line_num >= 0));
-  operation_t *new_operation = malloc(sizeof(operation_t));
+  operation_t *new_operation = NULL;
+  new_operation = malloc(sizeof(operation_t));
   assert(new_operation);
-  char *text = malloc(strlen(new_text) + 1);
+  char *text = NULL;
+  text = malloc(strlen(new_text) + 1);
   assert(text);
   new_operation->line_num = line_num;
   new_operation->new_text = text;
