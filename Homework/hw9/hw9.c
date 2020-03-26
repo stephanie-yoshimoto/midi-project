@@ -75,7 +75,7 @@ void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
   else {
     commit_t *current = head;
     while (current) {
-      /* traverse until hash is found in list */
+      /* traverse until hash is found in list, insert new node */
 
       if (strcmp(current->data->hash, hash) == 0) {
         if (current->next_commit) {
@@ -117,7 +117,6 @@ commit_t *remove_commit(commit_t *head, char *hash) {
   commit_t *current = head;
   while (current) {
     if (strcmp(current->data->hash, hash) == 0) {
-      removed_node = current;
       if (current->next_commit) {
         current->next_commit->prev_commit = current->prev_commit;
       }
@@ -127,10 +126,14 @@ commit_t *remove_commit(commit_t *head, char *hash) {
 
       current->next_commit = NULL;
       current->prev_commit = NULL;
+      removed_node = current;
       break;
     }
-    current = current->next_commit;
+    else {
+      current = current->next_commit;
+    }
   }
+
   return removed_node;
 } /* remove_commit() */
 
@@ -141,9 +144,9 @@ commit_t *remove_commit(commit_t *head, char *hash) {
 int remove_all_commits_by_author(commit_t *head, char *author_name) {
   assert((head) && (author_name));
   int nodes_deleted = 0;
-  int was_removed = false;
   commit_t *current = head;
   while (current) {
+    bool was_removed = false;
     if (strcmp(current->data->author, author_name) == 0) {
       nodes_deleted++;
       was_removed = true;
@@ -161,7 +164,6 @@ int remove_all_commits_by_author(commit_t *head, char *author_name) {
     current = current->next_commit;
     if (was_removed) {
       temp->next_commit = NULL;
-      was_removed = false;
     }
   }
   return nodes_deleted;
