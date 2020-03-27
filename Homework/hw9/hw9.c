@@ -64,8 +64,8 @@ commit_t *find_commit(commit_t *head, char *hash_key) {
  */
 
 void insert_commit(commit_t *head, commit_t *insert_node, char *hash) {
-  assert((head) && (insert_node) && (hash));
-  if (strlen(hash) == 0) {
+  assert(insert_node);
+  if ((strlen(hash) == 0) || (!hash)) {
     insert_node->next_commit = head;
     insert_node->next_commit->prev_commit = insert_node;
     insert_node->prev_commit = NULL;
