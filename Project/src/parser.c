@@ -151,7 +151,7 @@ event_t *parse_event(FILE *file_ptr_in) {
   }
   event->delta_time = delta_time;
 
-  uint8_t type = -1;
+  uint8_t type = 0;
   returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
     return event;
@@ -186,22 +186,105 @@ event_t *parse_event(FILE *file_ptr_in) {
 sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t data_len) {
   sys_event_t *sys_event = malloc(sizeof(sys_event_t));
   assert(sys_event);
+  sys_event->data_len = data_len;
+
+  uint8_t *data = NULL;
+  data = malloc(sizeof(uint8_t) * data_len);
+  assert(data);
+  sys_event->data = data;
+
   return *sys_event;
 } /* parse_sys_event() */
 
 meta_event_t parse_meta_event(FILE *file_ptr_in) {
   meta_event_t *meta_event = malloc(sizeof(meta_event_t));
   assert(meta_event);
+
+  char *name = 0;
+  int returned_value = fread(name, sizeof(uint8_t), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return *meta_event;
+  }
+  meta_event->name = name;
+
+  uint32_t data_len = 0;
+  returned_value = fread(&data_len, sizeof(uint32_t), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return *meta_event;
+  }
+  meta_event->data_len = data_len;
+  assert(META_TABLE[(int) *name].name);
+  assert(META_TABLE[(int) *name].data_len == data_len);
+
+  uint8_t *data = NULL;
+  data = malloc(sizeof(uint8_t) * data_len);
+  assert(data);
+  meta_event->data = data;
+  returned_value = fread(data, sizeof(data), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return *meta_event;
+  }
+
   return *meta_event;
 } /* parse_meta_event() */
 
 midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t data_len) {
   midi_event_t *midi_event = malloc(sizeof(midi_event_t));
   assert(midi_event);
+
+  char *name = 0;
+  int returned_value = fread(name, sizeof(uint8_t), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return *midi_event;
+  }
+  midi_event->name = name;
+  midi_event->data_len = data_len;
+
+  uint8_t *data = NULL;
+  data = malloc(sizeof(uint8_t) * data_len);
+  assert(data);
+  midi_event->data = data;
+  returned_value = fread(data, sizeof(data), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return *midi_event;
+  }
+
   return *midi_event;
 } /* parse_midi_event() */
 
-/* Define parse_var_len here */
+uint32_t parse_var_len(FILE *file_ptr_in) {
+  uint8_t mask = 128;
+  uint32_t parsed = 0;
+  uint8_t temp = 0;
+  while (mask == 128) {
+    int returned_value = fread(&temp, sizeof(uint8_t), 1, file_ptr_in);
+    if (returned_value != 1) {
+      return parsed;
+    }
+
+    mask = temp & 128;
+    if (mask == 128) {
+      temp <<= 1;
+      parsed <<= 7;
+      parsed |= temp;
+    }
+  }
+
+  temp <<= 1;
+  parsed <<= 7;
+  parsed |= temp;
+
+  parsed >>= 1;
+  return parsed;
+} /* parse_var_len() */
+
+uint16_t end_swap_16(uint8_t endian[2]) {
+  return 0;
+} /* end_swap_16() */
+
+uint32_t end_swap_32(uint8_t endian[4]) {
+  return 0;
+} /*end_swap_32() */
 
 uint8_t event_type(event_t *event) {
   return 0;
