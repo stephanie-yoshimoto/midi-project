@@ -25,18 +25,16 @@ song_data_t *parse_file(const char *file_path) {
   song->path = path;
   strcpy(path, file_path);
   parse_header(file_ptr_in, song);
-  track_node_t *track_list = NULL;
-  parse_header(file_ptr_in, song);
 
+  track_node_t *track_list = NULL;
   track_list = malloc(sizeof(track_node_t));
   assert(track_list);
   song->track_list = track_list;
   song->track_list->next_track = NULL;
-  track_t *track = NULL;
-  track = malloc(sizeof(track_t));
-  assert(track);
-  song->track_list->track = track;
-  parse_track(file_ptr_in, song);
+  song->track_list->track = NULL;
+  while (feof(file_ptr_in) == 0) {
+    parse_track(file_ptr_in, song);
+  }
 
   assert(feof(file_ptr_in) == 0);
   return song;
@@ -61,9 +59,9 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   if (returned_value != 1) {
     return;
   }
+  assert((format == 0) || (format == 1) || (format == 2));
 
   uint16_t num_tracks = 0;
-  assert((format == 0) || (format == 1) || (format == 2));
   returned_value = fread(&num_tracks, sizeof(uint16_t), 1, file_ptr_in);
   if (returned_value != 1) {
     return;
@@ -76,10 +74,9 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   }
 
   assert(sizeof(format + num_tracks + division) == 6);
-
   song->format = (uint8_t) format;
   song->num_tracks = num_tracks;
-  if ((division << 15) == 0) {
+  if ((division & 32768) == 0) {
     song->division.uses_tpq = true;
     song->division.ticks_per_qtr = division;
   }
@@ -101,7 +98,6 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   /* traverse until current end of track list to append new tracks */
 
   track_node_t *list = song->track_list;
-  track_node_t *temp_list = list;
   while (list) {
     if (!list->next_track) {
       break;
@@ -116,27 +112,23 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   if (returned_value != 1) {
     return;
   }
-  song->track_list->track->length = length;
+
+  track_t *track = NULL;
+  track = malloc(sizeof(track_t));
+  assert(track);
+  track->length = length;
+  track->event_list = NULL;
+  track->event_list = malloc(sizeof(event_node_t));
+  assert(track->event_list);
+  track->event_list->next_event = NULL;
+  track->event_list->event = NULL;
+  list->next_track->track = track;
 
   int num_events = (length / sizeof(event_t));
-  event_node_t *event_list = list->track->event_list;
-  event_node_t *temp = event_list;
-  while (event_list) {
-    if (!event_list->next_event) {
-      break;
-    }
-    else {
-      event_list = event_list->next_event;
-    }
-  }
-
   for (int i = 0; i < num_events; i++) {
-    event_list->next_event->event = parse_event(file_ptr_in);
-    event_list = event_list->next_event;
+    track->event_list->event = parse_event(file_ptr_in);
+    track->event_list = track->event_list->next_event;
   }
-
-  song->track_list = temp_list;
-  song->track_list->track->event_list = temp;
 } /* parse_track() */
 
 event_t *parse_event(FILE *file_ptr_in) {
@@ -157,6 +149,7 @@ event_t *parse_event(FILE *file_ptr_in) {
     return event;
   }
   event->type = type;
+  type = event_type(event);
 
   uint8_t data_len = 0;
   returned_value = fread(&data_len, sizeof(uint8_t), 1, file_ptr_in);
@@ -167,15 +160,15 @@ event_t *parse_event(FILE *file_ptr_in) {
   /* need to do something with data_len (it means amount of events in track) */
 
   switch (type) {
-    case (META_EVENT): {
+    case META_EVENT_T: {
       event->meta_event = parse_meta_event(file_ptr_in);
       break;
     }
-    case ((SYS_EVENT_1) || (SYS_EVENT_2)): {
+    case SYS_EVENT_T: {
       event->sys_event = parse_sys_event(file_ptr_in, data_len);
       break;
     }
-    default: {
+    case MIDI_EVENT_T: {
       event->midi_event = parse_midi_event(file_ptr_in, data_len);
       break;
     }
@@ -184,72 +177,78 @@ event_t *parse_event(FILE *file_ptr_in) {
 } /* parse_event() */
 
 sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t data_len) {
-  sys_event_t *sys_event = malloc(sizeof(sys_event_t));
-  assert(sys_event);
-  sys_event->data_len = data_len;
+  sys_event_t sys_event = {0, NULL};
+  sys_event_t *sys_event_ptr = &sys_event;
+  sys_event_ptr->data_len = data_len;
 
   uint8_t *data = NULL;
   data = malloc(sizeof(uint8_t) * data_len);
   assert(data);
-  sys_event->data = data;
+  int returned_value = fread(data, sizeof(data), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return sys_event;
+  }
+  sys_event_ptr->data = data;
 
-  return *sys_event;
+  return sys_event;
 } /* parse_sys_event() */
 
 meta_event_t parse_meta_event(FILE *file_ptr_in) {
-  meta_event_t *meta_event = malloc(sizeof(meta_event_t));
-  assert(meta_event);
+  meta_event_t meta_event = {NULL, 0, NULL};
+  meta_event_t *meta_event_ptr = &meta_event;
 
   char *name = 0;
   int returned_value = fread(name, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
-    return *meta_event;
+    return meta_event;
   }
-  meta_event->name = name;
+  meta_event_ptr->name = name;
 
   uint32_t data_len = 0;
   returned_value = fread(&data_len, sizeof(uint32_t), 1, file_ptr_in);
   if (returned_value != 1) {
-    return *meta_event;
+    return meta_event;
   }
-  meta_event->data_len = data_len;
+  meta_event_ptr->data_len = data_len;
   assert(META_TABLE[(int) *name].name);
   assert(META_TABLE[(int) *name].data_len == data_len);
 
   uint8_t *data = NULL;
   data = malloc(sizeof(uint8_t) * data_len);
   assert(data);
-  meta_event->data = data;
+  meta_event_ptr->data = data;
   returned_value = fread(data, sizeof(data), 1, file_ptr_in);
   if (returned_value != 1) {
-    return *meta_event;
+    return meta_event;
   }
 
-  return *meta_event;
+  return meta_event;
 } /* parse_meta_event() */
 
 midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t data_len) {
-  midi_event_t *midi_event = malloc(sizeof(midi_event_t));
-  assert(midi_event);
+  midi_event_t midi_event = {NULL, 0, 0, NULL};
+  midi_event_t *midi_event_ptr = &midi_event;
 
   char *name = 0;
   int returned_value = fread(name, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
-    return *midi_event;
+    return midi_event;
   }
-  midi_event->name = name;
-  midi_event->data_len = data_len;
+  midi_event_ptr->name = name;
+  midi_event_ptr->data_len = data_len;
 
   uint8_t *data = NULL;
   data = malloc(sizeof(uint8_t) * data_len);
   assert(data);
-  midi_event->data = data;
   returned_value = fread(data, sizeof(data), 1, file_ptr_in);
   if (returned_value != 1) {
-    return *midi_event;
+    return midi_event;
   }
+  midi_event_ptr->data = data;
 
-  return *midi_event;
+  midi_event_ptr->status = 0;
+
+  return midi_event;
 } /* parse_midi_event() */
 
 uint32_t parse_var_len(FILE *file_ptr_in) {
@@ -278,28 +277,26 @@ uint32_t parse_var_len(FILE *file_ptr_in) {
   return parsed;
 } /* parse_var_len() */
 
-uint16_t end_swap_16(uint8_t endian[2]) {
-  return 0;
-} /* end_swap_16() */
-
-uint32_t end_swap_32(uint8_t endian[4]) {
-  return 0;
-} /*end_swap_32() */
-
 uint8_t event_type(event_t *event) {
-  return 0;
+  switch (event->type) {
+    case META_EVENT:
+      return META_EVENT_T;
+    case SYS_EVENT_1:
+    case SYS_EVENT_2:
+      return SYS_EVENT_T;
+    default:
+      return MIDI_EVENT_T;
+  }
 } /* event_type() */
 
 void free_song(song_data_t *song) {
   if (song) {
     free(song->path);
     song->path = NULL;
-
-    /* are uint_t's malloc'd and need to be freed? */
-    /* free all malloc'd elements in division, then free division itself */
-
     free_track_node(song->track_list);
     song->track_list = NULL;
+    free(song);
+    song = NULL;
   }
 }
 
@@ -310,6 +307,8 @@ void free_track_node(track_node_t *track_node) {
       track_node->track->event_list = NULL;
       free(track_node->track);
       track_node->track = NULL;
+      free(track_node);
+      track_node = NULL;
     }
   }
 } /* free_track_node() */
@@ -317,14 +316,42 @@ void free_track_node(track_node_t *track_node) {
 void free_event_node(event_node_t *event_node) {
   if (event_node) {
     if ((!event_node->next_event) || (event_node == event_node->next_event)) {
-      /* free & null union that has structs in it (midi is largest byte wise) */
-
+      switch (event_type(event_node->event)) {
+        case SYS_EVENT_T:
+          free(event_node->event->sys_event.data);
+          event_node->event->sys_event.data = NULL;
+          break;
+        case META_EVENT_T:
+          free(event_node->event->meta_event.data);
+          event_node->event->meta_event.data = NULL;
+          break;
+        case MIDI_EVENT_T:
+          free(event_node->event->midi_event.data);
+          event_node->event->midi_event.data = NULL;
+          break;
+      }
       free(event_node->event);
       event_node->event = NULL;
+      free(event_node);
+      event_node = NULL;
     }
   }
 } /* free_event_node() */
 
-/* Define end_swap_16 here */
+uint16_t end_swap_16(uint8_t endian[2]) {
+  uint16_t result = 0;
+  result |= endian[1];
+  result <<= 8;
+  result |= endian[0];
+  return result;
+} /* end_swap_16() */
 
-/* Define end_swap_32 here */
+uint32_t end_swap_32(uint8_t endian[4]) {
+  uint32_t result = 0;
+  for (int i = 3; i > 0; i--) {
+    result |= endian[i];
+    result <<= 8;
+  }
+  result |= endian[0];
+  return result;
+} /*end_swap_32() */
