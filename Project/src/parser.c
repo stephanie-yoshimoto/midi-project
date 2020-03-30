@@ -10,7 +10,7 @@
 
 #define IDENTIFIER_LEN (4)
 
-bool g_running_status = false;
+uint8_t g_prev_status = 0;
 
 song_data_t *parse_file(const char *file_path) {
   assert(file_path);
@@ -159,11 +159,11 @@ event_t *parse_event(FILE *file_ptr_in) {
       break;
     }
     case SYS_EVENT_T: {
-      event->sys_event = parse_sys_event(file_ptr_in, type);
+      event->sys_event = parse_sys_event(file_ptr_in, event->type);
       break;
     }
     case MIDI_EVENT_T: {
-      event->midi_event = parse_midi_event(file_ptr_in, type);
+      event->midi_event = parse_midi_event(file_ptr_in, event->type);
       break;
     }
   }
@@ -172,10 +172,9 @@ event_t *parse_event(FILE *file_ptr_in) {
 
 sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   sys_event_t sys_event = {0, NULL};
-  sys_event_t *sys_event_ptr = &sys_event;
 
   uint32_t data_len = parse_var_len(file_ptr_in);
-  sys_event_ptr->data_len = data_len;
+  sys_event.data_len = data_len;
 
   uint8_t data[data_len];
   for (int i = 0; i < data_len; i++) {
@@ -184,14 +183,13 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
       return sys_event;
     }
   }
-  sys_event_ptr->data = data;
+  sys_event.data = data;
 
   return sys_event;
 } /* parse_sys_event() */
 
 meta_event_t parse_meta_event(FILE *file_ptr_in) {
   meta_event_t meta_event = {NULL, 0, NULL};
-  meta_event_t *meta_event_ptr = &meta_event;
 
   uint8_t type_2 = 0;
   int returned_value = fread(&type_2, sizeof(uint8_t), 1, file_ptr_in);
@@ -204,8 +202,16 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   if (returned_value != 1) {
     return meta_event;
   }
-  meta_event_ptr->data_len = data_len;
-  /* how do you assert that it's in the table */
+
+  if (META_TABLE[type_2].data_len != 0) {
+    assert(data_len == META_TABLE[type_2].data_len);
+  }
+  meta_event.data_len = data_len;
+
+  /* if event is not valid, name should be NULL in table */
+
+  assert(META_TABLE[type_2].name);
+  meta_event.name = META_TABLE[type_2].name;
 
   uint8_t data[data_len];
   for (int i = 0; i < data_len; i++) {
@@ -214,40 +220,34 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
       return meta_event;
     }
   }
-  meta_event_ptr->data = data;
+  meta_event.data = data;
 
   return meta_event;
 } /* parse_meta_event() */
 
-midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t data_len) {
+midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t status) {
   midi_event_t midi_event = {NULL, 0, 0, NULL};
-  midi_event_t *midi_event_ptr = &midi_event;
 
-  uint8_t status = 0;
-  int returned_value = fread(&status, sizeof(uint8_t), 1, file_ptr_in);
-  if (returned_value != 1) {
-    return midi_event;
-  }
-
-  if (status < 128) {
-    g_running_status = true;
+  if ((status & 128) == 0) {
+    midi_event.status = g_prev_status;
   }
   else {
-    g_running_status = false;
+    midi_event.status = status;
+    g_prev_status = status;
   }
-  midi_event_ptr->status = status;
-  assert((MIDI_TABLE[status].status == status) &&
-         (MIDI_TABLE[status].data_len == data_len));
-  midi_event_ptr->data_len = data_len;
+  assert(MIDI_TABLE[status].status == status);
+  assert(MIDI_TABLE[status].name);
+  midi_event.name = MIDI_TABLE[status].name;
+  midi_event.data_len = MIDI_TABLE[status].data_len;
 
-  uint8_t data[data_len];
-  for (int i = 0; i < data_len; i++) {
-    returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
+  uint8_t data[midi_event.data_len];
+  for (int i = 0; i < midi_event.data_len; i++) {
+    int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return midi_event;
     }
   }
-  midi_event_ptr->data = data;
+  midi_event.data = data;
 
   return midi_event;
 } /* parse_midi_event() */
