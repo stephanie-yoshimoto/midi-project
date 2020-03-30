@@ -4,8 +4,11 @@
 
 #include "library.h"
 
+#include <ftw.h>
 #include <malloc.h>
 #include <string.h>
+
+tree_node_t *g_song_library;
 
 tree_node_t **find_parent_pointer(tree_node_t **root, const char *song_name) {
   if (root == NULL) {
@@ -39,13 +42,17 @@ int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
 } /* tree_insert() */
 
 int remove_song_from_tree(tree_node_t **root, const char *song_name) {
+  tree_node_t **root_copy = root;
   tree_node_t **target = find_parent_pointer(root, song_name);
   if (!target) {
     return SONG_NOT_FOUND;
   }
   else {
-    
+    tree_node_t *left = (*target)->left_child;
+    tree_node_t *right = (*target)->right_child;
     free_node(*target);
+    tree_insert(root_copy, left);
+    tree_insert(root_copy, right);
     return DELETE_SUCCESS;
   }
 } /* remove_song_from_tree() */
@@ -62,6 +69,11 @@ void free_node(tree_node_t *node) {
 void print_node(tree_node_t *node, FILE *file_ptr_out) {
   fprintf(file_ptr_out, "%s\n", node->song_name);
 } /* print_node() */
+
+void print_node_no_file(tree_node_t *node, void *ptr) {
+  FILE *file_ptr_out = (FILE *)(ptr);
+  fprintf(file_ptr_out, "%s\n", node->song_name);
+} /* print_node_no_file() */
 
 void traverse_pre_order(tree_node_t *root, void *data,
                         traversal_func_t visit) {
@@ -110,9 +122,19 @@ void free_library(tree_node_t *root) {
 } /* free_library() */
 
 void write_song_list(FILE *fp, tree_node_t *root) {
-  /*void (*func_ptr)(tree_node_t *, (void *) (FILE *)) = NULL;
-  func_ptr = print_node;*/
-  traverse_in_order(root, fp, &print_node);
+  traverse_in_order(root, fp, print_node_no_file);
 } /* write_song_list() */
 
-/* Define make_library here */
+int analyze_file(const char *file_name, const struct stat *stat_ptr, int flag) {
+  return 0;
+}
+
+void make_library(const char *directory) {
+  /* for every file in directory, check if last chars are .mid */
+  /* if so, use first function to make sure that the duplicate is not already */
+  /* there (should return null) */
+  /* use insert node to insert new midi file to g_song_library tree */
+
+  /* returns 0 on success, -1 if error */
+  ftw(directory, analyze_file, 1);
+}
