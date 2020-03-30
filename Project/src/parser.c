@@ -10,7 +10,7 @@
 
 #define IDENTIFIER_LEN (4)
 
-uint8_t g_prev_status = 0;
+uint8_t g_prev_status = 0x80;
 
 song_data_t *parse_file(const char *file_path) {
   assert(file_path);
@@ -44,7 +44,8 @@ song_data_t *parse_file(const char *file_path) {
 
 void parse_header(FILE *file_ptr_in, song_data_t *song) {
   char chunk_type[IDENTIFIER_LEN + 1];
-  int returned_value = fread(chunk_type, sizeof(chunk_type), 1, file_ptr_in);
+  int returned_value = fread(chunk_type, sizeof(chunk_type) - 1, 1,
+                             file_ptr_in);
   if (returned_value != 1) {
     return;
   }
@@ -61,7 +62,8 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   if (returned_value != 1) {
     return;
   }
-  assert((format == 0) || (format == 1) || (format == 2));
+  uint8_t cast_format = (uint8_t) format;
+  assert((cast_format == 0) || (cast_format == 1) || (cast_format == 2));
 
   uint16_t num_tracks = 0;
   returned_value = fread(&num_tracks, sizeof(uint16_t), 1, file_ptr_in);
@@ -75,10 +77,10 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
     return;
   }
 
-  assert(sizeof(format + num_tracks + division) == 6);
-  song->format = (uint8_t) format;
+  assert((sizeof(format) + sizeof(num_tracks) + sizeof(division)) == 6);
+  song->format = cast_format;
   song->num_tracks = num_tracks;
-  if ((division & 32768) == 0) {
+  if ((division & 0x8000) == 0) {
     song->division.uses_tpq = true;
     song->division.ticks_per_qtr = division;
   }
@@ -99,15 +101,10 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
   /* traverse until current end of track list to append new tracks */
 
-  track_node_t *list = song->track_list;
+  /*track_node_t *list = song->track_list;
   while (list) {
-    if (!list->next_track) {
-      break;
-    }
-    else {
-      list = list->next_track;
-    }
-  }
+    list = list->next_track;
+  }*/
 
   uint32_t length = 0;
   returned_value = fread(&length, sizeof(uint32_t), 1, file_ptr_in);
@@ -124,8 +121,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   assert(track->event_list);
   track->event_list->next_event = NULL;
   track->event_list->event = NULL;
-  list->next_track->track = track;
-
+  song->track_list->track = track;
   int num_events = (length / sizeof(event_t));
   for (int i = 0; i < num_events; i++) {
     track->event_list->event = parse_event(file_ptr_in);
@@ -138,32 +134,34 @@ event_t *parse_event(FILE *file_ptr_in) {
   event = malloc(sizeof(event_t));
   assert(event);
 
-  uint32_t delta_time = 0;
-  int returned_value = fread(&delta_time, sizeof(uint32_t), 1, file_ptr_in);
-  if (returned_value != 1) {
-    return event;
-  }
+  uint32_t delta_time = parse_var_len(file_ptr_in);
   event->delta_time = delta_time;
 
   uint8_t type = 0;
-  returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
+  int returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
     return event;
   }
   event->type = type;
   type = event_type(event);
-
+  /*if (event->type < 0x80) {
+    
+  }*/
+printf("event->type 0x%x\ntype 0x%x\n", event->type, type);
   switch (type) {
     case META_EVENT_T: {
+      printf("meta\n");
       event->meta_event = parse_meta_event(file_ptr_in);
       break;
     }
     case SYS_EVENT_T: {
-      event->sys_event = parse_sys_event(file_ptr_in, event->type);
+      printf("sys\n");
+      event->sys_event = parse_sys_event(file_ptr_in, type);
       break;
     }
     case MIDI_EVENT_T: {
-      event->midi_event = parse_midi_event(file_ptr_in, event->type);
+      printf("midi\n");
+      event->midi_event = parse_midi_event(file_ptr_in, type);
       break;
     }
   }
@@ -185,6 +183,7 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   }
   sys_event.data = data;
 
+  g_prev_status = 0x80;
   return sys_event;
 } /* parse_sys_event() */
 
@@ -197,12 +196,7 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
     return meta_event;
   }
 
-  uint32_t data_len = 0;
-  returned_value = fread(&data_len, sizeof(uint32_t), 1, file_ptr_in);
-  if (returned_value != 1) {
-    return meta_event;
-  }
-
+  uint32_t data_len = parse_var_len(file_ptr_in);
   if (META_TABLE[type_2].data_len != 0) {
     assert(data_len == META_TABLE[type_2].data_len);
   }
@@ -222,23 +216,33 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   }
   meta_event.data = data;
 
+  g_prev_status = 0x80;
   return meta_event;
 } /* parse_meta_event() */
 
-midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t status) {
+midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
   midi_event_t midi_event = {NULL, 0, 0, NULL};
 
-  if ((status & 128) == 0) {
+  uint8_t status = 0;
+  int returned_value = fread(&status, sizeof(uint8_t), 1, file_ptr_in);
+  if (returned_value != 1) {
+    return midi_event;
+  }
+printf("status 0x%x\n", status);
+printf("prev status 0x%x\n", g_prev_status);
+  if (status < 0x80) {
     midi_event.status = g_prev_status;
   }
   else {
     midi_event.status = status;
     g_prev_status = status;
   }
-  assert(MIDI_TABLE[status].status == status);
-  assert(MIDI_TABLE[status].name);
-  midi_event.name = MIDI_TABLE[status].name;
-  midi_event.data_len = MIDI_TABLE[status].data_len;
+  printf("%s %u\n", MIDI_TABLE[midi_event.status].name,
+         MIDI_TABLE[midi_event.status].status);
+  assert(MIDI_TABLE[midi_event.status].status == midi_event.status);
+  assert(MIDI_TABLE[midi_event.status].name);
+  midi_event.name = MIDI_TABLE[midi_event.status].name;
+  midi_event.data_len = MIDI_TABLE[midi_event.status].data_len;
 
   uint8_t data[midi_event.data_len];
   for (int i = 0; i < midi_event.data_len; i++) {
