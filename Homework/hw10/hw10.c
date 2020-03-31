@@ -105,37 +105,60 @@ int close_tab(tab_t **first_tab, int tab_no) {
   assert((first_tab) && (tab_no > 0));
 
   tab_t *initial_tab = *first_tab;
-  tab_t **first_copy = first_tab;
-  while (*first_copy) {
-    if ((*first_copy)->tab_no == tab_no) {
-      if ((*first_copy)->next_tab) {
-        (*first_copy)->next_tab->prev_tab = (*first_copy)->prev_tab;
+  tab_t *temp = *first_tab;
+  while (temp) {
+    if (temp->tab_no == tab_no) {
+      if (temp->next_tab) {
+        tab_t *current_page = temp->next_tab;
+        tab_t *following_page = temp->next_tab->next_page;
+        while (current_page) {
+          current_page->prev_tab = temp->prev_tab;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->prev_tab = temp->prev_tab;
+          following_page = following_page->next_page;
+        }
       }
-      if ((*first_copy)->prev_tab) {
-        (*first_copy)->prev_tab->next_tab = (*first_copy)->next_tab;
+      if (temp->prev_tab) {
+        tab_t *current_page = temp->prev_tab;
+        tab_t *following_page = temp->prev_tab->next_page;
+        while (current_page) {
+          current_page->next_tab = temp->next_tab;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->next_tab = temp->next_tab;
+          following_page = following_page->next_page;
+        }
+      }
+      else {
+        /* first tab */
+
+        *first_tab = temp->next_tab;
+        free_tab(temp);
+        return SUCCESS;
       }
 
-      if (*first_copy == initial_tab) {
-        **first_copy = *initial_tab;
-      }
-
-      free_tab(*first_copy);
+      free_tab(temp);
+      *first_tab = initial_tab;
       return SUCCESS;
     }
     else {
-      *first_copy = (*first_copy)->next_tab;
+      temp = temp->next_tab;
     }
   }
 
+  *first_tab = initial_tab;
   return NO_TAB;
 } /* close_tab() */
 
 void close_browser(tab_t **first_tab) {
   assert(first_tab);
 
-  /*while (*first_tab) {
+  while (*first_tab) {
     close_tab(first_tab, (*first_tab)->tab_no);
-  }*/
+  }
 } /* close_browser() */
 
 int page_go_prev(tab_t **first_tab, int tab_no) {
@@ -151,8 +174,9 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
         return NO_PAGE;
       }
 
-      temp->page_info->current_page = false;
-      temp->prev_page->page_info->current_page = true;
+      temp = temp->prev_page;
+      temp->next_page->page_info->current_page = false;
+      temp->page_info->current_page = true;
       if (temp->prev_tab) {
         temp->prev_tab->next_tab = temp->prev_page;
       }
