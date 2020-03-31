@@ -167,28 +167,51 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
   tab_t *head = *first_tab;
   tab_t *initial_tab = *first_tab;
   tab_t *temp = *first_tab;
+  printf("%d\n\n", tab_no);
   while (temp) {
+    printf("%d\n", temp->tab_no);
     if (temp->tab_no == tab_no) {
       if (!temp->prev_page) {
         *first_tab = head;
         return NO_PAGE;
       }
 
+      temp->page_info->current_page = false;
       temp = temp->prev_page;
-      temp->next_page->page_info->current_page = false;
       temp->page_info->current_page = true;
       if (temp->prev_tab) {
-        temp->prev_tab->next_tab = temp->prev_page;
+        tab_t *current_page = temp->prev_tab;
+        tab_t *following_page = temp->prev_tab->next_page;
+        while (current_page) {
+          current_page->next_tab = temp;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->prev_tab = temp;
+          following_page = following_page->next_page;
+        }
       }
+
       if (temp->next_tab) {
-        temp->next_tab->prev_tab = temp->prev_page;
+        tab_t *current_page = temp->next_tab;
+        tab_t *following_page = temp->next_tab->next_page;
+        while (current_page) {
+          current_page->prev_tab = temp;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->prev_tab = temp;
+          following_page = following_page->next_page;
+        }
       }
 
       if (temp == initial_tab) {
-        *first_tab = initial_tab->prev_page;
+        *first_tab = temp;
+      }
+      else {
+        *first_tab = head;
       }
 
-      *first_tab = head;
       return SUCCESS;
     }
     else {
@@ -204,9 +227,22 @@ int page_go_next(tab_t **first_tab, int tab_no) {
   assert((first_tab) && (tab_no > 0));
 
   tab_t *head = *first_tab;
-  tab_t *initial_tab = *first_tab;
   tab_t *temp = *first_tab;
   while (temp) {
+  printf("%d\n", temp->tab_no);
+    temp = temp->next_tab;
+  }
+  printf("\n");
+  temp = *first_tab;
+  tab_t *initial_tab = *first_tab;
+  printf("%d\n\n", tab_no);
+  while (temp) {
+  printf("%d\n", temp->tab_no);
+  tab_t *temp_page = temp;
+  while (temp_page) {
+    printf("%s\n", temp_page->page_info->page_name);
+    temp_page = temp_page->next_page;
+  }
     if (temp->tab_no == tab_no) {
       if (!temp->next_page) {
         *first_tab = head;
@@ -214,19 +250,41 @@ int page_go_next(tab_t **first_tab, int tab_no) {
       }
 
       temp->page_info->current_page = false;
-      temp->next_page->page_info->current_page = true;
+      temp = temp->next_page;
+      temp->page_info->current_page = true;
       if (temp->prev_tab) {
-        temp->prev_tab->next_tab = temp->next_page;
+        tab_t *current_page = temp->prev_tab;
+        tab_t *following_page = temp->prev_tab->next_page;
+        while (current_page) {
+          current_page->next_tab = temp;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->prev_tab = temp;
+          following_page = following_page->next_page;
+        }
       }
+
       if (temp->next_tab) {
-        temp->next_tab->prev_tab = temp->next_page;
+        tab_t *current_page = temp->next_tab;
+        tab_t *following_page = temp->next_tab->next_page;
+        while (current_page) {
+          current_page->prev_tab = temp;
+          current_page = current_page->prev_page;
+        }
+        while (following_page) {
+          following_page->prev_tab = temp;
+          following_page = following_page->next_page;
+        }
       }
 
-      if (*first_tab == initial_tab) {
-        *first_tab = initial_tab->next_page;
+      if (temp == initial_tab) {
+        *first_tab = temp;
+      }
+      else {
+        *first_tab = head;
       }
 
-      *first_tab = head;
       return SUCCESS;
     }
     else {
