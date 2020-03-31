@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -79,6 +78,10 @@ void new_tab(tab_t **first_tab) {
   *first_tab = initial_tab;
 } /* new_tab() */
 
+/*
+ * Used by close_tab() to free tab data.
+ */
+
 void free_tab(tab_t *tab) {
   if (tab) {
     /* free page list */
@@ -111,6 +114,10 @@ void free_tab(tab_t *tab) {
     }
   }
 } /* free_tab() */
+
+/*
+ * Closes tab at tab number, adjusts adjacent pointers.
+ */
 
 int close_tab(tab_t **first_tab, int tab_no) {
   assert((first_tab) && (tab_no > 0));
@@ -164,6 +171,10 @@ int close_tab(tab_t **first_tab, int tab_no) {
   return NO_TAB;
 } /* close_tab() */
 
+/*
+ * Closes and frees all tabs in tab linked list.
+ */
+
 void close_browser(tab_t **first_tab) {
   assert(first_tab);
 
@@ -172,15 +183,17 @@ void close_browser(tab_t **first_tab) {
   }
 } /* close_browser() */
 
+/*
+ * Goes to previous page in tab, adjusts adjacent pointers.
+ */
+
 int page_go_prev(tab_t **first_tab, int tab_no) {
   assert((first_tab) && (tab_no > 0));
 
   tab_t *head = *first_tab;
   tab_t *initial_tab = *first_tab;
   tab_t *temp = *first_tab;
-  printf("%d\n\n", tab_no);
   while (temp) {
-    printf("%d\n", temp->tab_no);
     if (temp->tab_no == tab_no) {
       if (!temp->prev_page) {
         *first_tab = head;
@@ -198,7 +211,7 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
           current_page = current_page->prev_page;
         }
         while (following_page) {
-          following_page->prev_tab = temp;
+          following_page->next_tab = temp;
           following_page = following_page->next_page;
         }
       }
@@ -234,26 +247,17 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
   return NO_TAB;
 } /* page_go_prev() */
 
+/*
+ * Goes to next page in tab, adjusts adjacent tab pointers.
+ */
+
 int page_go_next(tab_t **first_tab, int tab_no) {
   assert((first_tab) && (tab_no > 0));
 
   tab_t *head = *first_tab;
+  tab_t *initial_tab = *first_tab;
   tab_t *temp = *first_tab;
   while (temp) {
-  printf("%d\n", temp->tab_no);
-    temp = temp->next_tab;
-  }
-  printf("\n");
-  temp = *first_tab;
-  tab_t *initial_tab = *first_tab;
-  printf("%d\n\n", tab_no);
-  while (temp) {
-  printf("%d\n", temp->tab_no);
-  tab_t *temp_page = temp;
-  while (temp_page) {
-    printf("%s\n", temp_page->page_info->page_name);
-    temp_page = temp_page->next_page;
-  }
     if (temp->tab_no == tab_no) {
       if (!temp->next_page) {
         *first_tab = head;
@@ -271,7 +275,7 @@ int page_go_next(tab_t **first_tab, int tab_no) {
           current_page = current_page->prev_page;
         }
         while (following_page) {
-          following_page->prev_tab = temp;
+          following_page->next_tab = temp;
           following_page = following_page->next_page;
         }
       }
@@ -307,10 +311,16 @@ int page_go_next(tab_t **first_tab, int tab_no) {
   return NO_TAB;
 } /* page_go_next() */
 
+/*
+ * Opens a new page at tab number, arranges adjacent pointers and clears
+ * pages after new page.
+ */
+
 int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
   assert((first_tab) && (page_name) && (url) && (tab_no > 0));
 
   tab_t *temp = *first_tab;
+  tab_t *head = *first_tab;
   if (!temp) {
     return NO_TAB;
   }
@@ -330,20 +340,11 @@ int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
     return NO_TAB;
   }
 
-  int largest_page_no = 0;
-  tab_t *current_page = temp;
-  while (current_page->next_page) {
-    if (current_page->page_info->page_no > largest_page_no) {
-      largest_page_no = current_page->page_info->page_no;
-    }
-    current_page = current_page->next_page;
-  }
-
   page_data_t *page_data = NULL;
   page_data = malloc(sizeof(page_data_t));
   assert(page_data);
   page_data->current_page = true;
-  page_data->page_no = largest_page_no + 1;
+  page_data->page_no = 0;
   page_data->page_name = NULL;
   page_data->page_name = malloc(strlen(page_name) + 1);
   assert(page_data->page_name);
@@ -358,12 +359,95 @@ int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
   assert(tab);
   tab->tab_no = tab_no;
   tab->page_info = page_data;
+  tab->next_tab = temp->next_tab;
+  tab->prev_tab = temp->prev_tab;
+
+  /* find largest page number */
+
+  int largest_page_no = 0;
+  tab_t *current_page = temp;
+  tab_t *following_page = temp->next_page;
+  while ((current_page) || (following_page)) {
+    if (current_page) {
+      if (current_page->page_info->page_no > largest_page_no) {
+        largest_page_no = current_page->page_info->page_no;
+      }
+      current_page = current_page->prev_page;
+    }
+    if (following_page) {
+      if (following_page->page_info->page_no > largest_page_no) {
+        largest_page_no = following_page->page_info->page_no;
+      }
+      following_page = following_page->next_page;
+    }
+  }
+  page_data->page_no = largest_page_no + 1;
+  current_page = temp;
   tab->prev_page = current_page;
+  tab->prev_page->page_info->current_page = false;
   tab->next_page = current_page->next_page;
+
+  /* free all data after current page */
+
+  temp = current_page->next_page;
+  while (temp) {
+    free(temp->page_info->page_name);
+    temp->page_info->page_name = NULL;
+    free(temp->page_info->url);
+    temp->page_info->url = NULL;
+    free(temp->page_info);
+    temp->page_info = NULL;
+    tab_t *temp_page = temp;
+    temp = temp->next_page;
+    free(temp_page);
+    temp_page = NULL;
+  }
+
   current_page->next_page = tab;
   tab->prev_page = current_page;
   tab->next_page = NULL;
 
+  /* all pages in next tab must point to new current page */
+
+  tab_t *next_tab = current_page->next_tab;
+  if (next_tab) {
+    tab_t *next_tab_page = next_tab;
+    while (next_tab_page) {
+      next_tab_page->prev_tab = tab;
+      next_tab_page = next_tab_page->prev_page;
+    }
+
+    tab_t *next_tab_next = next_tab->next_page;
+    while (next_tab_next) {
+      next_tab_next->prev_tab = tab;
+      next_tab_next = next_tab_next->next_page;
+    }
+  }
+
+  /* all pages in previous tab must point to new current page */
+
+  tab_t *prev_tab = current_page->prev_tab;
+  if (prev_tab) {
+    tab_t *prev_tab_page = prev_tab;
+    while (prev_tab_page) {
+      prev_tab_page->next_tab = tab;
+      prev_tab_page = prev_tab_page->prev_page;
+    }
+
+    tab_t *prev_tab_next = prev_tab->next_page;
+    while (prev_tab_next) {
+      prev_tab_next->next_tab = tab;
+      prev_tab_next = prev_tab_next->next_page;
+    }
+  }
+  else {
+    /* first tab */
+
+    *first_tab = tab;
+    return SUCCESS;
+  }
+
+  *first_tab = head;
   return SUCCESS;
 } /* open_page() */
 
