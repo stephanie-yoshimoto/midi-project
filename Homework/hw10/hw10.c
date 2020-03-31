@@ -57,15 +57,26 @@ void new_tab(tab_t **first_tab) {
   }
   new_tab->tab_no = largest_tab_no + 1;
   new_tab->prev_tab = temp;
-
   if (!initial_tab) {
     new_tab->tab_no = 1;
     *first_tab = new_tab;
+    return;
   }
-  else {
-    temp->next_tab = new_tab;
-    *first_tab = initial_tab;
+
+  tab_t *current_page = temp;
+  while (current_page) {
+    current_page->next_tab = new_tab;
+    current_page = current_page->prev_page;
   }
+
+  tab_t *following_page = temp->next_page;
+  while (following_page) {
+    following_page->next_tab = new_tab;
+    following_page = following_page->next_page;
+  }
+
+  temp->next_tab = new_tab;
+  *first_tab = initial_tab;
 } /* new_tab() */
 
 void free_tab(tab_t *tab) {
