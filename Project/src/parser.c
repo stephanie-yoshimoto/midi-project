@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 
 #define IDENTIFIER_LEN (4)
@@ -30,17 +29,31 @@ song_data_t *parse_file(const char *file_path) {
   strcpy(path, file_path);
   parse_header(file_ptr_in, song);
 
-  track_node_t *track_list = NULL;
-  track_list = malloc(sizeof(track_node_t));
-  assert(track_list);
-  song->track_list = track_list;
+  song->track_list = NULL;
+  song->track_list = malloc(sizeof(track_node_t));
+  assert(song->track_list);
   song->track_list->next_track = NULL;
   song->track_list->track = NULL;
   while (feof(file_ptr_in) == 0) {
     parse_track(file_ptr_in, song);
+    if (song->track_list->next_track) {
+      song->track_list = song->track_list->next_track;
+    }
+    else {
+      break;
+    }
   }
 
-  assert(feof(file_ptr_in) == 0);
+  while (song->track_list->track) {
+    /*while (song->track_list->track->event_list) {
+      song->track_list->track->event_list =
+          song->track_list->track->event_list->next_event;
+    }*/
+    song->track_list = song->track_list->next_track;
+    printf("jsklngsf\n");
+  }
+
+  assert(feof(file_ptr_in));
   return song;
 } /* parse_file() */
 
@@ -109,6 +122,8 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   int returned_value = fread(chunk_type, sizeof(chunk_type) - 1, 1,
                              file_ptr_in);
   if (returned_value != 1) {
+    /* likely because of eof */
+
     return;
   }
 printf("%s\n", chunk_type);
@@ -131,15 +146,20 @@ printf("%s\n", chunk_type);
   track->event_list = malloc(sizeof(event_node_t));
   assert(track->event_list);
   track->event_list->next_event = NULL;
+  song->track_list->track = track;
+  song->track_list->next_track = malloc(sizeof(track_node_t));
+  assert(song->track_list->next_track);
+  song->track_list->next_track->next_track = NULL;
 
   long unsigned prev_size = 0;
   event_node_t *event_list = track->event_list;
-  /*event_node_t *event_list_head = track->event_list;*/
   for (int i = 0; i < length; i += prev_size) {
     event_list->event = parse_event(file_ptr_in);
+    event_list->next_event = NULL;
     if (!event_list->event) {
-      /*song->track_list->track->event_list = event_list_head;
-      song->track_list = song->track_list->next_track;*/
+      break;
+    }
+    else if (strcmp(event_list->event->meta_event.name, "End of Track") == 0) {
       break;
     }
 
@@ -175,7 +195,7 @@ event_t *parse_event(FILE *file_ptr_in) {
 
   uint32_t delta_time = parse_var_len(file_ptr_in);
   event->delta_time = delta_time;
-printf("delta time 0x%x\n", delta_time);
+/*printf("delta time 0x%x\n", delta_time);*/
   uint8_t type = 0;
   int returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
@@ -183,8 +203,7 @@ printf("delta time 0x%x\n", delta_time);
   }
   event->type = type;
   type = event_type(event);
-printf("event->type 0x%x\n", event->type);
-
+/*printf("event->type 0x%x\n", event->type);*/
   switch (type) {
     case META_EVENT_T: {
       event->meta_event = parse_meta_event(file_ptr_in);
@@ -238,20 +257,13 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   if (returned_value != 1) {
     return meta_event;
   }
-printf("type_2 0x%x\n", type_2);
-  if (type_2 == 0x2F) {
-    meta_event.name = META_TABLE[type_2].name;
-    meta_event.data = NULL;
-    g_prev_status = 0x80;
-    return meta_event;
-  }
-
+/*printf("type 2 0x%x\n", type_2);*/
   uint32_t data_len = parse_var_len(file_ptr_in);
   if (META_TABLE[type_2].data_len != 0) {
     assert(data_len == META_TABLE[type_2].data_len);
   }
   meta_event.data_len = data_len;
-printf("data len 0x%x\n", data_len);
+/*printf("data_len 0x%x\n", data_len);*/
   /* if event is not valid, name should be NULL in table */
 
   assert(META_TABLE[type_2].name);
@@ -297,8 +309,7 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     midi_event.name = MIDI_TABLE[g_prev_type].name;
     midi_event.data_len = MIDI_TABLE[g_prev_type].data_len;
   }
-printf("midi status 0x%x\n", midi_event.status);
-printf("%s, data len %u\n", midi_event.name, midi_event.data_len);
+printf("%s\n", midi_event.name);
   uint8_t data[midi_event.data_len];
   for (int i = 0; i < midi_event.data_len; i++) {
     int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
