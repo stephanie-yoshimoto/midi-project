@@ -6,12 +6,14 @@
 
 #include <assert.h>
 #include <malloc.h>
+#include <malloc_debug.h>
 #include <string.h>
 
 #define IDENTIFIER_LEN (4)
 
 uint8_t g_prev_status = 0x80;
 uint8_t g_prev_type = 0;
+bool g_sysex_flag = false;
 
 song_data_t *parse_file(const char *file_path) {
   assert(file_path);
@@ -26,7 +28,7 @@ song_data_t *parse_file(const char *file_path) {
   path = malloc(strlen(file_path) + 1);
   assert(path);
   song->path = path;
-  strcpy(path, file_path);
+  strcpy(song->path, file_path);
   parse_header(file_ptr_in, song);
 
   song->track_list = NULL;
@@ -34,26 +36,37 @@ song_data_t *parse_file(const char *file_path) {
   assert(song->track_list);
   song->track_list->next_track = NULL;
   song->track_list->track = NULL;
+  track_node_t *list = song->track_list;
+
   while (feof(file_ptr_in) == 0) {
+    g_sysex_flag = false;
     parse_track(file_ptr_in, song);
-    if (song->track_list->next_track) {
-      song->track_list = song->track_list->next_track;
-    }
-    else {
-      break;
-    }
   }
 
-  while (song->track_list->track) {
-    /*while (song->track_list->track->event_list) {
-      song->track_list->track->event_list =
-          song->track_list->track->event_list->next_event;
-    }*/
-    song->track_list = song->track_list->next_track;
-    printf("jsklngsf\n");
-  }
+  song->track_list = list;
+/*
+  while (list) {
+    if (list->track) {
+      while (list->track->event_list) {
+        uint8_t data_len = list->track->event_list->event->sys_event.data_len;
+        switch (list->track->event_list->event->type) {
+          case META_EVENT_T:
+            data_len = list->track->event_list->event->meta_event.data_len;
+            break;
+          case MIDI_EVENT_T:
+            data_len = list->track->event_list->event->midi_event.data_len;
+            break;
+        }
+        printf("data len 0x%x\n", data_len);
+        list->track->event_list = list->track->event_list->next_event;
+      }
+    }
+    list = list->next_track;
+  }*/
 
   assert(feof(file_ptr_in));
+  fclose(file_ptr_in);
+  file_ptr_in = NULL;
   return song;
 } /* parse_file() */
 
@@ -126,8 +139,17 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
     return;
   }
-printf("%s\n", chunk_type);
+/*printf("%s\n", chunk_type);*/
   assert(strcmp(chunk_type, "MTrk") == 0);
+
+  while (song->track_list) {
+    if (!song->track_list->next_track) {
+      break;
+    }
+    else {
+      song->track_list = song->track_list->next_track;
+    }
+  }
 
   uint8_t length_arr[4];
   for (int i = 3; i >= 0; i--) {
@@ -149,6 +171,7 @@ printf("%s\n", chunk_type);
   song->track_list->track = track;
   song->track_list->next_track = malloc(sizeof(track_node_t));
   assert(song->track_list->next_track);
+  song->track_list->next_track->track = NULL;
   song->track_list->next_track->next_track = NULL;
 
   long unsigned prev_size = 0;
@@ -238,6 +261,15 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
     if (returned_value != 1) {
       return sys_event;
     }
+
+    if ((type == SYS_EVENT_1) && (i == data_len - 1) &&
+        (data[i] != SYS_EVENT_2)) {
+      g_sysex_flag = true;
+    }
+    else if ((type == SYS_EVENT_2) && (i == data_len - 1) &&
+             (data[i] == SYS_EVENT_2)) {
+      g_sysex_flag = false;
+    }
   }
   sys_event.data = data;
 
@@ -309,7 +341,7 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     midi_event.name = MIDI_TABLE[g_prev_type].name;
     midi_event.data_len = MIDI_TABLE[g_prev_type].data_len;
   }
-printf("%s\n", midi_event.name);
+/*printf("%s\n", midi_event.name);*/
   uint8_t data[midi_event.data_len];
   for (int i = 0; i < midi_event.data_len; i++) {
     int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
@@ -364,7 +396,12 @@ void free_song(song_data_t *song) {
   if (song) {
     free(song->path);
     song->path = NULL;
-    free_track_node(song->track_list);
+    track_node_t *list = song->track_list;
+    while (list) {
+      track_node_t *temp = list->next_track;
+      free_track_node(list);
+      list = temp;
+    }
     song->track_list = NULL;
     free(song);
     song = NULL;
@@ -373,25 +410,28 @@ void free_song(song_data_t *song) {
 
 void free_track_node(track_node_t *track_node) {
   if (track_node) {
-    if ((!track_node->next_track) || (track_node == track_node->next_track)) {
-      free_event_node(track_node->track->event_list);
+    if (track_node->track) {
+      event_node_t *event_list = track_node->track->event_list;
+      while (event_list) {
+        event_node_t *temp = event_list->next_event;
+        free_event_node(event_list);
+        event_list = temp;
+      }
       track_node->track->event_list = NULL;
       free(track_node->track);
-      track_node->track = NULL;
-      free(track_node);
-      track_node = NULL;
     }
+    track_node->track = NULL;
+    free(track_node);
+    track_node = NULL;
   }
 } /* free_track_node() */
 
 void free_event_node(event_node_t *event_node) {
   if (event_node) {
-    if ((!event_node->next_event) || (event_node == event_node->next_event)) {
-      free(event_node->event);
-      event_node->event = NULL;
-      free(event_node);
-      event_node = NULL;
-    }
+    free(event_node->event);
+    event_node->event = NULL;
+    free(event_node);
+    event_node = NULL;
   }
 } /* free_event_node() */
 
