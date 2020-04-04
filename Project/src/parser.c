@@ -14,6 +14,10 @@ uint8_t g_prev_status = 0x80;
 uint8_t g_prev_type = 0;
 bool g_sysex_flag = false;
 
+/*
+ * Read in all data from file and return it is a song struct.
+ */
+
 song_data_t *parse_file(const char *file_path) {
   assert(file_path);
   FILE *file_ptr_in = NULL;
@@ -62,6 +66,10 @@ song_data_t *parse_file(const char *file_path) {
   file_ptr_in = NULL;
   return song;
 } /* parse_file() */
+
+/*
+ * Parse the header chunk portion of file.
+ */
 
 void parse_header(FILE *file_ptr_in, song_data_t *song) {
   char chunk_type[IDENTIFIER_LEN + 1];
@@ -123,6 +131,10 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   }
 } /* parse_header() */
 
+/*
+ * Parse a track, including event data.
+ */
+
 void parse_track(FILE *file_ptr_in, song_data_t *song) {
   char chunk_type[IDENTIFIER_LEN + 1];
   int returned_value = fread(chunk_type, sizeof(chunk_type) - 1, 1,
@@ -132,7 +144,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
     return;
   }
-/*printf("%s\n", chunk_type);*/
+
   assert(strcmp(chunk_type, "MTrk") == 0);
 
   while (song->track_list) {
@@ -189,6 +201,10 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   }
 } /* parse_track() */
 
+/*
+ * Parses each event by calling respective function.
+ */
+
 event_t *parse_event(FILE *file_ptr_in) {
   event_t *event = NULL;
   event = malloc(sizeof(event_t));
@@ -201,7 +217,7 @@ event_t *parse_event(FILE *file_ptr_in) {
 
   uint32_t delta_time = parse_var_len(file_ptr_in);
   event->delta_time = delta_time;
-/*printf("delta time 0x%x\n", delta_time);*/
+
   uint8_t type = 0;
   int returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
@@ -209,7 +225,7 @@ event_t *parse_event(FILE *file_ptr_in) {
   }
   event->type = type;
   type = event_type(event);
-/*printf("event->type 0x%x\n", event->type);*/
+
   switch (type) {
     case META_EVENT_T: {
       event->meta_event = parse_meta_event(file_ptr_in);
@@ -227,6 +243,10 @@ event_t *parse_event(FILE *file_ptr_in) {
 
   return event;
 } /* parse_event() */
+
+/*
+ * Parses SysEx event from file and reads into event SysEx struct.
+ */
 
 sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   sys_event_t sys_event = {0, NULL};
@@ -261,6 +281,10 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   return sys_event;
 } /* parse_sys_event() */
 
+/*
+ * Parses meta event from file and reads into meta event struct.
+ */
+
 meta_event_t parse_meta_event(FILE *file_ptr_in) {
   meta_event_t meta_event = {NULL, 0, NULL};
 
@@ -273,13 +297,13 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   if (returned_value != 1) {
     return meta_event;
   }
-/*printf("type 2 0x%x\n", type_2);*/
+
   uint32_t data_len = parse_var_len(file_ptr_in);
   if (META_TABLE[type_2].data_len != 0) {
     assert(data_len == META_TABLE[type_2].data_len);
   }
   meta_event.data_len = data_len;
-/*printf("data_len 0x%x\n", data_len);*/
+
   /* if event is not valid, name should be NULL in table */
 
   assert(META_TABLE[type_2].name);
@@ -309,6 +333,10 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   return meta_event;
 } /* parse_meta_event() */
 
+/*
+ * Parses Midi event from file and returns a Midi struct.
+ */
+
 midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
   midi_event_t midi_event = {NULL, 0, 0, NULL};
 
@@ -336,7 +364,7 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     midi_event.name = MIDI_TABLE[g_prev_type].name;
     midi_event.data_len = MIDI_TABLE[g_prev_type].data_len;
   }
-/*printf("%s\n", midi_event.name);*/
+
   uint8_t *data = malloc(sizeof(uint8_t) * midi_event.data_len);
   assert(data);
   for (int i = 0; i < midi_event.data_len; i++) {
@@ -349,6 +377,10 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
 
   return midi_event;
 } /* parse_midi_event() */
+
+/*
+ * Parses a variable length quantity from file.
+ */
 
 uint32_t parse_var_len(FILE *file_ptr_in) {
   uint8_t mask = 128;
@@ -376,6 +408,10 @@ uint32_t parse_var_len(FILE *file_ptr_in) {
   return parsed;
 } /* parse_var_len() */
 
+/*
+ * Determines type of event using internal data.
+ */
+
 uint8_t event_type(event_t *event) {
   switch (event->type) {
     case META_EVENT:
@@ -387,6 +423,10 @@ uint8_t event_type(event_t *event) {
       return MIDI_EVENT_T;
   }
 } /* event_type() */
+
+/*
+ * Frees a song struct.
+ */
 
 void free_song(song_data_t *song) {
   if (song) {
@@ -402,7 +442,11 @@ void free_song(song_data_t *song) {
     free(song);
     song = NULL;
   }
-}
+} /* free_song() */
+
+/*
+ * Frees a track struct, including event list.
+ */
 
 void free_track_node(track_node_t *track_node) {
   if (track_node) {
@@ -421,6 +465,10 @@ void free_track_node(track_node_t *track_node) {
     track_node = NULL;
   }
 } /* free_track_node() */
+
+/*
+ * Frees an event node depending on type of event.
+ */
 
 void free_event_node(event_node_t *event_node) {
   if (event_node) {
@@ -455,6 +503,10 @@ void free_event_node(event_node_t *event_node) {
   }
 } /* free_event_node() */
 
+/*
+ * Changes endianness of a 2 byte data type.
+ */
+
 uint16_t end_swap_16(uint8_t endian[2]) {
   uint16_t result = 0;
   result |= endian[1];
@@ -462,6 +514,10 @@ uint16_t end_swap_16(uint8_t endian[2]) {
   result |= endian[0];
   return result;
 } /* end_swap_16() */
+
+/*
+ * Changes endianness of a 4 byte data type.
+ */
 
 uint32_t end_swap_32(uint8_t endian[4]) {
   uint32_t result = 0;
@@ -471,4 +527,4 @@ uint32_t end_swap_32(uint8_t endian[4]) {
   }
   result |= endian[0];
   return result;
-} /*end_swap_32() */
+} /* end_swap_32() */
