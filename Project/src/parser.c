@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <malloc.h>
+#include <malloc_debug.h>
 #include <string.h>
 
 #define IDENTIFIER_LEN (4)
@@ -144,7 +145,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
     return;
   }
-
+/*printf("%s\n", chunk_type);*/
   assert(strcmp(chunk_type, "MTrk") == 0);
 
   while (song->track_list) {
@@ -180,6 +181,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   song->track_list->next_track->next_track = NULL;
 
   event_node_t *event_list = track->event_list;
+  event_node_t *event_list_copy = track->event_list;
   long position_diff = 0;
   for (int i = 0; i < length; i += position_diff) {
     long start_position = ftell(file_ptr_in);
@@ -188,17 +190,22 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
     if (!event_list->event) {
       break;
     }
-    else if (strcmp(event_list->event->meta_event.name, "End of Track") == 0) {
+    else if ((event_list->event->type == META_EVENT) &&
+             (strcmp(event_list->event->meta_event.name, "End of Track") ==
+             0)) {
       break;
     }
 
     event_list->next_event = malloc(sizeof(event_node_t));
     assert(event_list->next_event);
+    event_list->next_event->next_event = NULL;
     event_list = event_list->next_event;
 
     long end_position = ftell(file_ptr_in);
     position_diff = end_position - start_position;
   }
+
+  track->event_list = event_list_copy;
 } /* parse_track() */
 
 /*
@@ -217,7 +224,7 @@ event_t *parse_event(FILE *file_ptr_in) {
 
   uint32_t delta_time = parse_var_len(file_ptr_in);
   event->delta_time = delta_time;
-
+/*printf("delta time 0x%x\n", delta_time);*/
   uint8_t type = 0;
   int returned_value = fread(&type, sizeof(uint8_t), 1, file_ptr_in);
   if (returned_value != 1) {
@@ -225,7 +232,8 @@ event_t *parse_event(FILE *file_ptr_in) {
   }
   event->type = type;
   type = event_type(event);
-
+/*printf("ftell 0x%lx\n", ftell(file_ptr_in));
+printf("event->type 0x%x\n", event->type);*/
   switch (type) {
     case META_EVENT_T: {
       event->meta_event = parse_meta_event(file_ptr_in);
@@ -344,13 +352,23 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     return midi_event;
   }
 
+  if (type == 0) {
+    /* status byte is not set */
+
+    uint8_t temp_data = 0;
+    int returned_value = fread(&temp_data, sizeof(uint8_t), 1, file_ptr_in);
+    if (returned_value != 1) {
+      return midi_event;
+    }
+  }
+
   if (MIDI_TABLE[type].status != type) {
     int returned_value = fseek(file_ptr_in, -1, SEEK_CUR);
     if (returned_value != 0) {
       return midi_event;
     }
   }
-  else {
+  else if (type >= 0x80) {
     assert(MIDI_TABLE[type].name);
     midi_event.name = MIDI_TABLE[type].name;
     midi_event.data_len = MIDI_TABLE[type].data_len;
@@ -358,11 +376,20 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     g_prev_status = midi_event.status;
     g_prev_type = type;
   }
-
+/*printf("type 0x%x\n", type);*/
   if (type < 0x80) {
+    /* type is a data byte */
+
     midi_event.status = g_prev_status;
     midi_event.name = MIDI_TABLE[g_prev_type].name;
     midi_event.data_len = MIDI_TABLE[g_prev_type].data_len;
+    if (type == 0) {
+      printf("caught 0\n");
+      int returned_value = fseek(file_ptr_in, -1, SEEK_CUR);
+      if (returned_value != 0) {
+        return midi_event;
+      }
+    }
   }
 
   uint8_t *data = malloc(sizeof(uint8_t) * midi_event.data_len);
@@ -472,31 +499,33 @@ void free_track_node(track_node_t *track_node) {
 
 void free_event_node(event_node_t *event_node) {
   if (event_node) {
-    switch (event_node->event->type) {
-      case SYS_EVENT_1:
-      case SYS_EVENT_2:
-        if (event_node->event->sys_event.data_len == 0) {
+    if (event_node->event) {
+      switch (event_node->event->type) {
+        case SYS_EVENT_1:
+        case SYS_EVENT_2:
+          if (event_node->event->sys_event.data_len == 0) {
+            break;
+          }
+          free(event_node->event->sys_event.data);
+          event_node->event->sys_event.data = NULL;
           break;
-        }
-        free(event_node->event->sys_event.data);
-        event_node->event->sys_event.data = NULL;
-        break;
-      case META_EVENT:
-        if (event_node->event->meta_event.data_len == 0) {
+        case META_EVENT:
+          if (event_node->event->meta_event.data_len == 0) {
+            break;
+          }
+          free(event_node->event->meta_event.data);
+          event_node->event->meta_event.data = NULL;
           break;
-        }
-        free(event_node->event->meta_event.data);
-        event_node->event->meta_event.data = NULL;
-        break;
-      default:
-        if (event_node->event->midi_event.data_len == 0) {
+        default:
+          if (event_node->event->midi_event.data_len == 0) {
+            break;
+          }
+          free(event_node->event->midi_event.data);
+          event_node->event->midi_event.data = NULL;
           break;
-        }
-        free(event_node->event->midi_event.data);
-        event_node->event->midi_event.data = NULL;
-        break;
+      }
+      free(event_node->event);
     }
-    free(event_node->event);
     event_node->event = NULL;
     free(event_node);
     event_node = NULL;
