@@ -5,6 +5,7 @@
 #include "hw10.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <malloc.h>
 #include <string.h>
 #include <stdio.h>
@@ -40,7 +41,6 @@ void new_tab(tab_t **first_tab) {
   new_tab->next_page = NULL;
 
   int largest_tab_no = 0;
-  tab_t *initial_tab = *first_tab;
   tab_t *temp = *first_tab;
   while (temp) {
     if (temp->tab_no > largest_tab_no) {
@@ -56,8 +56,7 @@ void new_tab(tab_t **first_tab) {
   }
   new_tab->tab_no = largest_tab_no + 1;
   new_tab->prev_tab = temp;
-  if (!initial_tab) {
-    new_tab->tab_no = 1;
+  if (!*first_tab) {
     *first_tab = new_tab;
     return;
   }
@@ -67,7 +66,6 @@ void new_tab(tab_t **first_tab) {
     current_page->next_tab = new_tab;
     current_page = current_page->prev_page;
   }
-
   tab_t *following_page = temp->next_page;
   while (following_page) {
     following_page->next_tab = new_tab;
@@ -75,7 +73,6 @@ void new_tab(tab_t **first_tab) {
   }
 
   temp->next_tab = new_tab;
-  *first_tab = initial_tab;
 } /* new_tab() */
 
 /*
@@ -128,11 +125,11 @@ int close_tab(tab_t **first_tab, int tab_no) {
     if (temp->tab_no == tab_no) {
       if (temp->next_tab) {
         tab_t *current_page = temp->next_tab;
-        tab_t *following_page = temp->next_tab->next_page;
         while (current_page) {
           current_page->prev_tab = temp->prev_tab;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->next_tab->next_page;
         while (following_page) {
           following_page->prev_tab = temp->prev_tab;
           following_page = following_page->next_page;
@@ -140,11 +137,11 @@ int close_tab(tab_t **first_tab, int tab_no) {
       }
       if (temp->prev_tab) {
         tab_t *current_page = temp->prev_tab;
-        tab_t *following_page = temp->prev_tab->next_page;
         while (current_page) {
           current_page->next_tab = temp->next_tab;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->prev_tab->next_page;
         while (following_page) {
           following_page->next_tab = temp->next_tab;
           following_page = following_page->next_page;
@@ -205,11 +202,11 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
       temp->page_info->current_page = true;
       if (temp->prev_tab) {
         tab_t *current_page = temp->prev_tab;
-        tab_t *following_page = temp->prev_tab->next_page;
         while (current_page) {
           current_page->next_tab = temp;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->prev_tab->next_page;
         while (following_page) {
           following_page->next_tab = temp;
           following_page = following_page->next_page;
@@ -218,11 +215,11 @@ int page_go_prev(tab_t **first_tab, int tab_no) {
 
       if (temp->next_tab) {
         tab_t *current_page = temp->next_tab;
-        tab_t *following_page = temp->next_tab->next_page;
         while (current_page) {
           current_page->prev_tab = temp;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->next_tab->next_page;
         while (following_page) {
           following_page->prev_tab = temp;
           following_page = following_page->next_page;
@@ -269,11 +266,11 @@ int page_go_next(tab_t **first_tab, int tab_no) {
       temp->page_info->current_page = true;
       if (temp->prev_tab) {
         tab_t *current_page = temp->prev_tab;
-        tab_t *following_page = temp->prev_tab->next_page;
         while (current_page) {
           current_page->next_tab = temp;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->prev_tab->next_page;
         while (following_page) {
           following_page->next_tab = temp;
           following_page = following_page->next_page;
@@ -282,11 +279,11 @@ int page_go_next(tab_t **first_tab, int tab_no) {
 
       if (temp->next_tab) {
         tab_t *current_page = temp->next_tab;
-        tab_t *following_page = temp->next_tab->next_page;
         while (current_page) {
           current_page->prev_tab = temp;
           current_page = current_page->prev_page;
         }
+        tab_t *following_page = temp->next_tab->next_page;
         while (following_page) {
           following_page->prev_tab = temp;
           following_page = following_page->next_page;
@@ -320,7 +317,6 @@ int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
   assert((first_tab) && (page_name) && (url) && (tab_no > 0));
 
   tab_t *temp = *first_tab;
-  tab_t *head = *first_tab;
   if (!temp) {
     return NO_TAB;
   }
@@ -426,6 +422,7 @@ int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
 
   /* all pages in previous tab must point to new current page */
 
+  tab_t *head = *first_tab;
   tab_t *prev_tab = current_page->prev_tab;
   if (prev_tab) {
     tab_t *prev_tab_page = prev_tab;
@@ -462,14 +459,14 @@ int num_pages(tab_t **first_tab) {
   int num_pages = 0;
   while (*first_tab) {
     tab_t *current_page = *first_tab;
-    tab_t *current_page_next = current_page->next_page;
     while (current_page) {
       num_pages++;
       current_page = current_page->prev_page;
     }
-    while (current_page_next) {
+    current_page = (*first_tab)->next_page;
+    while (current_page) {
       num_pages++;
-      current_page_next = current_page_next->next_page;
+      current_page = current_page->next_page;
     }
 
     *first_tab = (*first_tab)->next_tab;
