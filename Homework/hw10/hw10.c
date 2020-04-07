@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define NEW_PAGE_NO (1)
+
 /*
  * malloc's a new tab with specified parameters, adds tab to end of tab list.
  */
@@ -21,7 +23,7 @@ void new_tab(tab_t **first_tab) {
   page_data = malloc(sizeof(page_data_t));
   assert(page_data);
   page_data->current_page = true;
-  page_data->page_no = 1;
+  page_data->page_no = NEW_PAGE_NO;
   page_data->page_name = NULL;
   char *name = "Purdue CS";
   page_data->page_name = malloc(strlen(name) + 1);
@@ -340,7 +342,6 @@ int open_page(tab_t **first_tab, int tab_no, char *page_name, char *url) {
   page_data = malloc(sizeof(page_data_t));
   assert(page_data);
   page_data->current_page = true;
-  page_data->page_no = 0;
   page_data->page_name = NULL;
   page_data->page_name = malloc(strlen(page_name) + 1);
   assert(page_data->page_name);
