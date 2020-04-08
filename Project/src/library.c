@@ -7,7 +7,6 @@
 #include <assert.h>
 #include <ftw.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 
 #define SUCCESS (0)
@@ -16,68 +15,80 @@
 tree_node_t *g_song_library = NULL;
 
 tree_node_t **find_parent_pointer(tree_node_t **root, const char *song_name) {
-  tree_node_t *head = *root;
   if ((!root) || (!*root)) {
     return NULL;
   }
   else if (strcmp((*root)->song_name, song_name) == 0) {
-    *root = head;
     return root;
   }
   else if (strcmp((*root)->song_name, song_name) < 0) {
-    *root = head;
     return find_parent_pointer(&((*root)->right_child), song_name);
   }
   else {
-    *root = head;
     return find_parent_pointer(&((*root)->left_child), song_name);
   }
 } /* find_parent_pointer() */
 
 int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
-  tree_node_t *head = *root;
-  if (!*root) {
+  if ((!*root) || (!root)) {
     *root = insert_node;
     return INSERT_SUCCESS;
   }
   else if (strcmp((*root)->song_name, insert_node->song_name) == 0) {
-    *root = head;
     return DUPLICATE_SONG;
   }
   else if (strcmp((*root)->song_name, insert_node->song_name) < 0) {
-    *root = head;
     return tree_insert(&((*root)->right_child), insert_node);
   }
-  else {
-    *root = head;
+  else if (strcmp((*root)->song_name, insert_node->song_name) > 0) {
     return tree_insert(&((*root)->left_child), insert_node);
   }
+  return INSERT_SUCCESS;
 } /* tree_insert() */
 
-int remove_song_from_tree(tree_node_t **root, const char *song_name) {
+int remove_song_with_root(tree_node_t **node, const char *song_name,
+                          tree_node_t **root) {
   tree_node_t **root_copy = root;
-  tree_node_t **target = find_parent_pointer(root, song_name);
-  if (!target) {
-    root = root_copy;
+  if (!*node) {
     return SONG_NOT_FOUND;
   }
-  else {
-    tree_node_t *left = (*target)->left_child;
-    tree_node_t *right = (*target)->right_child;
-    free_node(*target);
-    tree_insert(root_copy, left);
-    tree_insert(root_copy, right);
-    root = root_copy;
-    return DELETE_SUCCESS;
+  else if (strcmp((*node)->song_name, song_name) > 0) {
+    return remove_song_with_root(&(*node)->left_child, song_name, root);
   }
+  else if (strcmp((*node)->song_name, song_name) < 0) {
+    return remove_song_with_root(&(*node)->right_child, song_name, root);
+  }
+  else {
+    if (!(*node)->left_child) {
+      tree_node_t *temp = *node;
+      *node = (*node)->right_child;
+      free_node(temp);
+      return DELETE_SUCCESS;
+    }
+    else if (!(*node)->right_child) {
+      tree_node_t *temp = *node;
+      *node = (*node)->left_child;
+      free_node(temp);
+      return DELETE_SUCCESS;
+    }
+    else {
+      tree_node_t *right = (*node)->right_child;
+      tree_node_t *left = (*node)->left_child;
+      free_node(*node);
+      *node = NULL;
+      tree_insert(root_copy, right);
+      tree_insert(root_copy, left);
+      return DELETE_SUCCESS;
+    }
+  }
+  return DELETE_SUCCESS;
+} /* remove_song_with_root() */
+
+int remove_song_from_tree(tree_node_t **root, const char *song_name) {
+  return remove_song_with_root(root, song_name, root);
 } /* remove_song_from_tree() */
 
 void free_node(tree_node_t *node) {
-  if (node->song_name) {
-    free(node->song_name);
-    node->song_name = NULL;
-  }
-
   free_song(node->song);
   node->song = NULL;
   free(node);
@@ -144,6 +155,10 @@ void write_song_list(FILE *fp, tree_node_t *root) {
 } /* write_song_list() */
 
 int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
+  if (flag == FTW_D) {
+    return SUCCESS;
+  }
+
   song_data_t *song = parse_file(file_path);
   if (song) {
     tree_node_t *new_node = malloc(sizeof(tree_node_t));
@@ -165,16 +180,12 @@ int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
       }
     }
     char *song_name = &copy_file_name[temp_index + 1];
-    new_node->song_name = malloc(strlen(song_name) + 1);
-    assert(new_node->song_name);
-    strcpy(new_node->song_name, song_name);
+    new_node->song_name = song_name;
     new_node->song = song;
     new_node->left_child = NULL;
     new_node->right_child = NULL;
     int insert_result = tree_insert(&g_song_library, new_node);
-    if (insert_result == DUPLICATE_SONG) {
-      assert(false);
-    }
+    assert(insert_result != DUPLICATE_SONG);
     return SUCCESS;
   }
   else {
@@ -183,6 +194,5 @@ int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
 }
 
 void make_library(const char *directory) {
-  ftw(directory, analyze_file, 0);
-  /*analyze_file(directory, NULL, 0);*/
+  ftw(directory, analyze_file, 15);
 }
