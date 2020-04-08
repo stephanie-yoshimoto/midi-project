@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 
 #define IDENTIFIER_LEN (4)
@@ -82,35 +81,37 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   assert(strcmp(chunk_type, "MThd") == 0);
 
   uint8_t length_arr[4];
-  for (int i = 3; i >= 0; i--) {
+  for (int i = 0; i < 4; i++) {
     returned_value = fread(&length_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
+  uint8_t length = end_swap_32(length_arr);
+  assert(length == 6);
 
   uint8_t format_arr[2];
-  for (int i = 1; i >= 0; i--) {
+  for (int i = 0; i < 2; i++) {
     returned_value = fread(&format_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
   uint16_t format = end_swap_16(format_arr);
-  uint8_t cast_format = (uint8_t) format;
-  assert((cast_format == 0) || (cast_format == 1) || (cast_format == 2));
+  assert((format == 0) || (format == 1) || (format == 2));
 
   uint8_t tracks_arr[2];
-  for (int i = 1; i >= 0; i--) {
+  for (int i = 0; i < 2; i++) {
     returned_value = fread(&tracks_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
   uint16_t num_tracks = end_swap_16(tracks_arr);
+  assert(num_tracks < 0x8000);
 
   uint8_t division_arr[2];
-  for (int i = 1; i >= 0; i--) {
+  for (int i = 0; i < 2; i++) {
     returned_value = fread(&division_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
@@ -119,7 +120,7 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   uint16_t division = end_swap_16(division_arr);
 
   assert((sizeof(format) + sizeof(num_tracks) + sizeof(division)) == 6);
-  song->format = cast_format;
+  song->format = (uint8_t) format;
   song->num_tracks = num_tracks;
   if ((division & 0x8000) == 0) {
     song->division.uses_tpq = true;
@@ -158,7 +159,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
   }
 
   uint8_t length_arr[4];
-  for (int i = 3; i >= 0; i--) {
+  for (int i = 0; i < 4; i++) {
     returned_value = fread(&length_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
@@ -352,15 +353,13 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     return midi_event;
   }
 
-  if (type == 0) {
-    /* status byte is not set */
-
+  /*if (type == 0) {
     uint8_t temp_data = 0;
     int returned_value = fread(&temp_data, sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return midi_event;
     }
-  }
+  }*/
 
   if (MIDI_TABLE[type].status != type) {
     int returned_value = fseek(file_ptr_in, -1, SEEK_CUR);
@@ -383,25 +382,35 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     midi_event.status = g_prev_status;
     midi_event.name = MIDI_TABLE[g_prev_type].name;
     midi_event.data_len = MIDI_TABLE[g_prev_type].data_len;
-    if (type == 0) {
-      printf("caught 0\n");
-      int returned_value = fseek(file_ptr_in, -1, SEEK_CUR);
+    /*if (type == 0) {
+      /printf("caught 0\n");
+      int returned_value = fseek(file_ptr_in, 1, SEEK_CUR);
       if (returned_value != 0) {
         return midi_event;
       }
-    }
+      midi_event.data_len++;
+    }*/
   }
 
   uint8_t *data = malloc(sizeof(uint8_t) * midi_event.data_len);
   assert(data);
   for (int i = 0; i < midi_event.data_len; i++) {
-    int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
+    uint8_t temp = 0;
+    int returned_value = fread(&temp, sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return midi_event;
     }
+    data[i] = temp;
+    /*if ((type == 0) && (i == midi_event.data_len - 2)) {
+      data[i + 1] = 0x4;
+      break;
+    }*/
   }
   midi_event.data = data;
-
+/*printf("\nstatus 0x%x\n", midi_event.status);
+for (int i = 0; i < midi_event.data_len; i++) {
+  printf("data[%d] 0x%x ", i, midi_event.data[i]);
+}*/
   return midi_event;
 } /* parse_midi_event() */
 
@@ -538,9 +547,9 @@ void free_event_node(event_node_t *event_node) {
 
 uint16_t end_swap_16(uint8_t endian[2]) {
   uint16_t result = 0;
-  result |= endian[1];
-  result <<= 8;
   result |= endian[0];
+  result <<= 8;
+  result |= endian[1];
   return result;
 } /* end_swap_16() */
 
@@ -549,11 +558,13 @@ uint16_t end_swap_16(uint8_t endian[2]) {
  */
 
 uint32_t end_swap_32(uint8_t endian[4]) {
+  uint8_t first_half[2] = {endian[0], endian[1]};
+  uint16_t first_digit = end_swap_16(first_half);
+  uint8_t second_half[2] = {endian[2], endian[3]};
+  uint16_t second_digit = end_swap_16(second_half);
   uint32_t result = 0;
-  for (int i = 3; i > 0; i--) {
-    result |= endian[i];
-    result <<= 8;
-  }
-  result |= endian[0];
+  result |= first_digit;
+  result <<= 16;
+  result |= second_digit;
   return result;
 } /* end_swap_32() */
