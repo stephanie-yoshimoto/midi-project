@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 
 /*
  * Creates and returns new tree node with given hash value.
@@ -97,6 +96,10 @@ void delete_tree(tree_node_t *root_node) {
   }
 } /* delete_tree() */
 
+/*
+ * Creates a hash list of binary tree in preorder traversal.
+ */
+
 hash_list_t *get_hash_list_prefix(tree_node_t *root_node) {
   assert(root_node);
 
@@ -127,6 +130,10 @@ hash_list_t *get_hash_list_prefix(tree_node_t *root_node) {
   }
   return new_hash_list;
 } /* get_hash_list_prefix() */
+
+/*
+ * Creates a hash list of binary tree in postorder traversal.
+ */
 
 hash_list_t *get_hash_list_postfix(tree_node_t *root_node) {
   assert(root_node);
@@ -169,37 +176,117 @@ hash_list_t *get_hash_list_postfix(tree_node_t *root_node) {
       left->next_hash_ptr = new_hash_list;
     }
   }
+  else if (right) {
+    while (right->next_hash_ptr) {
+      right = right->next_hash_ptr;
+    }
+    right->next_hash_ptr = new_hash_list;
+  }
   else {
-    head_hash_list->next_hash_ptr = new_hash_list;
+    head_hash_list = new_hash_list;
   }
   return head_hash_list;
 } /* get_hash_list_postfix() */
 
+/*
+ * Creates a hash list of binary tree in forward traversal.
+ */
+
 hash_list_t *get_hash_list_forward(tree_node_t *root_node) {
   assert(root_node);
 
-  /*get_hash_list_forward(root_node->left_child_ptr);*/
+  hash_list_t *left = NULL;
+  if (root_node->left_child_ptr) {
+    left = get_hash_list_forward(root_node->left_child_ptr);
+  }
+
+  hash_list_t *head = left;
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  /*get_hash_list_forward(root_node->right_child_ptr);*/
-  return new_hash_list;
+  if (!left) {
+    head = new_hash_list;
+  }
+  else {
+    while (left->next_hash_ptr) {
+      left = left->next_hash_ptr;
+    }
+    left->next_hash_ptr = new_hash_list;
+  }
+
+  hash_list_t *right = NULL;
+  if (root_node->right_child_ptr) {
+    right = get_hash_list_forward(root_node->right_child_ptr);
+  }
+
+  if (!left) {
+    head->next_hash_ptr = right;
+  }
+  else {
+    if (new_hash_list) {
+      new_hash_list->next_hash_ptr = right;
+    }
+    else {
+      left->next_hash_ptr = right;
+    }
+  }
+
+  return head;
 } /* get_hash_list_forward() */
+
+/*
+ * Creates a hash list of binary tree in reverse traversal.
+ */
 
 hash_list_t *get_hash_list_reverse(tree_node_t *root_node) {
   assert(root_node);
 
-  /*get_hash_list_reverse(root_node->right_child_ptr);*/
+  hash_list_t *right = NULL;
+  if (root_node->right_child_ptr) {
+    right = get_hash_list_reverse(root_node->right_child_ptr);
+  }
+
+  hash_list_t *head = right;
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  /*get_hash_list_reverse(root_node->left_child_ptr);*/
-  return new_hash_list;
+  if (!right) {
+    head = new_hash_list;
+  }
+  else {
+    while (right->next_hash_ptr) {
+      right = right->next_hash_ptr;
+    }
+    right->next_hash_ptr = new_hash_list;
+  }
+
+  hash_list_t *left = NULL;
+  if (root_node->left_child_ptr) {
+    left = get_hash_list_reverse(root_node->left_child_ptr);
+  }
+
+  if (!right) {
+    head->next_hash_ptr = left;
+  }
+  else {
+    if (new_hash_list) {
+      new_hash_list->next_hash_ptr = left;
+    }
+    else {
+      right->next_hash_ptr = left;
+    }
+  }
+
+  return head;
 } /* get_hash_list_reverse() */
+
+/*
+ * Frees all nodes and their data in linked list hash list.
+ */
 
 void delete_hash_list(hash_list_t *del_hash_list) {
   if (del_hash_list) {
