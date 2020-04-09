@@ -264,12 +264,15 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   uint32_t data_len = parse_var_len(file_ptr_in);
   sys_event.data_len = data_len;
 
-  uint8_t *data = malloc(sizeof(uint8_t) * data_len);
-  assert(data);
-  for (int i = 0; i < data_len; i++) {
-    int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
-    if (returned_value != 1) {
-      return sys_event;
+  uint8_t *data = NULL;
+  if (sys_event.data_len != 0) {
+    data = malloc(sizeof(uint8_t) * data_len);
+    assert(data);
+    for (int i = 0; i < data_len; i++) {
+      int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
+      if (returned_value != 1) {
+        return sys_event;
+      }
     }
   }
   sys_event.data = data;
@@ -310,12 +313,6 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   if (meta_event.data_len != 0) {
     data = malloc(sizeof(uint8_t) * meta_event.data_len);
     assert(data);
-  }
-  else {
-    uint8_t data[meta_event.data_len];
-    meta_event.data = data;
-    g_prev_type = 0x80;
-    return meta_event;
   }
 
   for (int i = 0; i < data_len; i++) {
@@ -367,19 +364,12 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     data = malloc(sizeof(uint8_t) * midi_event.data_len);
     assert(data);
     for (int i = 0; i < midi_event.data_len; i++) {
-      uint8_t temp = 0;
-      int returned_value = fread(&temp, sizeof(uint8_t), 1, file_ptr_in);
+      int returned_value = fread(&data[i], sizeof(uint8_t), 1, file_ptr_in);
       if (returned_value != 1) {
         return midi_event;
       }
-      data[i] = temp;
     }
   }
-  else {
-    uint8_t data[midi_event.data_len];
-    midi_event.data = data;
-  }
-
   midi_event.data = data;
 
   return midi_event;
