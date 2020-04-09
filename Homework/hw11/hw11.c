@@ -68,15 +68,17 @@ tree_node_t *search_node(tree_node_t *root_node, int hash_value) {
     return root_node;
   }
   else {
-    tree_node_t *found = search_node(root_node->left_child_ptr, hash_value);
-    if (!found) {
-      found = search_node(root_node->right_child_ptr, hash_value);
+    tree_node_t *found_left = search_node(root_node->left_child_ptr,
+                                          hash_value);
+    tree_node_t *found_right = search_node(root_node->right_child_ptr,
+                                           hash_value);
+    if (found_left) {
+      return found_left;
     }
     else {
-      return found;
+      return found_right;
     }
   }
-  return NULL;
 } /* search_node() */
 
 /*
@@ -103,57 +105,107 @@ hash_list_t *get_hash_list_prefix(tree_node_t *root_node) {
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  hash_list_t *hash_list_copy = new_hash_list;
-  printf("here\n");
-  get_hash_list_prefix(root_node->left_child_ptr);
-  get_hash_list_prefix(root_node->right_child_ptr);
-  return hash_list_copy;
+
+  hash_list_t *left = NULL;
+  if (root_node->left_child_ptr) {
+    left = get_hash_list_prefix(root_node->left_child_ptr);
+  }
+  hash_list_t *right = NULL;
+  if (root_node->right_child_ptr) {
+    right = get_hash_list_prefix(root_node->right_child_ptr);
+  }
+
+  new_hash_list->next_hash_ptr = left;
+  if (left) {
+    while (left->next_hash_ptr) {
+      left = left->next_hash_ptr;
+    }
+    left->next_hash_ptr = right;
+  }
+  else {
+    new_hash_list->next_hash_ptr = right;
+  }
+  return new_hash_list;
 } /* get_hash_list_prefix() */
 
 hash_list_t *get_hash_list_postfix(tree_node_t *root_node) {
   assert(root_node);
 
-  get_hash_list_postfix(root_node->left_child_ptr);
-  get_hash_list_postfix(root_node->right_child_ptr);
+  hash_list_t *left = NULL;
+  if (root_node->left_child_ptr) {
+    left = get_hash_list_postfix(root_node->left_child_ptr);
+  }
+  hash_list_t *right = NULL;
+  if (root_node->right_child_ptr) {
+    right = get_hash_list_postfix(root_node->right_child_ptr);
+  }
+
+  hash_list_t *head_hash_list = NULL;
+  if (left) {
+    head_hash_list = left;
+    while (left->next_hash_ptr) {
+      left = left->next_hash_ptr;
+    }
+    left->next_hash_ptr = right;
+  }
+  else {
+    head_hash_list = right;
+  }
+
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  return new_hash_list;
+
+  if (left) {
+    if (left->next_hash_ptr) {
+      while (left->next_hash_ptr) {
+        left = left->next_hash_ptr;
+      }
+      left->next_hash_ptr = new_hash_list;
+    }
+    else {
+      left->next_hash_ptr = new_hash_list;
+    }
+  }
+  else {
+    head_hash_list->next_hash_ptr = new_hash_list;
+  }
+  return head_hash_list;
 } /* get_hash_list_postfix() */
 
 hash_list_t *get_hash_list_forward(tree_node_t *root_node) {
   assert(root_node);
 
-  get_hash_list_forward(root_node->left_child_ptr);
+  /*get_hash_list_forward(root_node->left_child_ptr);*/
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  get_hash_list_forward(root_node->right_child_ptr);
+  /*get_hash_list_forward(root_node->right_child_ptr);*/
   return new_hash_list;
 } /* get_hash_list_forward() */
 
 hash_list_t *get_hash_list_reverse(tree_node_t *root_node) {
   assert(root_node);
 
-  get_hash_list_forward(root_node->right_child_ptr);
+  /*get_hash_list_reverse(root_node->right_child_ptr);*/
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
-  get_hash_list_forward(root_node->left_child_ptr);
+  /*get_hash_list_reverse(root_node->left_child_ptr);*/
   return new_hash_list;
 } /* get_hash_list_reverse() */
 
-void delete_hash_list(hash_list_t *hash_list) {
-  if (hash_list) {
-    hash_list_t *temp_list = hash_list->next_hash_ptr;
-    free(hash_list);
-    hash_list = NULL;
+void delete_hash_list(hash_list_t *del_hash_list) {
+  if (del_hash_list) {
+    hash_list_t *temp_list = del_hash_list->next_hash_ptr;
+    free(del_hash_list);
+    del_hash_list = NULL;
     delete_hash_list(temp_list);
   }
 } /* delete_hash_list() */
