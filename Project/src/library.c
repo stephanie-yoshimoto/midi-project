@@ -30,7 +30,7 @@ tree_node_t **find_parent_pointer(tree_node_t **root, const char *song_name) {
 } /* find_parent_pointer() */
 
 int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
-  if ((!*root) || (!root)) {
+  if (!*root) {
     *root = insert_node;
     return INSERT_SUCCESS;
   }
@@ -163,7 +163,6 @@ int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
   if (song) {
     tree_node_t *new_node = malloc(sizeof(tree_node_t));
     assert(new_node);
-
     char copy_file_name[strlen(file_path) + 1];
     strcpy(copy_file_name, file_path);
     int last_char = strlen(copy_file_name) - 1;
@@ -179,9 +178,8 @@ int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
         temp_index = i;
       }
     }
-    char *song_name = &copy_file_name[temp_index + 1];
-    new_node->song_name = song_name;
     new_node->song = song;
+    new_node->song_name = new_node->song->path + temp_index + 1;
     new_node->left_child = NULL;
     new_node->right_child = NULL;
     int insert_result = tree_insert(&g_song_library, new_node);
@@ -191,8 +189,8 @@ int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
   else {
     return WRITE_FAIL;
   }
-}
+} /* analyze_file() */
 
 void make_library(const char *directory) {
   ftw(directory, analyze_file, 15);
-}
+} /* make_library() */
