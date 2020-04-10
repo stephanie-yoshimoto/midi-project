@@ -7,6 +7,9 @@
 #include <assert.h>
 #include <malloc.h>
 
+#define CHILD_LEFT (0)
+#define CHILD_RIGHT (1)
+
 /*
  * Creates and returns new tree node with given hash value.
  */
@@ -31,25 +34,21 @@ tree_node_t *create_node(int hash_value) {
 
 void insert_node(tree_node_t **parent_node, tree_node_t *new_node,
                  int child_type) {
-  assert((parent_node) && (new_node) && ((child_type == 0) ||
-         (child_type == 1)));
+  assert((parent_node) && (new_node) && ((child_type == CHILD_LEFT) ||
+         (child_type == CHILD_RIGHT)));
 
   if (!(*parent_node)) {
     *parent_node = new_node;
   }
-  else if (child_type == 0) {
+  else if (child_type == CHILD_LEFT) {
     tree_node_t *left_branch = (*parent_node)->left_child_ptr;
     (*parent_node)->left_child_ptr = new_node;
-    if (left_branch) {
-      delete_tree(left_branch);
-    }
+    delete_tree(left_branch);
   }
-  else if (child_type == 1) {
+  else if (child_type == CHILD_RIGHT) {
     tree_node_t *right_branch = (*parent_node)->right_child_ptr;
     (*parent_node)->right_child_ptr = new_node;
-    if (right_branch) {
-      delete_tree(right_branch);
-    }
+    delete_tree(right_branch);
   }
 } /* insert_node() */
 
@@ -200,12 +199,13 @@ hash_list_t *get_hash_list_forward(tree_node_t *root_node) {
     left = get_hash_list_forward(root_node->left_child_ptr);
   }
 
-  hash_list_t *head = left;
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
+
+  hash_list_t *head = left;
   if (!left) {
     head = new_hash_list;
   }
@@ -248,12 +248,13 @@ hash_list_t *get_hash_list_reverse(tree_node_t *root_node) {
     right = get_hash_list_reverse(root_node->right_child_ptr);
   }
 
-  hash_list_t *head = right;
   hash_list_t *new_hash_list = NULL;
   new_hash_list = malloc(sizeof(hash_list_t));
   assert(new_hash_list);
   new_hash_list->hash_value = root_node->hash_value;
   new_hash_list->next_hash_ptr = NULL;
+
+  hash_list_t *head = right;
   if (!right) {
     head = new_hash_list;
   }
@@ -288,11 +289,11 @@ hash_list_t *get_hash_list_reverse(tree_node_t *root_node) {
  * Frees all nodes and their data in linked list hash list.
  */
 
-void delete_hash_list(hash_list_t *del_hash_list) {
-  if (del_hash_list) {
-    hash_list_t *temp_list = del_hash_list->next_hash_ptr;
-    free(del_hash_list);
-    del_hash_list = NULL;
-    delete_hash_list(temp_list);
+void delete_hash_list(hash_list_t *list) {
+  while (list) {
+    hash_list_t *temp_list = list->next_hash_ptr;
+    free(list);
+    list = NULL;
+    list = temp_list;
   }
 } /* delete_hash_list() */
