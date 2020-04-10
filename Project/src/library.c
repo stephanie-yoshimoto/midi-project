@@ -57,53 +57,34 @@ int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
 } /* tree_insert() */
 
 /*
- * Removes song from tree, using root node as reference.
- */
-
-int remove_song_with_root(tree_node_t **node, const char *song_name,
-                          tree_node_t **root) {
-  tree_node_t **root_copy = root;
-  if (!*node) {
-    return SONG_NOT_FOUND;
-  }
-  else if (strcmp((*node)->song_name, song_name) > 0) {
-    return remove_song_with_root(&(*node)->left_child, song_name, root);
-  }
-  else if (strcmp((*node)->song_name, song_name) < 0) {
-    return remove_song_with_root(&(*node)->right_child, song_name, root);
-  }
-  else {
-    if (!(*node)->left_child) {
-      tree_node_t *temp = *node;
-      *node = (*node)->right_child;
-      free_node(temp);
-      return DELETE_SUCCESS;
-    }
-    else if (!(*node)->right_child) {
-      tree_node_t *temp = *node;
-      *node = (*node)->left_child;
-      free_node(temp);
-      return DELETE_SUCCESS;
-    }
-    else {
-      tree_node_t *right = (*node)->right_child;
-      tree_node_t *left = (*node)->left_child;
-      free_node(*node);
-      *node = NULL;
-      tree_insert(root_copy, right);
-      tree_insert(root_copy, left);
-      return DELETE_SUCCESS;
-    }
-  }
-  return DELETE_SUCCESS;
-} /* remove_song_with_root() */
-
-/*
  * Removes song with corresponding song name from tree.
  */
 
 int remove_song_from_tree(tree_node_t **root, const char *song_name) {
-  return remove_song_with_root(root, song_name, root);
+  tree_node_t **root_copy = root;
+  tree_node_t **found_node = find_parent_pointer(root, song_name);
+  if ((!found_node) || (!*found_node)) {
+    return SONG_NOT_FOUND;
+  }
+
+  if (!(*found_node)->left_child) {
+    tree_node_t *temp = *found_node;
+    *found_node = (*found_node)->right_child;
+    free_node(temp);
+  }
+  else if (!(*found_node)->right_child) {
+    tree_node_t *temp = *found_node;
+    *found_node = (*found_node)->left_child;
+    free_node(temp);
+  }
+  else {
+    tree_node_t *right = (*found_node)->right_child;
+    tree_node_t *left = (*found_node)->left_child;
+    free_node(*found_node);
+    tree_insert(root_copy, right);
+    tree_insert(root_copy, left);
+  }
+  return DELETE_SUCCESS;
 } /* remove_song_from_tree() */
 
 /*
