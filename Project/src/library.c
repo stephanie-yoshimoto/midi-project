@@ -11,8 +11,14 @@
 
 #define SUCCESS (0)
 #define WRITE_FAIL (-1)
+#define NUM_DIRS (20)
 
 tree_node_t *g_song_library = NULL;
+
+/*
+ * Finds and returns pointer to node with corresponding song name if node
+ * exists in tree.
+ */
 
 tree_node_t **find_parent_pointer(tree_node_t **root, const char *song_name) {
   if ((!root) || (!*root)) {
@@ -28,6 +34,10 @@ tree_node_t **find_parent_pointer(tree_node_t **root, const char *song_name) {
     return find_parent_pointer(&((*root)->left_child), song_name);
   }
 } /* find_parent_pointer() */
+
+/*
+ * Inserts node into tree at sorted position, given root of tree.
+ */
 
 int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
   if (!*root) {
@@ -45,6 +55,10 @@ int tree_insert(tree_node_t **root, tree_node_t *insert_node) {
   }
   return INSERT_SUCCESS;
 } /* tree_insert() */
+
+/*
+ * Removes song from tree, using root node as reference.
+ */
 
 int remove_song_with_root(tree_node_t **node, const char *song_name,
                           tree_node_t **root) {
@@ -84,9 +98,17 @@ int remove_song_with_root(tree_node_t **node, const char *song_name,
   return DELETE_SUCCESS;
 } /* remove_song_with_root() */
 
+/*
+ * Removes song with corresponding song name from tree.
+ */
+
 int remove_song_from_tree(tree_node_t **root, const char *song_name) {
   return remove_song_with_root(root, song_name, root);
 } /* remove_song_from_tree() */
+
+/*
+ * Frees all data attached to tree node.
+ */
 
 void free_node(tree_node_t *node) {
   free_song(node->song);
@@ -95,14 +117,17 @@ void free_node(tree_node_t *node) {
   node = NULL;
 } /* free_node() */
 
+/*
+ * Prints song name of node to file.
+ */
+
 void print_node(tree_node_t *node, FILE *file_ptr_out) {
   fprintf(file_ptr_out, "%s\n", node->song_name);
 } /* print_node() */
 
-void print_node_no_file(tree_node_t *node, void *ptr) {
-  FILE *file_ptr_out = (FILE *)(ptr);
-  print_node(node, file_ptr_out);
-} /* print_node_no_file() */
+/*
+ * Traverses tree in preorder, performing operation on each node.
+ */
 
 void traverse_pre_order(tree_node_t *root, void *data,
                         traversal_func_t visit) {
@@ -116,6 +141,10 @@ void traverse_pre_order(tree_node_t *root, void *data,
   }
 } /* traverse_pre_order() */
 
+/*
+ * Traverses tree in inorder, performing operation on each node.
+ */
+
 void traverse_in_order(tree_node_t *root, void *data, traversal_func_t visit) {
   if (!root) {
     return;
@@ -127,8 +156,12 @@ void traverse_in_order(tree_node_t *root, void *data, traversal_func_t visit) {
   }
 } /* traverse_in_order() */
 
+/*
+ * Traverses tree in postorder, performing operation on each node.
+ */
+
 void traverse_post_order(tree_node_t *root, void *data,
-                       traversal_func_t visit) {
+                         traversal_func_t visit) {
   if (!root) {
     return;
   }
@@ -138,6 +171,10 @@ void traverse_post_order(tree_node_t *root, void *data,
     (*visit)(root, data);
   }
 } /* traverse_post_order() */
+
+/*
+ * Frees all tree nodes in library.
+ */
 
 void free_library(tree_node_t *root) {
   if (!root) {
@@ -150,47 +187,53 @@ void free_library(tree_node_t *root) {
   }
 } /* free_library() */
 
+/*
+ * Prints the names of all songs in tree to output in sorted order.
+ */
+
 void write_song_list(FILE *fp, tree_node_t *root) {
-  traverse_in_order(root, fp, print_node_no_file);
+  traverse_in_order(root, fp, (traversal_func_t) print_node);
 } /* write_song_list() */
 
+/*
+ * Used by ftw function to check if each file is a MIDI file and if it is a
+ * duplicate file.
+ */
+
 int analyze_file(const char *file_path, const struct stat *stat_ptr, int flag) {
-  if (flag == FTW_D) {
-    return SUCCESS;
-  }
+  if (flag == FTW_F) {
+    int last_char = strlen(file_path) - 1;
+    if ((file_path[last_char] == 'd') &&
+        (file_path[last_char - 1] == 'i') &&
+        (file_path[last_char - 2] == 'm') &&
+        (file_path[last_char - 3] == '.')) {
+      song_data_t *song = parse_file(file_path);
+      if (song) {
+        tree_node_t *new_node = malloc(sizeof(tree_node_t));
+        assert(new_node);
 
-  song_data_t *song = parse_file(file_path);
-  if (song) {
-    tree_node_t *new_node = malloc(sizeof(tree_node_t));
-    assert(new_node);
-    char copy_file_name[strlen(file_path) + 1];
-    strcpy(copy_file_name, file_path);
-    int last_char = strlen(copy_file_name) - 1;
-    if ((copy_file_name[last_char] != 'd') || (copy_file_name[last_char - 1] !=
-        'i') || (copy_file_name[last_char - 2] != 'm') ||
-        (copy_file_name[last_char - 3] != '.')) {
-      return WRITE_FAIL;
-    }
-
-    int temp_index = 0;
-    for (int i = 0; copy_file_name[i] != '\0'; i++) {
-      if (copy_file_name[i] == '/') {
-        temp_index = i;
+        int index = 0;
+        for (int i = 0; file_path[i] != '\0'; i++) {
+          if (file_path[i] == '/') {
+            index = i;
+          }
+        }
+        new_node->song = song;
+        new_node->song_name = new_node->song->path + index + 1;
+        new_node->left_child = NULL;
+        new_node->right_child = NULL;
+        assert(tree_insert(&g_song_library, new_node) != DUPLICATE_SONG);
       }
     }
-    new_node->song = song;
-    new_node->song_name = new_node->song->path + temp_index + 1;
-    new_node->left_child = NULL;
-    new_node->right_child = NULL;
-    int insert_result = tree_insert(&g_song_library, new_node);
-    assert(insert_result != DUPLICATE_SONG);
-    return SUCCESS;
   }
-  else {
-    return WRITE_FAIL;
-  }
+  return SUCCESS;
 } /* analyze_file() */
 
+/*
+ * Searches through directory structure and adds every MIDI file to
+ * g_song_library.
+ */
+
 void make_library(const char *directory) {
-  ftw(directory, analyze_file, 15);
+  ftw(directory, analyze_file, NUM_DIRS);
 } /* make_library() */
