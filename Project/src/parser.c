@@ -6,12 +6,22 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 
 #define IDENTIFIER_LEN (4)
+#define UINT16_ARR (2)
+#define UINT32_ARR (4)
+#define BYTE (8)
+#define LENGTH (6)
+#define BOUND (32768)
+#define FORMAT_0 (0)
+#define FORMAT_1 (1)
+#define FORMAT_2 (2)
+#define DEFAULT_VAL (0)
+#define VAR_LEN_SHIFT (7)
+#define END_OF_TRACK "End of Track"
 
-uint8_t g_prev_type = 0;
+uint8_t g_prev_type = DEFAULT_VAL;
 
 /*
  * Read in all data from file and return it is a song struct.
@@ -40,7 +50,7 @@ song_data_t *parse_file(const char *file_path) {
   song->track_list->track = NULL;
   track_node_t *list = song->track_list;
 
-  while (feof(file_ptr_in) == 0) {
+  for (int i = 0; i <= song->num_tracks; i++) {
     parse_track(file_ptr_in, song);
   }
 
@@ -76,40 +86,43 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   if (returned_value != 1) {
     return;
   }
-  assert(strcmp(chunk_type, "MThd") == 0);
+  assert(chunk_type[0] == 'M');
+  assert(chunk_type[1] == 'T');
+  assert(chunk_type[2] == 'h');
+  assert(chunk_type[3] == 'd');
 
-  uint8_t length_arr[4];
-  for (int i = 0; i < 4; i++) {
+  uint8_t length_arr[UINT32_ARR];
+  for (int i = 0; i < UINT32_ARR; i++) {
     returned_value = fread(&length_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
   uint8_t length = end_swap_32(length_arr);
-  assert(length == 6);
+  assert(length == LENGTH);
 
-  uint8_t format_arr[2];
-  for (int i = 0; i < 2; i++) {
+  uint8_t format_arr[UINT16_ARR];
+  for (int i = 0; i < UINT16_ARR; i++) {
     returned_value = fread(&format_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
   uint16_t format = end_swap_16(format_arr);
-  assert((format == 0) || (format == 1) || (format == 2));
+  assert((format == FORMAT_0) || (format == FORMAT_1) || (format == FORMAT_2));
 
-  uint8_t tracks_arr[2];
-  for (int i = 0; i < 2; i++) {
+  uint8_t tracks_arr[UINT16_ARR];
+  for (int i = 0; i < UINT16_ARR; i++) {
     returned_value = fread(&tracks_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
     }
   }
   uint16_t num_tracks = end_swap_16(tracks_arr);
-  assert(num_tracks < 0x8000);
+  assert(num_tracks < BOUND);
 
-  uint8_t division_arr[2];
-  for (int i = 0; i < 2; i++) {
+  uint8_t division_arr[UINT16_ARR];
+  for (int i = 0; i < UINT16_ARR; i++) {
     returned_value = fread(&division_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
@@ -117,16 +130,15 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   }
   uint16_t division = end_swap_16(division_arr);
 
-  assert((sizeof(format) + sizeof(num_tracks) + sizeof(division)) == 6);
   song->format = (uint8_t) format;
   song->num_tracks = num_tracks;
-  if ((division & 0x8000) == 0) {
+  if ((division & BOUND) == 0) {
     song->division.uses_tpq = true;
     song->division.ticks_per_qtr = division;
   }
   else {
     song->division.uses_tpq = false;
-    song->division.ticks_per_frame = (division >> 8);
+    song->division.ticks_per_frame = (division >> BYTE);
     song->division.frames_per_sec = ((uint8_t) division);
   }
 } /* parse_header() */
@@ -144,7 +156,6 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
     return;
   }
-
   assert(strcmp(chunk_type, "MTrk") == 0);
 
   while (song->track_list) {
@@ -156,8 +167,8 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
     }
   }
 
-  uint8_t length_arr[4];
-  for (int i = 0; i < 4; i++) {
+  uint8_t length_arr[UINT32_ARR];
+  for (int i = 0; i < UINT32_ARR; i++) {
     returned_value = fread(&length_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     if (returned_value != 1) {
       return;
@@ -190,7 +201,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
       break;
     }
     else if ((event_list->event->type == META_EVENT) &&
-             (strcmp(event_list->event->meta_event.name, "End of Track") ==
+             (strcmp(event_list->event->meta_event.name, END_OF_TRACK) ==
              0)) {
       break;
     }
@@ -277,7 +288,7 @@ sys_event_t parse_sys_event(FILE *file_ptr_in, uint8_t type) {
   }
   sys_event.data = data;
 
-  g_prev_type = 0x80;
+  g_prev_type = DEFAULT_VAL;
   return sys_event;
 } /* parse_sys_event() */
 
@@ -323,7 +334,7 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
   }
   meta_event.data = data;
 
-  g_prev_type = 0x80;
+  g_prev_type = DEFAULT_VAL;
   return meta_event;
 } /* parse_meta_event() */
 
@@ -392,13 +403,13 @@ uint32_t parse_var_len(FILE *file_ptr_in) {
     mask = temp & 128;
     if (mask == 128) {
       temp <<= 1;
-      parsed <<= 7;
+      parsed <<= VAR_LEN_SHIFT;
       parsed |= temp;
     }
   }
 
   temp <<= 1;
-  parsed <<= 7;
+  parsed <<= VAR_LEN_SHIFT;
   parsed |= temp;
 
   parsed >>= 1;
@@ -411,13 +422,16 @@ uint32_t parse_var_len(FILE *file_ptr_in) {
 
 uint8_t event_type(event_t *event) {
   switch (event->type) {
-    case META_EVENT:
+    case META_EVENT: {
       return META_EVENT_T;
+    }
     case SYS_EVENT_1:
-    case SYS_EVENT_2:
+    case SYS_EVENT_2: {
       return SYS_EVENT_T;
-    default:
+    }
+    default: {
       return MIDI_EVENT_T;
+    }
   }
 } /* event_type() */
 
@@ -472,27 +486,30 @@ void free_event_node(event_node_t *event_node) {
     if (event_node->event) {
       switch (event_node->event->type) {
         case SYS_EVENT_1:
-        case SYS_EVENT_2:
+        case SYS_EVENT_2: {
           if (event_node->event->sys_event.data_len == 0) {
             break;
           }
           free(event_node->event->sys_event.data);
           event_node->event->sys_event.data = NULL;
           break;
-        case META_EVENT:
+        }
+        case META_EVENT: {
           if (event_node->event->meta_event.data_len == 0) {
             break;
           }
           free(event_node->event->meta_event.data);
           event_node->event->meta_event.data = NULL;
           break;
-        default:
+        }
+        default: {
           if (event_node->event->midi_event.data_len == 0) {
             break;
           }
           free(event_node->event->midi_event.data);
           event_node->event->midi_event.data = NULL;
           break;
+        }
       }
       free(event_node->event);
     }
@@ -509,7 +526,7 @@ void free_event_node(event_node_t *event_node) {
 uint16_t end_swap_16(uint8_t endian[2]) {
   uint16_t result = 0;
   result |= endian[0];
-  result <<= 8;
+  result <<= BYTE;
   result |= endian[1];
   return result;
 } /* end_swap_16() */
@@ -519,13 +536,15 @@ uint16_t end_swap_16(uint8_t endian[2]) {
  */
 
 uint32_t end_swap_32(uint8_t endian[4]) {
-  uint8_t first_half[2] = {endian[0], endian[1]};
+  uint8_t first_half[UINT16_ARR] = {endian[0], endian[1]};
   uint16_t first_digit = end_swap_16(first_half);
-  uint8_t second_half[2] = {endian[2], endian[3]};
+  uint8_t second_half[UINT16_ARR] = {endian[2], endian[3]};
   uint16_t second_digit = end_swap_16(second_half);
+
   uint32_t result = 0;
   result |= first_digit;
-  result <<= 16;
+  result <<= BYTE;
+  result <<= BYTE;
   result |= second_digit;
   return result;
 } /* end_swap_32() */
