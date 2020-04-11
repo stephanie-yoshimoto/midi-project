@@ -10,7 +10,6 @@
 #include <string.h>
 
 #define SUCCESS (0)
-#define WRITE_FAIL (-1)
 #define NUM_DIRS (20)
 
 tree_node_t *g_song_library = NULL;
@@ -81,6 +80,7 @@ int remove_song_from_tree(tree_node_t **root, const char *song_name) {
     tree_node_t *right = (*found_node)->right_child;
     tree_node_t *left = (*found_node)->left_child;
     free_node(*found_node);
+    *found_node = NULL;
     tree_insert(root_copy, right);
     tree_insert(root_copy, left);
   }
