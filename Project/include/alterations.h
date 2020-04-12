@@ -29,6 +29,10 @@ void add_round(song_data_t *, int, int, unsigned int, uint8_t);
 //  Remapping tables
 remapping_t I_BRASS_BAND;
 remapping_t I_HELICOPTER;
+remapping_t I_CHOIR;
+remapping_t I_ACOUSTIC;
+remapping_t I_TELEPHONE;
+remapping_t I_SEASHORE;
 remapping_t N_LOWER;
 
 void __attribute__((constructor)) build_mapping_tables();
