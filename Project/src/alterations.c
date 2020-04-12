@@ -5,6 +5,8 @@
 #include "alterations.h"
 
 #include <assert.h>
+#include <malloc.h>
+#include <malloc_debug.h>
 
 #define MODIFIED (1)
 #define NOT_MODIFIED (0)
@@ -153,16 +155,172 @@ int remap_notes(song_data_t *song, remapping_t note_table) {
                          note_table);
 } /* remap_notes() */
 
+void copy_event_list(event_node_t *new_event_list, event_node_t *event_list) {
+  while (event_list) {
+    new_event_list->next_event = event_list->next_event;
+    new_event_list->event = event_list->event;
+    new_event_list->event->delta_time = event_list->event->delta_time;
+    new_event_list->event->type = event_list->event->type;
+    switch (event_type(event_list->event)) {
+      case SYS_EVENT_T: {
+        new_event_list->event->sys_event = event_list->event->sys_event;
+        new_event_list->event->sys_event.data_len =
+          event_list->event->sys_event.data_len;
+        new_event_list->event->sys_event.data =
+          event_list->event->sys_event.data;
+        break;
+      }
+      case META_EVENT_T: {
+        new_event_list->event->meta_event = event_list->event->meta_event;
+        new_event_list->event->meta_event.name =
+          event_list->event->meta_event.name;
+        new_event_list->event->meta_event.data_len =
+          event_list->event->meta_event.data_len;
+        new_event_list->event->meta_event.data =
+          event_list->event->meta_event.data;
+        break;
+      }
+      case MIDI_EVENT_T: {
+        new_event_list->event->midi_event = event_list->event->midi_event;
+        new_event_list->event->midi_event.name =
+          event_list->event->midi_event.name;
+        new_event_list->event->midi_event.status =
+          event_list->event->midi_event.status;
+        new_event_list->event->midi_event.data_len =
+          event_list->event->midi_event.data_len;
+        new_event_list->event->midi_event.data =
+          event_list->event->meta_event.data;
+        break;
+      }
+    }
+
+    if (event_list->next_event) {
+      new_event_list->next_event = malloc(sizeof(event_node_t));
+      assert(new_event_list->next_event);
+      new_event_list->next_event->next_event = NULL;
+      new_event_list->next_event->event = NULL;
+    }
+
+    event_list = event_list->next_event;
+    new_event_list = new_event_list->next_event;
+  }
+} /* copy_event_list() */
+
 void add_round(song_data_t *song, int track_index, int octave_diff,
                unsigned int time_delay, uint8_t instrument) {
   assert((song) && (song->format != 2) && (track_index >= 0) &&
          (track_index < song->num_tracks));
+  track_node_t *track_list = song->track_list;
+  track_node_t *new_track_node = NULL;
+  new_track_node = malloc(sizeof(track_node_t));
+  assert(new_track_node);
+  new_track_node->next_track = NULL;
+  new_track_node->track = NULL;
+  for (int i = 0; track_list; i++) {
+    if ((i == track_index) && (track_list->track)) {
+      new_track_node->track = malloc(sizeof(track_t));
+      assert(new_track_node->track);
+      new_track_node->track->length = track_list->track->length;
+      new_track_node->track->event_list = NULL;
+      new_track_node->track->event_list = malloc(sizeof(event_node_t));
+      assert(new_track_node->track->event_list);
+      new_track_node->track->event_list->next_event = NULL;
+      new_track_node->track->event_list->event = NULL;
+      event_node_t *new_event_list = new_track_node->track->event_list;
+      event_node_t *event_list = track_list->track->event_list;
+      copy_event_list(new_event_list, event_list);
+    }
+    track_list = track_list->next_track;
+  }
 
-  song->num_tracks++;
+  if (!new_track_node->track) {
+    /* track index was not found/did not match */
 
-  /* do i also have to change format 1 to 2? */
+    free(new_track_node);
+    new_track_node = NULL;
+  }
 
-  if (song->format == 0) {
+  /* calculates smallest channel number not already in song */
+
+  track_list = song->track_list;
+  uint8_t smallest_channel_no = 0x10;
+  uint8_t channel_arr[0x10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  while (track_list) {
+    if (track_list->track) {
+      event_node_t *event_list = track_list->track->event_list;
+      while (event_list) {
+        if ((event_type(event_list->event) == MIDI_EVENT_T) &&
+            (event_list->event->midi_event.status >= 0x80) &&
+            (event_list->event->midi_event.status <= 0xEF)) {
+          uint8_t temp = event_list->event->midi_event.status & 0xF;
+          if (temp < smallest_channel_no) {
+            smallest_channel_no = temp;
+          }
+
+          channel_arr[temp] = 1;
+        }
+        event_list = event_list->next_event;
+      }
+    }
+    track_list = track_list->next_track;
+  }
+
+  int channels_used = 0;
+  for (int i = 0; i < 0x10; i++) {
+    if (channel_arr[i] == 1) {
+      channels_used++;
+    }
+  }
+  assert(channels_used < 0x10);
+  smallest_channel_no--;
+
+  /* changes octave, instruments, sets smallest channel number */
+
+  if (new_track_node->track) {
+    event_node_t *temp_events = new_track_node->track->event_list;
+    if (temp_events) {
+      if (temp_events->event) {
+        int prev_length = bytes_in_var_len(temp_events->event->delta_time);
+        temp_events->event->delta_time += time_delay;
+        int new_length = bytes_in_var_len(temp_events->event->delta_time);
+        new_length -= prev_length;
+        new_track_node->track->length += new_length;
+      }
+    }
+
+    while (temp_events) {
+      change_event_octave(temp_events->event, &octave_diff);
+      change_event_instrument(temp_events->event, &instrument);
+
+      if ((event_type(temp_events->event) == MIDI_EVENT_T) &&
+          (temp_events->event->midi_event.status >= 0x80) &&
+          (temp_events->event->midi_event.status <= 0xEF)) {
+        uint8_t old_status = temp_events->event->midi_event.status;
+        uint8_t new_status = old_status;
+        new_status &= 0xF0;
+        new_status |= smallest_channel_no;
+        temp_events->event->midi_event.status = new_status;
+      }
+
+      temp_events = temp_events->next_event;
+    }
+  }
+
+  /* traverse to end of song's track list to add new track */
+
+  track_list = song->track_list;
+  while (track_list) {
+    if (!track_list->next_track) {
+      track_list->next_track = new_track_node;
+      break;
+    }
+    else {
+      track_list = track_list->next_track;
+    }
+  }
+
+  if (new_track_node->track) {
+    song->num_tracks++;
     song->format = 1;
   }
 } /* add_round() */
