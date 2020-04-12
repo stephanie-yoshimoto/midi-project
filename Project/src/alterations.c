@@ -16,9 +16,12 @@
 
 int change_event_octave(event_t *event, int *num_octaves) {
   uint8_t type = event_type(event);
-  if ((type == MIDI_EVENT_T) && (event->midi_event.status < 0xB0)) {
+  if ((type == MIDI_EVENT_T) && (event->midi_event.status >= 0x80) &&
+      (event->midi_event.status < 0xB0)) {
+    /* note on/off or polyphonic key event */
+
     uint8_t oct_inc = event->midi_event.data[0] + (OCTAVE_STEP * *num_octaves);
-    if ((oct_inc >= 0) && (oct_inc <= 0x7F)) {
+    if ((oct_inc >= 0) && (oct_inc <= 127)) {
       event->midi_event.data[0] = oct_inc;
       return MODIFIED;
     }
@@ -26,10 +29,25 @@ int change_event_octave(event_t *event, int *num_octaves) {
   return NOT_MODIFIED;
 } /* change_event_octave() */
 
+int bytes_in_var_len(uint32_t num) {
+  if (num < 0x80) {
+    return 1;
+  }
+  else if (num < 0x4000) {
+    return 2;
+  }
+  else if (num < 0x200000) {
+    return 3;
+  }
+  else {
+    return 4;
+  }
+} /* bytes_in_var_len() */
+
 int change_event_time(event_t *event, float *multiplier) {
-  uint32_t prev_delta_time = event->delta_time;
+  uint32_t prev_delta_time = bytes_in_var_len(event->delta_time);
   event->delta_time *= *multiplier;
-  uint32_t new_delta_time = event->delta_time;
+  uint32_t new_delta_time = bytes_in_var_len(event->delta_time);
   return new_delta_time - prev_delta_time;
 } /* change_event_time() */
 
@@ -39,7 +57,7 @@ int change_event_instrument(event_t *event, remapping_t instrument_table) {
       (event->midi_event.status <= 0xCF)) {
     /* event is program change event */
 
-    event->midi_event.data[0] = instrument_table[event->midi_event.status];
+    event->midi_event.data[0] = instrument_table[event->midi_event.data[0]];
     return PROGRAM_CHANGE_EVENT;
   }
   return NON_PROGRAM_CHANGE_EVENT;
@@ -50,9 +68,9 @@ int change_event_note(event_t *event, remapping_t note_table) {
   if (type == MIDI_EVENT_T) {
     if ((event->midi_event.status >= 0x80) && (event->midi_event.status <=
         0xAF)) {
-      /* event is note off, note on, or polyphonic key */
+      /* event is either note off, note on, or polyphonic key */
 
-      event->midi_event.data[0] = note_table[event->midi_event.status];
+      event->midi_event.data[0] = note_table[event->midi_event.data[0]];
       return NOTE;
     }
   }
@@ -108,7 +126,7 @@ int warp_time(song_data_t *song, float multiplier) {
   /* delta time will change in each track? */
 
   multiplier = 1.0 / multiplier;
-  apply_to_events(song, (event_func_t) change_event_octave, &multiplier);
+  apply_to_events(song, (event_func_t) change_event_time, &multiplier);
 
   file_ptr_in = fopen(song->path, "r");
   if (!file_ptr_in) {
@@ -127,12 +145,12 @@ int warp_time(song_data_t *song, float multiplier) {
 
 int remap_instruments(song_data_t *song, remapping_t instrument_table) {
   return apply_to_events(song, (event_func_t) change_event_instrument,
-                         &instrument_table);
+                         instrument_table);
 } /* remap_instruments() */
 
-int remap_notes(song_data_t *song, remapping_t instrument_table) {
+int remap_notes(song_data_t *song, remapping_t note_table) {
   return apply_to_events(song, (event_func_t) change_event_note,
-                         &instrument_table);
+                         note_table);
 } /* remap_notes() */
 
 void add_round(song_data_t *song, int track_index, int octave_diff,
@@ -161,6 +179,22 @@ void build_mapping_tables()
 
   for (int i = 0; i <= 0xFF; i++) {
     I_HELICOPTER[i] = 125;
+  }
+
+  for (int i = 0; i <= 0xFF; i++) {
+    I_CHOIR[i] = 53;
+  }
+
+  for (int i = 0; i <= 0xFF; i++) {
+    I_ACOUSTIC[i] = 24;
+  }
+
+  for (int i = 0; i <= 0xFF; i++) {
+    I_TELEPHONE[i] = 124;
+  }
+
+  for (int i = 0; i <= 0xFF; i++) {
+    I_SEASHORE[i] = 122;
   }
 
   for (int i = 0; i <= 0xFF; i++) {
