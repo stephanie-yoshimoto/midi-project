@@ -20,7 +20,13 @@
 #define DEFAULT_VAL (0)
 #define VAR_LEN_SHIFT (7)
 #define FREAD_SUCCESS (1)
+#define FSEEK_SUCCESS (0)
+#define MIDI_MIN (128)
+#define MIDI_MAX (255)
+#define MASK (128)
 #define END_OF_TRACK "End of Track"
+#define MTHD "MThd"
+#define MTRK "MTrk"
 
 uint8_t g_prev_type = DEFAULT_VAL;
 
@@ -86,7 +92,7 @@ void parse_header(FILE *file_ptr_in, song_data_t *song) {
   int returned_value = fread(chunk_type, sizeof(chunk_type) - 1, 1,
                              file_ptr_in);
   assert(returned_value == FREAD_SUCCESS);
-  assert(strcmp(chunk_type, "MThd") == 0);
+  assert(strcmp(chunk_type, MTHD) == 0);
 
   uint8_t length_arr[UINT32_ARR];
   for (int i = 0; i < UINT32_ARR; i++) {
@@ -145,7 +151,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
     return;
   }
-  assert(strcmp(chunk_type, "MTrk") == 0);
+  assert(strcmp(chunk_type, MTRK) == 0);
 
   if (song) {
     while (song->track_list) {
@@ -161,17 +167,18 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
     return;
   }
 
+  track_t *track = NULL;
+  track = malloc(sizeof(track_t));
+  assert(track);
+
   uint8_t length_arr[UINT32_ARR];
   for (int i = 0; i < UINT32_ARR; i++) {
     returned_value = fread(&length_arr[i], sizeof(uint8_t), 1, file_ptr_in);
     assert(returned_value == FREAD_SUCCESS);
   }
   uint32_t length = end_swap_32(length_arr);
-
-  track_t *track = NULL;
-  track = malloc(sizeof(track_t));
-  assert(track);
   track->length = length;
+
   track->event_list = NULL;
   track->event_list = malloc(sizeof(event_node_t));
   assert(track->event_list);
@@ -184,9 +191,9 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
 
   event_node_t *event_list = track->event_list;
   event_node_t *event_list_copy = track->event_list;
-  long position_diff = 0;
+  int position_diff = 0;
   for (int i = 0; i < length; i += position_diff) {
-    long start_position = ftell(file_ptr_in);
+    int start_position = ftell(file_ptr_in);
     event_list->event = parse_event(file_ptr_in);
     event_list->next_event = NULL;
     if (!event_list->event) {
@@ -203,7 +210,7 @@ void parse_track(FILE *file_ptr_in, song_data_t *song) {
     event_list->next_event->next_event = NULL;
     event_list = event_list->next_event;
 
-    long end_position = ftell(file_ptr_in);
+    int end_position = ftell(file_ptr_in);
     position_diff = end_position - start_position;
   }
 
@@ -328,14 +335,14 @@ meta_event_t parse_meta_event(FILE *file_ptr_in) {
  */
 
 midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
-  assert((file_ptr_in) && (type < 0xFF));
+  assert((file_ptr_in) && (type < MIDI_MAX));
   midi_event_t midi_event = {NULL, 0, 0, NULL};
 
   if (feof(file_ptr_in)) {
     return midi_event;
   }
 
-  if (type >= 0x80) {
+  if (type >= MIDI_MIN) {
     assert(MIDI_TABLE[type].name);
     midi_event.name = MIDI_TABLE[type].name;
     midi_event.data_len = MIDI_TABLE[type].data_len;
@@ -346,7 +353,7 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
     /* type is a data byte */
 
     int returned_value = fseek(file_ptr_in, -1, SEEK_CUR);
-    if (returned_value != 0) {
+    if (returned_value != FSEEK_SUCCESS) {
       return midi_event;
     }
 
@@ -375,15 +382,15 @@ midi_event_t parse_midi_event(FILE *file_ptr_in, uint8_t type) {
 
 uint32_t parse_var_len(FILE *file_ptr_in) {
   assert(file_ptr_in);
-  uint8_t mask = 128;
+  uint8_t mask = MASK;
   uint32_t parsed = 0;
   uint8_t temp = 0;
-  while (mask == 128) {
+  while (mask == MASK) {
     int returned_value = fread(&temp, sizeof(uint8_t), 1, file_ptr_in);
     assert(returned_value == FREAD_SUCCESS);
 
-    mask = temp & 128;
-    if (mask == 128) {
+    mask = temp & MASK;
+    if (mask == MASK) {
       temp <<= 1;
       parsed <<= VAR_LEN_SHIFT;
       parsed |= temp;
