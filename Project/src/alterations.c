@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
+#include <string.h>
 
 #define MODIFIED (1)
 #define NOT_MODIFIED (0)
@@ -47,9 +47,9 @@ int bytes_in_var_len(uint32_t num) {
 } /* bytes_in_var_len() */
 
 int change_event_time(event_t *event, float *multiplier) {
-  uint32_t prev_delta_time = bytes_in_var_len(event->delta_time);
+  int prev_delta_time = bytes_in_var_len(event->delta_time);
   event->delta_time *= *multiplier;
-  uint32_t new_delta_time = bytes_in_var_len(event->delta_time);
+  int new_delta_time = bytes_in_var_len(event->delta_time);
   return new_delta_time - prev_delta_time;
 } /* change_event_time() */
 
@@ -103,46 +103,7 @@ int change_octave(song_data_t *song, int num_octaves) {
 } /* change_octaves() */
 
 int warp_time(song_data_t *song, float multiplier) {
-  if (!song) {
-    return NOT_MODIFIED;
-  }
-
-  FILE *file_ptr_in = NULL;
-  file_ptr_in = fopen(song->path, "r");
-  if (!file_ptr_in) {
-    return NOT_MODIFIED;
-  }
-
-  int returned_value = fseek(file_ptr_in, 0, SEEK_END);
-  if (returned_value != FSEEK_SUCCESS) {
-    return NOT_MODIFIED;
-  }
-  int initial_length = ftell(file_ptr_in);
-  fclose(file_ptr_in);
-  file_ptr_in = NULL;
-
-  /* what do i do with value that returns below? */
-
-  /* is it saying that since delta time will inc/dec, then the length of */
-  /* track will also change bc bytes needed for var length quantity */
-  /* delta time will change in each track? */
-
-  multiplier = 1.0 / multiplier;
-  apply_to_events(song, (event_func_t) change_event_time, &multiplier);
-
-  file_ptr_in = fopen(song->path, "r");
-  if (!file_ptr_in) {
-    return NOT_MODIFIED;
-  }
-  returned_value = fseek(file_ptr_in, 0, SEEK_END);
-  if (returned_value != FSEEK_SUCCESS) {
-    return NOT_MODIFIED;
-  }
-  int result_length = ftell(file_ptr_in);
-  fclose(file_ptr_in);
-  file_ptr_in = NULL;
-
-  return result_length - initial_length;
+  return apply_to_events(song, (event_func_t) change_event_time, &multiplier);
 } /* warp_time() */
 
 int remap_instruments(song_data_t *song, remapping_t instrument_table) {
@@ -155,89 +116,46 @@ int remap_notes(song_data_t *song, remapping_t note_table) {
                          note_table);
 } /* remap_notes() */
 
-void copy_event_list(event_node_t *new_event_list, event_node_t *event_list) {
-  while (event_list) {
-    new_event_list->next_event = event_list->next_event;
-    new_event_list->event = event_list->event;
-    new_event_list->event->delta_time = event_list->event->delta_time;
-    new_event_list->event->type = event_list->event->type;
-    switch (event_type(event_list->event)) {
-      case SYS_EVENT_T: {
-        new_event_list->event->sys_event = event_list->event->sys_event;
-        new_event_list->event->sys_event.data_len =
-          event_list->event->sys_event.data_len;
-        new_event_list->event->sys_event.data =
-          event_list->event->sys_event.data;
-        break;
-      }
-      case META_EVENT_T: {
-        new_event_list->event->meta_event = event_list->event->meta_event;
-        new_event_list->event->meta_event.name =
-          event_list->event->meta_event.name;
-        new_event_list->event->meta_event.data_len =
-          event_list->event->meta_event.data_len;
-        new_event_list->event->meta_event.data =
-          event_list->event->meta_event.data;
-        break;
-      }
-      case MIDI_EVENT_T: {
-        new_event_list->event->midi_event = event_list->event->midi_event;
-        new_event_list->event->midi_event.name =
-          event_list->event->midi_event.name;
-        new_event_list->event->midi_event.status =
-          event_list->event->midi_event.status;
-        new_event_list->event->midi_event.data_len =
-          event_list->event->midi_event.data_len;
-        new_event_list->event->midi_event.data =
-          event_list->event->meta_event.data;
-        break;
-      }
-    }
-
-    if (event_list->next_event) {
-      new_event_list->next_event = malloc(sizeof(event_node_t));
-      assert(new_event_list->next_event);
-      new_event_list->next_event->next_event = NULL;
-      new_event_list->next_event->event = NULL;
-    }
-
-    event_list = event_list->next_event;
-    new_event_list = new_event_list->next_event;
-  }
-} /* copy_event_list() */
-
 void add_round(song_data_t *song, int track_index, int octave_diff,
                unsigned int time_delay, uint8_t instrument) {
   assert((song) && (song->format != 2) && (track_index >= 0) &&
          (track_index < song->num_tracks));
-  track_node_t *track_list = song->track_list;
-  track_node_t *new_track_node = NULL;
-  new_track_node = malloc(sizeof(track_node_t));
-  assert(new_track_node);
-  new_track_node->next_track = NULL;
-  new_track_node->track = NULL;
-  for (int i = 0; track_list; i++) {
-    if ((i == track_index) && (track_list->track)) {
-      new_track_node->track = malloc(sizeof(track_t));
-      assert(new_track_node->track);
-      new_track_node->track->length = track_list->track->length;
-      new_track_node->track->event_list = NULL;
-      new_track_node->track->event_list = malloc(sizeof(event_node_t));
-      assert(new_track_node->track->event_list);
-      new_track_node->track->event_list->next_event = NULL;
-      new_track_node->track->event_list->event = NULL;
-      event_node_t *new_event_list = new_track_node->track->event_list;
-      event_node_t *event_list = track_list->track->event_list;
-      copy_event_list(new_event_list, event_list);
+
+  track_node_t *original_list = song->track_list;
+  while (original_list) {
+    if (!original_list->next_track) {
+      break;
     }
+    else {
+      original_list = original_list->next_track;
+    }
+  }
+
+  song_data_t *song_copy = parse_file(song->path);
+  assert(song_copy);
+  track_node_t *track_list = song_copy->track_list;
+  track_node_t *prev_node = song_copy->track_list;
+  bool appended = false;
+  track_node_t *new_track_node = NULL;
+  for (int i = 0; (i <= track_index) && (track_list); i++) {
+    if (i == track_index) {
+      prev_node->next_track = track_list->next_track;
+      if (track_index == 0) {
+        song_copy->track_list = prev_node->next_track;
+      }
+      original_list->next_track = track_list;
+      track_list->next_track = NULL;
+      new_track_node = track_list;
+      appended = true;
+      free_song(song_copy);
+      break;
+    }
+    prev_node = track_list;
     track_list = track_list->next_track;
   }
 
-  if (!new_track_node->track) {
-    /* track index was not found/did not match */
-
-    free(new_track_node);
-    new_track_node = NULL;
+  if (!appended) {
+    return;
   }
 
   /* calculates smallest channel number not already in song */
@@ -272,7 +190,11 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
     }
   }
   assert(channels_used < 0x10);
-  smallest_channel_no--;
+  for (int i = 0; i < 0x10; i++) {
+    if (channel_arr[i] == 0) {
+      smallest_channel_no = i;
+    }
+  }
 
   /* changes octave, instruments, sets smallest channel number */
 
@@ -303,19 +225,6 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
       }
 
       temp_events = temp_events->next_event;
-    }
-  }
-
-  /* traverse to end of song's track list to add new track */
-
-  track_list = song->track_list;
-  while (track_list) {
-    if (!track_list->next_track) {
-      track_list->next_track = new_track_node;
-      break;
-    }
-    else {
-      track_list = track_list->next_track;
     }
   }
 
