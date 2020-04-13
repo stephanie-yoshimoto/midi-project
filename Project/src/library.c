@@ -172,8 +172,8 @@ void free_library(tree_node_t *root) {
  * Prints the names of all songs in tree to output in sorted order.
  */
 
-void write_song_list(FILE *fp, tree_node_t *root) {
-  traverse_in_order(root, fp, (traversal_func_t) print_node);
+void write_song_list(FILE *file_ptr_out, tree_node_t *root) {
+  traverse_in_order(root, file_ptr_out, (traversal_func_t) print_node);
 } /* write_song_list() */
 
 /*
