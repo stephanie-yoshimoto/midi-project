@@ -238,20 +238,19 @@ void populate_array(struct node *root, void *data_structure,
 struct node **find_nodes(struct node *root, void *data_structure,
                          int *num_duplicates) {
   assert((root) && (data_structure) && (num_duplicates));
-  struct node *root_copy = root;
-  struct node **array_of_dups = NULL;
-  *num_duplicates = 0;
+  /*struct node *root_copy = root;*/
+  *num_duplicates = 1;
   search_tree(root, data_structure, num_duplicates);
-
-  if ((*num_duplicates == 0) || (*num_duplicates == 1)) {
-    return array_of_dups;
+  if (*num_duplicates == 1) {
+    return NULL;
   }
-  array_of_dups = malloc(sizeof(struct node) * *num_duplicates);
-  assert(*array_of_dups);
-  for (int i = 0; i < *num_duplicates; i++) {
+
+  (*num_duplicates)--;
+  struct node **array_of_dups = NULL;
+  /*for (int i = 0; i < *num_duplicates; i++) {
     array_of_dups[i] = NULL;
   }
-  populate_array(root_copy, data_structure, array_of_dups, *num_duplicates);
+  populate_array(root_copy, data_structure, array_of_dups, *num_duplicates);*/
   return array_of_dups;
 } /* find_nodes() */
 
@@ -278,25 +277,42 @@ struct node *find_target_node(struct node **root, struct node *node) {
   return NULL;
 } /* find_target_node() */
 
+void printInorder(struct node** node)
+{
+     if (*node == NULL)
+          return;
+
+     printInorder(&(*node)->left);
+     printf("%p\n", *node);
+     printInorder(&(*node)->right);
+}
+
 void remove_node(struct node **root, struct node *node) {
   assert((root) && (node));
   if (!*root) {
     return;
   }
 
-  struct node **root_copy = root;
+  printInorder(root);
+  printf("\n%p\n", node);
   struct node *found_node = find_target_node(root, node);
-  struct node *left = found_node->left;
-  struct node *right = found_node->right;
+  if ((!(*root)->left) && ((*root)->right)) {
+    *root = found_node->right;
+  }
+  else if ((!(*root)->right) && ((*root)->left)) {
+    *root = found_node->left;
+  }
+  else if (((*root)->left) && ((*root)->right)) {
+    *root = node->left;
+    while (*root) {
+      *root = (*root)->right;
+    }
+    *root = found_node->right;;
+  }
   found_node->left = NULL;
   found_node->right = NULL;
   delete_node(&found_node);
-  if (left) {
-    insert_node(root_copy, left);
-  }
-  if (right) {
-    insert_node(root_copy, right);
-  }
+  printInorder(root);
 } /* remove_node() */
 
 void delete_tree(struct node **root) {
