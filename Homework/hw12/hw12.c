@@ -212,23 +212,92 @@ void search_tree(struct node *root, void *data_structure, int *num_duplicates) {
   }
 } /* search_tree() */
 
+void populate_array(struct node *root, void *data_structure,
+                    struct node **array_of_dups, int length) {
+  if (!root) {
+    return;
+  }
+
+  int result = root->compare(data_structure, root->data);
+  if (result <= 0) {
+    if (result == 0) {
+      for (int i = 0; i < length; i++) {
+        if (array_of_dups[i] == NULL) {
+          array_of_dups[i] = root;
+        }
+      }
+    }
+
+    populate_array(root->left, data_structure, array_of_dups, length);
+  }
+  else if (result > 0) {
+    populate_array(root->right, data_structure, array_of_dups, length);
+  }
+} /* populate_array() */
+
 struct node **find_nodes(struct node *root, void *data_structure,
                          int *num_duplicates) {
   assert((root) && (data_structure) && (num_duplicates));
+  struct node *root_copy = root;
   struct node **array_of_dups = NULL;
+  *num_duplicates = 0;
   search_tree(root, data_structure, num_duplicates);
-  (*num_duplicates)--;
+
+  if ((*num_duplicates == 0) || (*num_duplicates == 1)) {
+    return array_of_dups;
+  }
   array_of_dups = malloc(sizeof(struct node) * *num_duplicates);
   assert(*array_of_dups);
-
-
+  for (int i = 0; i < *num_duplicates; i++) {
+    array_of_dups[i] = NULL;
+  }
+  populate_array(root_copy, data_structure, array_of_dups, *num_duplicates);
   return array_of_dups;
 } /* find_nodes() */
 
-void remove_node(struct node **root, struct node *remove_node) {
-  assert((root) && (remove_node));
+struct node *find_target_node(struct node **root, struct node *node) {
+  if (!*root) {
+    return NULL;
+  }
 
-}
+  int result = (*root)->compare(node->data, (*root)->data);
+  if (result <= 0) {
+    if ((result == 0) && (*root == node)) {
+      return *root;
+    }
+
+    if ((*root)->left) {
+      return find_target_node(&(*root)->left, node);
+    }
+  }
+  else if (result > 0) {
+    if ((*root)->right) {
+      return find_target_node(&(*root)->right, node);
+    }
+  }
+  return NULL;
+} /* find_target_node() */
+
+void remove_node(struct node **root, struct node *node) {
+  assert((root) && (node));
+  if (!*root) {
+    return;
+  }
+
+  struct node **root_copy = root;
+  struct node *found_node = find_target_node(root, node);
+  struct node *left = found_node->left;
+  struct node *right = found_node->right;
+  found_node->left = NULL;
+  found_node->right = NULL;
+  delete_node(&found_node);
+  if (left) {
+    insert_node(root_copy, left);
+  }
+  if (right) {
+    insert_node(root_copy, right);
+  }
+} /* remove_node() */
 
 void delete_tree(struct node **root) {
   assert(root);
