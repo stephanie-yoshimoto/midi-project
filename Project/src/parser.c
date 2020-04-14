@@ -37,8 +37,14 @@ uint8_t g_prev_type = DEFAULT_VAL;
 song_data_t *parse_file(const char *file_path) {
   assert(file_path);
   FILE *file_ptr_in = NULL;
-  file_ptr_in = fopen(file_path, "r");
+  file_ptr_in = fopen(file_path, "rb");
   assert(file_ptr_in);
+
+  int returned_value = fseek(file_ptr_in, 0, SEEK_END);
+  assert(returned_value == FSEEK_SUCCESS);
+  int file_end = ftell(file_ptr_in);
+  returned_value = fseek(file_ptr_in, 0, SEEK_SET);
+  assert(returned_value == FSEEK_SUCCESS);
 
   song_data_t *song = NULL;
   song = malloc(sizeof(song_data_t));
@@ -76,7 +82,7 @@ song_data_t *parse_file(const char *file_path) {
     }
   }
 
-  assert(feof(file_ptr_in));
+  assert(ftell(file_ptr_in) == file_end);
   fclose(file_ptr_in);
   file_ptr_in = NULL;
   return song;
