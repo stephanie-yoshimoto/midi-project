@@ -1,46 +1,175 @@
-/* Name, ui.c, CS 24000, Spring 2020
+/* Stephanie Yoshimoto, ui.c, CS 24000, Spring 2020
  * Last updated April 9, 2020
  */
 
-/* Add any includes here */
-
 #include "ui.h"
 
-/* Define update_song_list here */
+#include <gtk/gtk.h>
+#include <ftw.h>
 
-/* Define update_drawing_area here */
+tree_node_t *g_current_node = NULL;
+song_data_t *g_current_song = NULL;
+song_data_t *g_modified_song = NULL;
 
-/* Define update_info here */
+void update_song_list() {
+  /* post order traversal of printing to text label? */
+} /* update_song_list() */
 
-/* Define update_song here */
+void update_drawing_area() {
 
-/* Define range_of_song here */
+} /* update_drawing_area() */
 
-/* Define activate here */
+void update_info() {
 
-/* Define add_song_cb here */
+} /* update_info() */
 
-/* Define load_songs_cb here */
+void update_song() {
 
-/* Define song_selected_cb here */
+} /* update_song() */
 
-/* Define search_bar_cb here */
+void range_of_song(song_data_t *song, int *lowest_pitch, int *highest_pitch,
+                   int *song_length) {
 
-/* Define time_scale_cb here */
+} /* range_of_song() */
 
-/* Define draw_cb here */
+void activate(GtkApplication *app, gpointer ptr) {
+  /* set window */
 
-/* Define warp_time_cb here */
+  GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW (window), "MIDI Library");
+  gtk_container_set_border_width(GTK_CONTAINER (window), 10);
+  gtk_widget_set_size_request(window, 900, 800);
+  gtk_window_set_resizable(GTK_WINDOW (window), false);
+  g_signal_connect(G_OBJECT (window), "window",
+    G_CALLBACK (load_songs_cb), NULL);
 
-/* Define song_octave_cb here */
+  /* grid */
 
-/* Define instrument_map_cb here */
+  GtkWidget *grid = gtk_grid_new();
+  gtk_container_add(GTK_CONTAINER (window), grid);
 
-/* Define note_map_cb here */
+  /* add song button */
 
-/* Define save_song_cb here */
+  GtkWidget *add_song_btn = gtk_button_new_with_label("Add Song from File");
+  gtk_widget_set_size_request(add_song_btn, 100, 30);
+  g_signal_connect(G_OBJECT (add_song_btn), "clicked",
+    G_CALLBACK (add_song_cb), NULL);
+  gtk_container_add(GTK_CONTAINER (window), add_song_btn);
+  gtk_grid_attach(GTK_GRID (grid), add_song_btn, 0, 0, 1, 1);
 
-/* Define remove_song_cb here */
+  /* load from directory button */
+
+  GtkWidget *load_dir_btn =
+    gtk_button_new_with_label("Load from Directory");
+  gtk_widget_set_size_request(load_dir_btn, 100, 30);
+  g_signal_connect(G_OBJECT (load_dir_btn), "clicked",
+    G_CALLBACK (load_songs_cb), NULL);
+  gtk_container_add(GTK_CONTAINER (window), load_dir_btn);
+  gtk_grid_attach(GTK_GRID (grid), load_dir_btn, 1, 0, 1, 1);
+
+  /* song list */
+
+  GtkWidget *song_list = gtk_list_box_new();
+  gtk_widget_set_size_request(song_list, 200, 700);
+  gtk_list_box_set_selection_mode(GTK_LIST_BOX (song_list),
+    GTK_SELECTION_SINGLE);
+  g_signal_connect(G_OBJECT (song_list), "selection",
+    G_CALLBACK (song_selected_cb), NULL);
+  gtk_container_add(GTK_CONTAINER (window), song_list);
+  gtk_grid_attach(GTK_GRID (grid), song_list, 0, 1, 2, 1);
+
+  /* search bar */
+
+  GtkWidget *search_bar = gtk_search_entry_new();
+  gtk_widget_set_size_request(search_bar, 200, 30);
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR (search_bar), true);
+  /*g_signal_connect_object(G_OBJECT (search_bar), "highlighted",
+    G_CALLBACK (search_bar_cb), );*/
+  gtk_container_add(GTK_CONTAINER (window), search_bar);
+  gtk_grid_attach(GTK_GRID (grid), search_bar, 0, 2, 3, 1);
+
+  /* add widgets to window */
+
+  gtk_widget_show_all(window);
+  gtk_main();
+} /* activate() */
+
+void add_song_cb(GtkButton *button, gpointer ptr) {
+  GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  GtkWidget *dialog = gtk_file_chooser_dialog_new("Open File",
+    GTK_WINDOW (window), GTK_RESPONSE_CANCEL, "_Cancel",
+    GTK_FILE_CHOOSER_ACTION_OPEN, "_Open", NULL);
+  gtk_container_add(GTK_CONTAINER (window), dialog);
+  gtk_widget_show_all(window);
+
+  if (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_FILE_CHOOSER_ACTION_OPEN) {
+    gchar *file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
+    g_print("%s\n", file_name);
+    /*make_library(file_name);
+    update_song_list();*/
+    gtk_widget_destroy(dialog);
+  }
+} /* add_song_cb() */
+
+void load_songs_cb(GtkButton *button, gpointer ptr) {
+  GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  GtkWidget *dialog = gtk_file_chooser_dialog_new("Choose Folder",
+    GTK_WINDOW (window), GTK_RESPONSE_CANCEL, "_Cancel",
+    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, "_Open", NULL);
+  gtk_container_add(GTK_CONTAINER (window), dialog);
+  gtk_widget_show_all(window);
+
+  if (gtk_dialog_run(GTK_DIALOG (dialog)) ==
+      GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+    gchar *dir_name =
+      gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER (dialog));
+    g_print("%s\n", dir_name);
+    /*make_library(dir_name);
+    update_song_list();*/
+    gtk_widget_destroy(dialog);
+  }
+} /* load_songs_cb() */
+
+void song_selected_cb(GtkListBox *list_box, GtkListBoxRow *row) {
+  /*GtkListBoxRow = gtk_list_box_get_selected_row(list_box);*/
+  printf("hiii\n");
+} /* song_selected_cb() */
+
+void search_bar_cb(GtkSearchBar *search, gpointer ptr) {
+
+} /* search_bar_cb() */
+
+void time_scale_cb(GtkSpinButton *button, gpointer ptr) {
+
+} /* time_scale_cb() */
+
+gboolean draw_cb(GtkDrawingArea *drawing_area, cairo_t *cairo, gpointer ptr) {
+  return false;
+} /* draw_cb() */
+
+void warp_time_cb(GtkSpinButton *button, gpointer ptr) {
+
+} /* warp_time_cb() */
+
+void song_octave_cb(GtkSpinButton *button, gpointer ptr) {
+
+} /* song_octave_cb() */
+
+void instrument_map_cb(GtkComboBoxText *text, gpointer ptr) {
+
+} /* instrument_map_cb() */
+
+void note_map_cb(GtkComboBoxText *text, gpointer ptr) {
+
+} /* note_map_cb() */
+
+void save_song_cb(GtkButton *button, gpointer ptr) {
+
+} /* save_song_cb() */
+
+void remove_song_cb(GtkButton *button, gpointer ptr) {
+
+} /* remove_song_cb() */
 
 /*
  * Function called prior to main that sets up the instrument to color mapping
