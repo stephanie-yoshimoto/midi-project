@@ -212,7 +212,11 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
 
     while (temp_events) {
       change_event_octave(temp_events->event, &octave_diff);
-      change_event_instrument(temp_events->event, &instrument);
+      remapping_t instrument_map = {};
+      for (int i = 0; i <= 0xFF; i++) {
+        instrument_map[i] = instrument;
+      }
+      change_event_instrument(temp_events->event, instrument_map);
 
       if ((event_type(temp_events->event) == MIDI_EVENT_T) &&
           (temp_events->event->midi_event.status >= 0x80) &&
