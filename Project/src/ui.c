@@ -59,7 +59,7 @@ void create_row(tree_node_t *node, void *data) {
   gtk_list_box_insert(GTK_LIST_BOX (g_widgets.song_list), label, -1);
   GtkWidget *row = gtk_list_box_row_new();
   g_signal_connect(G_OBJECT (g_widgets.song_list), "activate-cursor-row",
-      G_CALLBACK (song_selected_cb), row);
+    G_CALLBACK (song_selected_cb), row);
   gtk_widget_show(label);
 } /* create_row() */
 
@@ -79,11 +79,41 @@ void update_drawing_area() {
 } /* update_drawing_area() */
 
 void update_info() {
+  const char *format =
+    "File name: %s\nFull path: %s\nNote range [%d, %d]\nOriginal length: %lu\n";
+  gtk_label_set_line_wrap(GTK_LABEL (g_widgets.song_info), true);
+  int lowest_pitch = 0;
+  int highest_pitch = 0;
+  int delta_time = 0;
+  range_of_song(g_current_song, &lowest_pitch, &highest_pitch, &delta_time);
+  char *markup = g_markup_printf_escaped(format, g_current_node->song_name,
+    g_current_node->song->path, lowest_pitch, highest_pitch, delta_time);
+  gtk_label_set_markup(GTK_LABEL (g_widgets.song_info), markup);
+  gtk_label_set_justify(GTK_LABEL (g_widgets.song_info), GTK_JUSTIFY_LEFT);
+  g_free(markup);
 
+  update_drawing_area();
+  gtk_widget_set_sensitive(g_widgets.t_scale_spin, true);
+  gtk_widget_set_sensitive(g_widgets.warp_time_spin, true);
+  gtk_widget_set_sensitive(g_widgets.octave_spin, true);
+  gtk_widget_set_sensitive(g_widgets.combo_box_text, true);
+  gtk_widget_set_sensitive(g_widgets.combo_box_2_text, true);
+  gtk_widget_set_sensitive(g_widgets.save_song_btn, true);
+  gtk_widget_set_sensitive(g_widgets.remove_song_btn, true);
 } /* update_info() */
 
 void update_song() {
+  /*gchar *temp_song_name = g_current_node->song_name;
+  tree_node_t **node_to_modify = find_parent_pointer(&g_song_library,
+    temp_song_name);
+  if ((!node_to_modify) || (!*node_to_modify)) {
+    return;
+  }
 
+  // modify current node or current song?
+  update_drawing_area();
+
+  g_free(temp_song_name);*/
 } /* update_song() */
 
 void range_of_song(song_data_t *song, int *lowest_pitch, int *highest_pitch,
@@ -193,7 +223,8 @@ void activate(GtkApplication *app, gpointer ptr) {
   g_widgets.t_scale_spin =
     gtk_spin_button_new(g_widgets.t_scale_adjustment, 0.0, 1);
   gtk_widget_set_size_request(g_widgets.t_scale_spin, 200, 25);
-  g_signal_connect(G_OBJECT (g_widgets.t_scale_spin), "changed",
+  gtk_widget_set_sensitive(g_widgets.t_scale_spin, false);
+  g_signal_connect(G_OBJECT (g_widgets.t_scale_spin), "value-changed",
     G_CALLBACK (time_scale_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.t_scale_box), g_widgets.t_scale_spin,
     false, false, 0);
@@ -228,6 +259,7 @@ void activate(GtkApplication *app, gpointer ptr) {
   g_widgets.warp_time_spin =
     gtk_spin_button_new(g_widgets.warp_time_adjustment, 0.0, 1);
   gtk_widget_set_size_request(g_widgets.warp_time_spin, 200, 25);
+  gtk_widget_set_sensitive(g_widgets.warp_time_spin, false);
   g_signal_connect(G_OBJECT (g_widgets.warp_time_spin), "changed",
     G_CALLBACK (warp_time_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.warp_time_box), g_widgets.warp_time_spin,
@@ -247,6 +279,7 @@ void activate(GtkApplication *app, gpointer ptr) {
   g_widgets.octave_spin =
     gtk_spin_button_new(g_widgets.octave_adjustment, 0.0, 1);
   gtk_widget_set_size_request(g_widgets.octave_spin, 200, 25);
+  gtk_widget_set_sensitive(g_widgets.octave_spin, false);
   g_signal_connect(G_OBJECT (g_widgets.octave_spin), "changed",
     G_CALLBACK (song_octave_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.octave_box), g_widgets.octave_spin,
@@ -272,6 +305,7 @@ void activate(GtkApplication *app, gpointer ptr) {
     NULL, "Brass band");
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT (g_widgets.combo_box_text),
     NULL, "Helicopter");
+  gtk_widget_set_sensitive(g_widgets.combo_box_text, false);
   g_signal_connect(G_OBJECT (g_widgets.combo_box_text), "changed",
     G_CALLBACK (instrument_map_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.instrument_box), g_widgets.combo_box_text,
@@ -293,6 +327,7 @@ void activate(GtkApplication *app, gpointer ptr) {
     NULL, NULL);
   gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT (g_widgets.combo_box_2_text),
     NULL, "Lower");
+  gtk_widget_set_sensitive(g_widgets.combo_box_2_text, false);
   g_signal_connect(G_OBJECT (g_widgets.combo_box_2_text), "changed",
     G_CALLBACK (note_map_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.notes_box), g_widgets.combo_box_2_text,
@@ -307,12 +342,14 @@ void activate(GtkApplication *app, gpointer ptr) {
     false, false, 0);
   g_widgets.remove_song_btn = gtk_button_new_with_label("Remove Song");
   gtk_widget_set_size_request(g_widgets.remove_song_btn, 200, 30);
+  gtk_widget_set_sensitive(g_widgets.remove_song_btn, false);
   g_signal_connect(G_OBJECT (g_widgets.remove_song_btn), "clicked",
     G_CALLBACK (remove_song_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.right_lower_box),
     g_widgets.remove_song_btn, false, false, 0);
   g_widgets.save_song_btn = gtk_button_new_with_label("Save Song");
   gtk_widget_set_size_request(g_widgets.save_song_btn, 200, 30);
+  gtk_widget_set_sensitive(g_widgets.save_song_btn, false);
   g_signal_connect(G_OBJECT (g_widgets.save_song_btn), "clicked",
     G_CALLBACK (save_song_cb), NULL);
   gtk_box_pack_end(GTK_BOX (g_widgets.right_lower_box),
@@ -369,16 +406,43 @@ void load_songs_cb(GtkButton *button, gpointer ptr) {
 
 void song_selected_cb(GtkListBox *list_box, GtkListBoxRow *row) {
   g_print("hellooo\n");
-
+  update_info();
 } /* song_selected_cb() */
 
-void search_bar_cb(GtkSearchBar *search_bar, gpointer ptr) {
-  g_print("damn i gotta implement this F\n");
+void filter_search(GtkWidget *search_entry, gpointer search_bar) {
+  const gchar *match_this = gtk_entry_get_text(GTK_ENTRY (search_entry));
+  g_print("%s\n", match_this);
+  /*gint length_of_search = strlen(match_this);*/
+  // if row does not contain for first n, invalidate
+  /*Gtk
+  if (strncmp(match_this, */
+} /* filter_search() */
 
+void find_matches(gpointer data, gpointer search_entry) {
+  const gchar *match_this = gtk_entry_get_text(GTK_ENTRY (search_entry));
+  GList *children = (GList *)(data);
+  gpointer ptr = g_list_nth_data(children, 0);
+  gchar *song_name = (gchar *)(ptr);
+  g_print("song name %s\n", song_name);
+  g_print("%s\n", match_this);
+  g_free(song_name);
+} /* find_matches() */
+
+void search_bar_cb(GtkSearchBar *search_entry, gpointer search_bar) {
+  GList *children =
+    gtk_container_get_children(GTK_CONTAINER (g_widgets.song_list));
+  g_print("children\n");
+  g_list_foreach(children, find_matches, search_entry);
+  /*GtkListBoxRow *row = NULL;
+  while ((row =
+         gtk_list_box_get_row_at_index(GTK_LIST_BOX (g_widgets.song_list), 0))
+         != NULL) {
+    filter_search(GTK_WIDGET (search_entry), search_bar);
+  }*/
 } /* search_bar_cb() */
 
 void time_scale_cb(GtkSpinButton *button, gpointer ptr) {
-
+  g_print("time scale callback\n");
 } /* time_scale_cb() */
 
 gboolean draw_cb(GtkDrawingArea *drawing_area, cairo_t *cairo, gpointer ptr) {
