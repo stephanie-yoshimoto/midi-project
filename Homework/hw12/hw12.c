@@ -8,6 +8,10 @@
 #include <malloc.h>
 #include <string.h>
 
+#define LESS (-1)
+#define GREATER (1)
+#define EQUAL (0)
+
 /*
  * Creates a CPU node, sets values according to parameters.
  */
@@ -57,13 +61,13 @@ int compare_cpu_data(void *data_1, void *data_2) {
   cpu_t *cpu_2 = (cpu_t *)(data_2);
   int speed_2 = cpu_2->speed * cpu_2->cores;
   if (speed_1 < speed_2) {
-    return -1;
+    return LESS;
   }
   else if (speed_1 > speed_2) {
-    return 1;
+    return GREATER;
   }
   else {
-    return 0;
+    return EQUAL;
   }
 } /* compare_cpu_data() */
 
@@ -118,21 +122,21 @@ int compare_memory_data(void *data_1, void *data_2) {
   memory_t *memory_2 = (memory_t *)(data_2);
   int model_cmp = strcmp(memory_1->model, memory_2->model);
   if (model_cmp > 0) {
-    return 1;
+    return GREATER;
   }
   else if (model_cmp < 0) {
-    return -1;
+    return LESS;
   }
   int manufacturer_cmp = strcmp(memory_1->manufacturer,
                                 memory_2->manufacturer);
   if (manufacturer_cmp > 0) {
-    return 1;
+    return GREATER;
   }
   else if (manufacturer_cmp < 0) {
-    return -1;
+    return LESS;
   }
   else {
-    return 0;
+    return EQUAL;
   }
 } /* compare_memory_data() */
 
@@ -160,12 +164,12 @@ void create_node(struct node **node, void *data_structure,
  * Frees all memory associated with node with callback function.
  */
 
-void delete_node(struct node **root) {
-  assert((root) && (*root) && ((*root)->left == NULL) &&
-         ((*root)->right == NULL));
-  (*root)->delete(&(*root)->data);
-  free(*root);
-  *root = NULL;
+void delete_node(struct node **node) {
+  assert((node) && (*node) && ((*node)->left == NULL) &&
+         ((*node)->right == NULL));
+  (*node)->delete(&(*node)->data);
+  free(*node);
+  *node = NULL;
 } /* delete_node() */
 
 /*
@@ -261,7 +265,6 @@ void populate_array(struct node *root, void *data_structure,
 struct node **find_nodes(struct node *root, void *data_structure,
                          int *num_duplicates) {
   assert((root) && (data_structure) && (num_duplicates));
-  struct node *root_copy = root;
   *num_duplicates = 1;
   search_tree(root, data_structure, num_duplicates);
   (*num_duplicates)--;
@@ -275,7 +278,7 @@ struct node **find_nodes(struct node *root, void *data_structure,
   for (int i = 0; i < *num_duplicates; i++) {
     array_of_dups[i] = NULL;
   }
-  populate_array(root_copy, data_structure, array_of_dups, *num_duplicates);
+  populate_array(root, data_structure, array_of_dups, *num_duplicates);
   return array_of_dups;
 } /* find_nodes() */
 
@@ -288,10 +291,7 @@ struct node *find_parent_node(struct node **root, struct node *node) {
     return NULL;
   }
 
-  if ((*root)->left == node) {
-    return *root;
-  }
-  else if ((*root)->right == node) {
+  if (((*root)->left == node) || ((*root)->right == node)) {
     return *root;
   }
   else {
@@ -306,8 +306,8 @@ struct node *find_parent_node(struct node **root, struct node *node) {
         return find_parent_node(&(*root)->right, node);
       }
     }
+    return NULL;
   }
-  return NULL;
 } /* find_parent_node() */
 
 /*
@@ -320,6 +320,8 @@ void remove_node(struct node **root, struct node *node) {
     return;
   }
 
+  /* node to delete is the root node in tree */
+
   if (node == *root) {
     struct node *remove = *root;
     if (!(*root)->left) {
@@ -329,9 +331,8 @@ void remove_node(struct node **root, struct node *node) {
       *root = (*root)->left;
     }
     else {
-      struct node *right_branch = node->right;
       *root = (*root)->left;
-      struct node *to_delete = node;
+      struct node *right_branch = node->right;
       node = *root;
       while (node) {
         if (!node->right) {
@@ -340,7 +341,6 @@ void remove_node(struct node **root, struct node *node) {
         node = node->right;
       }
       node->right = right_branch;
-      node = to_delete;
     }
     remove->left = NULL;
     remove->right = NULL;
