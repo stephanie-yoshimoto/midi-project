@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <malloc.h>
-#include <malloc_debug.h>
 #include <string.h>
 
 /*
@@ -164,11 +163,14 @@ void create_node(struct node **node, void *data_structure,
 void delete_node(struct node **root) {
   assert((root) && (*root) && ((*root)->left == NULL) &&
          ((*root)->right == NULL));
-  void (*delete)(void **root) = (*root)->delete;
-  delete(&(*root)->data);
+  (*root)->delete(&(*root)->data);
   free(*root);
   *root = NULL;
 } /* delete_node() */
+
+/*
+ * Inserts node into tree, using compare functions to make comparisons.
+ */
 
 void insert_node(struct node **root, struct node *new_node) {
   assert((root) && (new_node));
@@ -194,6 +196,10 @@ void insert_node(struct node **root, struct node *new_node) {
   }
 } /* insert_node() */
 
+/*
+ * Searches tree for duplicates matching data structure.
+ */
+
 void search_tree(struct node *root, void *data_structure, int *num_duplicates) {
   if (!root) {
     return;
@@ -215,6 +221,10 @@ void search_tree(struct node *root, void *data_structure, int *num_duplicates) {
     search_tree(root->right, data_structure, num_duplicates);
   }
 } /* search_tree() */
+
+/*
+ * Second tree traversal to fill array elements with duplicates.
+ */
 
 void populate_array(struct node *root, void *data_structure,
                     struct node **array_of_dups, int length) {
@@ -244,6 +254,10 @@ void populate_array(struct node *root, void *data_structure,
   }
 } /* populate_array() */
 
+/*
+ * Finds nodes in tree that have same data, returns as an array of pointers.
+ */
+
 struct node **find_nodes(struct node *root, void *data_structure,
                          int *num_duplicates) {
   assert((root) && (data_structure) && (num_duplicates));
@@ -264,6 +278,10 @@ struct node **find_nodes(struct node *root, void *data_structure,
   populate_array(root_copy, data_structure, array_of_dups, *num_duplicates);
   return array_of_dups;
 } /* find_nodes() */
+
+/*
+ * Finds parent node of node to be removed.
+ */
 
 struct node *find_parent_node(struct node **root, struct node *node) {
   if (!*root) {
@@ -292,22 +310,16 @@ struct node *find_parent_node(struct node **root, struct node *node) {
   return NULL;
 } /* find_parent_node() */
 
-void printInorder(struct node** node)
-{
-     if (*node == NULL)
-          return;
-
-     printInorder(&(*node)->left);
-     printf("%p\n", *node);
-     printInorder(&(*node)->right);
-}
+/*
+ * Removes node from tree, frees memory associated with node.
+ */
 
 void remove_node(struct node **root, struct node *node) {
   assert((root) && (node));
   if (!*root) {
     return;
   }
-printf("anotha one\n");
+
   if (node == *root) {
     struct node *remove = *root;
     if (!(*root)->left) {
@@ -336,58 +348,55 @@ printf("anotha one\n");
     return;
   }
 
-  printInorder(root);
   struct node *found_node = find_parent_node(root, node);
-  *root = found_node;
   if (found_node->left == node) {
-    printf("left\n");
-    struct node *right_branch = node->right;
-    if (node->left) {
+    if (!node->left) {
+      found_node->left = node->right;
+    }
+    else if (!node->right) {
       found_node->left = node->left;
-      if (right_branch) {
-        struct node *temp = found_node->left;
-        while (temp) {
-          if (!temp->right) {
-            break;
-          }
-          temp = temp->right;
-        }
-        temp->right = right_branch;
-      }
     }
     else {
-      found_node->right = right_branch;
+      found_node->left = node->left;
+      struct node *temp = found_node->left;
+      while (temp) {
+        if (!temp->right) {
+          break;
+        }
+        temp = temp->right;
+      }
+      temp->right = node->right;
     }
   }
   else {
     /* found node's right child is node to delete */
 
-    printf("right\n");
-    struct node *left_branch = node->left;
-    if (node->right) {
+    if (!node->left) {
       found_node->right = node->right;
-      if (left_branch) {
-        struct node *temp = found_node->right;
-        while (temp) {
-          if (!temp->left) {
-            break;
-          }
-          temp = temp->left;
-        }
-        temp->left = left_branch;
-      }
+    }
+    else if (!node->right) {
+      found_node->right = node->left;
     }
     else {
-      found_node->left = left_branch;
+      found_node->right = node->left;
+      struct node *temp = found_node->right;
+      while (temp) {
+        if (!temp->right) {
+          break;
+        }
+        temp = temp->right;
+      }
+      temp->right = node->right;
     }
   }
   node->left = NULL;
   node->right = NULL;
-  found_node = node;
-  found_node->right = NULL;
-  delete_node(&found_node);
-  printInorder(root);
+  delete_node(&node);
 } /* remove_node() */
+
+/*
+ * Deletes entire tree using recursion and delete node function.
+ */
 
 void delete_tree(struct node **root) {
   assert(root);
