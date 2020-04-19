@@ -11,6 +11,7 @@
 #define LESS (-1)
 #define GREATER (1)
 #define EQUAL (0)
+#define NO_MATCHES (0)
 
 /*
  * Creates a CPU node, sets values according to parameters.
@@ -268,7 +269,7 @@ struct node **find_nodes(struct node *root, void *data_structure,
   *num_duplicates = 1;
   search_tree(root, data_structure, num_duplicates);
   (*num_duplicates)--;
-  if (*num_duplicates == 0) {
+  if (*num_duplicates == NO_MATCHES) {
     return NULL;
   }
 
