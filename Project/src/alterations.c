@@ -19,12 +19,12 @@
 int change_event_octave(event_t *event, int *num_octaves) {
   uint8_t type = event_type(event);
   if ((type == MIDI_EVENT_T) && (event->midi_event.status >= 0x80) &&
-      (event->midi_event.status < 0xB0)) {
+      (event->midi_event.status <= 0xAF)) {
     /* note on/off or polyphonic key event */
 
-    uint8_t oct_inc = event->midi_event.data[0] + (OCTAVE_STEP * *num_octaves);
+    int oct_inc = event->midi_event.data[0] + (OCTAVE_STEP * *num_octaves);
     if ((oct_inc >= 0) && (oct_inc <= 127)) {
-      event->midi_event.data[0] = oct_inc;
+      event->midi_event.data[0] = (uint8_t) oct_inc;
       return MODIFIED;
     }
   }
@@ -164,7 +164,10 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
   uint8_t smallest_channel_no = 0x10;
   uint8_t channel_arr[0x10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   while (track_list) {
-    if (track_list->track) {
+    if (!track_list->next_track) {
+      break;
+    }
+    else if (track_list->track) {
       event_node_t *event_list = track_list->track->event_list;
       while (event_list) {
         if ((event_type(event_list->event) == MIDI_EVENT_T) &&
@@ -252,7 +255,7 @@ void build_mapping_tables()
     I_HELICOPTER[i] = 125;
   }
 
-  for (int i = 0; i <= 0xFF; i++) {
+  /*for (int i = 0; i <= 0xFF; i++) {
     I_CHOIR[i] = 53;
   }
 
@@ -266,7 +269,7 @@ void build_mapping_tables()
 
   for (int i = 0; i <= 0xFF; i++) {
     I_SEASHORE[i] = 122;
-  }
+  }*/
 
   for (int i = 0; i <= 0xFF; i++) {
     N_LOWER[i] = i;
