@@ -165,6 +165,8 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
   uint8_t channel_arr[0x10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   while (track_list) {
     if (!track_list->next_track) {
+      /* don't account for track that was just added */
+
       break;
     }
     else if (track_list->track) {
@@ -196,6 +198,7 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
   for (int i = 0; i < 0x10; i++) {
     if (channel_arr[i] == 0) {
       smallest_channel_no = i;
+      break;
     }
   }
 
@@ -229,6 +232,7 @@ void add_round(song_data_t *song, int track_index, int octave_diff,
         new_status &= 0xF0;
         new_status |= smallest_channel_no;
         temp_events->event->midi_event.status = new_status;
+        temp_events->event->type = new_status;
       }
 
       temp_events = temp_events->next_event;
