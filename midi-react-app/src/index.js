@@ -15,6 +15,10 @@ class Layout extends React.Component {
         selectedIndex: -1,
     }
 
+    getSelectedSong() {
+        return this.state.selectedSong
+    }
+
     updateSearch(e) {
         this.setState({search: e.target.value});
     }
@@ -35,11 +39,11 @@ class Layout extends React.Component {
         return (
             <div>
                 <h1 style={{textAlign: `center`}}>MIDI Library</h1>
-                <form className={'top-block'}>
-                    <form className={'buttons-dropdown'}>
+                <div className={'top-block'}>
+                    <div className={'buttons-dropdown'}>
                         <FileDialogue/>
-                    </form>
-                    <form className={'list'}>
+                    </div>
+                    <div className={'list'}>
                         <input type={'text'}
                                value={this.state.search}
                                placeholder={'Search Songs'}
@@ -54,13 +58,12 @@ class Layout extends React.Component {
                                 <ListItemText primary={'bohemianrhapsody.mid'}/>
                             </ListItem>
                         </List>
-                    </form>
-                </form>
-                <form className={'sliders-form'}>
-                    <Sliders/>
-                </form>
+                    </div>
+                </div>
+                <div className={'sliders-div'}>
+                    <Sliders />
+                </div>
             </div>
-
         );
     }
 }
@@ -77,3 +80,5 @@ ReactDOM.render(
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
 // serviceWorker.unregister();
+
+export default Layout;

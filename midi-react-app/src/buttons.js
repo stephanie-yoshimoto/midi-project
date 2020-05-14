@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import './index.css';
+import './buttons.css';
 import Dropdown from "react-dropdown";
 import { FilePicker } from 'react-file-picker';
+import Layout from './index.js';
 
 const Button = styled.button`
     font-family: sans-serif;
@@ -265,6 +266,10 @@ function buildDirectorySelector() {
 function doNothing() {}
 
 export default class FileDialogue extends React.Component {
+    state = {
+        selectedSong: '',
+    }
+
     componentDidMount() {
         this.fileSelector = buildFileSelector();
         this.directorySelector = buildDirectorySelector();
@@ -292,6 +297,14 @@ export default class FileDialogue extends React.Component {
         // insert api to access c data
     };
 
+    removeSong = () => {
+        const songToRemove = Layout.getSelectedSong
+        console.log(songToRemove)
+        // search list for list item with correactrect list text
+        // get selected list item from list
+        // remove selected song from list
+    }
+
     render() {
         return (
             <div>
@@ -311,7 +324,7 @@ export default class FileDialogue extends React.Component {
                 </script>
                 <Button onClick={this.handleDirectorySelect}>Choose Directory</Button>
                 <Button onClick={doNothing}>Update Song</Button>
-                <Button onClick={doNothing}>Remove Song</Button>
+                <Button onClick={this.removeSong}>Remove Song</Button>
                 <br/><br/><br/><br/>
                 <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
                           placeholder={'Change instrument'} className={'dropdown'}/>

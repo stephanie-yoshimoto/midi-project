@@ -1,0 +1,53 @@
+form {
+    font-family: sans-serif;
+    font-size: 1.3rem;
+    width: 13rem;
+    display: inline-block;
+    padding: 7px 7px;
+    border: 2px solid #3090c0;
+    border-radius: 5px;
+    margin: 1em;
+}
+
+.directory-button label, .directory-button button {
+    color: #3090c0;
+    padding: 7px 7px;
+    font-size: 0.8rem;
+}
+
+.directory-button label:hover, .directory-button button:hover {
+    transform: scale(1.1);
+    background-color: #2D5BA3;
+    color: white;
+}
+
+.buttons-dropdown {
+    width: 21rem;
+    display: inline-flex;
+    border: none;
+    padding: 7px 7px;
+    margin: 1em;
+}
+
+.dropdown {
+    font-family: sans-serif;
+    font-size: 1rem;
+    border: 2px solid #60a8d8;
+    border-radius: 5px;
+    margin: 1em;
+    display: inline-block;
+    width: 14rem;
+}
+
+input[type=text] {
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 1rem;
+    text-align: start;
+    display: flex;
+    min-width: 39rem;
+    min-height: 2rem;
+    outline: transparent;
+    border: 2px solid #60a8d8;
+    border-radius: 100px;
+    padding: 10px;
+}
