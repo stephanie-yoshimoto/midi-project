@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import './index.css';
 import Dropdown from "react-dropdown";
+import { FilePicker } from 'react-file-picker';
 
 const Button = styled.button`
     font-family: sans-serif;
@@ -269,9 +270,13 @@ export default class FileDialogue extends React.Component {
         this.directorySelector = buildDirectorySelector();
     }
 
-    handleFileSelect = (e) => {
-        e.preventDefault();
-        this.fileSelector.click();
+    // handleFileSelect = (e) => {
+    //     e.preventDefault();
+    //     let fileSelector = this.fileSelector.click();
+    // }
+
+    handleFileSelect() {
+        console.log('file selected');
     }
 
     handleDirectorySelect = (e) => {
@@ -290,7 +295,14 @@ export default class FileDialogue extends React.Component {
     render() {
         return (
             <div>
-                <Button onClick={this.handleFileSelect}>Choose File</Button>
+                {/*<Button onClick={this.handleFileSelect}>Choose File</Button>*/}
+                <FilePicker
+                    extensions={'.mid'}
+                    onChange={this.handleFileSelect}
+                    onError={errMsg => console.log(errMsg)}
+                >
+                    <Button>Choose File</Button>
+                </FilePicker>
                 <form className={'directory-button'}>
                     <label htmlFor={'directory-uploads'}>Choose Directory</label>
                     <input directory={''} webkitdirectory={''} type={'file'} id={'directory'} multiple/>
