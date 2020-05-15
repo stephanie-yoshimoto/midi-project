@@ -15,16 +15,21 @@ class Layout extends React.Component {
         selectedIndex: -1,
     }
 
-    getSelectedSong() {
-        return this.state.selectedSong
+    getSelectedIndex() {
+        return this.state.selectedIndex;
     }
 
-    updateSearch(e) {
-        this.setState({search: e.target.value});
+    updateSearch = (e) => {
+        this.setState({ search: e.target.value });
     }
 
-    updateSelectedSong = (e, index) => {
-        this.setState({selectedIndex: index});
+    async changeState(e, index) {
+        await this.setState({ selectedSong: e.target.innerText });
+        await this.setState({ selectedIndex: index });
+    }
+
+    selectSong = async (e, index) => {
+        this.changeState(e, index);
         document.getElementById('list-item-' + index).style.backgroundColor = '#78a8c0';
         for (let i = 0; i < index && document.getElementById('list-item-' + i) !== null; i++) {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
@@ -32,7 +37,6 @@ class Layout extends React.Component {
         for (let i = index + 1; document.getElementById('list-item-' + i) !== null; i++) {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
-        // update selected song by using index
     }
 
     render() {
@@ -47,13 +51,13 @@ class Layout extends React.Component {
                         <input type={'text'}
                                value={this.state.search}
                                placeholder={'Search Songs'}
-                               onChange={this.updateSearch.bind(this)}/>
+                               onChange={this.updateSearch}/>
                         <List components={'nav'} aria-label={'song-list'}>
-                            <ListItem button component={'a'} onClick={(e) => this.updateSelectedSong(e, 0)}
+                            <ListItem button component={'a'} onClick={(e) => this.selectSong(e, 0)}
                                       id={'list-item-0'} className={'list-item'}>
                                 <ListItemText primary={'prelude.mid'}/>
                             </ListItem>
-                            <ListItem button component={'a'} onClick={(e) => this.updateSelectedSong(e, 1)}
+                            <ListItem button component={'a'} onClick={(e) => this.selectSong(e, 1)}
                                       id={'list-item-1'} className={'list-item'}>
                                 <ListItemText primary={'bohemianrhapsody.mid'}/>
                             </ListItem>

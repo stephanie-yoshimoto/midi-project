@@ -5,7 +5,7 @@ export default class Sliders extends React.Component {
     state = {
         timeScale: 0,
         warpTime: 0.0,
-        octave: -5,
+        octave: 0,
     }
 
     handleTimeScale = (e) => {

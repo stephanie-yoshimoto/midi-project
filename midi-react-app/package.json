@@ -18,6 +18,7 @@
     "react-dom": "^16.13.1",
     "react-dropdown": "^1.7.0",
     "react-file-picker": "0.0.6",
+    "react-notifications": "^1.6.0",
     "react-scripts": "3.4.1",
     "styled-components": "^5.1.0"
   },
@@ -44,6 +45,8 @@
   },
   "devDependencies": {
     "electron": "^8.2.5",
+    "react-notifications-component": "^2.4.0",
+    "react-toastify": "^6.0.4",
     "reactstrap": "^8.4.1"
   }
 }

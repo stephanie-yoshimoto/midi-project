@@ -2,8 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import './buttons.css';
 import Dropdown from "react-dropdown";
-import { FilePicker } from 'react-file-picker';
 import Layout from './index.js';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Button = styled.button`
     font-family: sans-serif;
@@ -12,7 +13,9 @@ const Button = styled.button`
     border-radius: 5px;
     padding: 7px 7px;
     display: block;
-    margin: 1em;
+    margin: 0em;
+    margin-left: 0.5em;
+    margin-top: 1em;
     text-align: center;
     width: 14rem;
     color: #3090c0;
@@ -263,30 +266,36 @@ function buildDirectorySelector() {
     return directorySelector;
 }
 
-function doNothing() {}
-
 export default class FileDialogue extends React.Component {
-    state = {
-        selectedSong: '',
+    constructor(props) {
+        super(props);
+        this.handleFileSelect = React.createRef();
     }
 
-    componentDidMount() {
-        this.fileSelector = buildFileSelector();
-        this.directorySelector = buildDirectorySelector();
+    state = {
+        selectedIndex: -1,
     }
+
+    // componentDidMount() {
+    //     this.fileSelector = buildFileSelector();
+    //     this.directorySelector = buildDirectorySelector();
+    // }
 
     // handleFileSelect = (e) => {
     //     e.preventDefault();
     //     let fileSelector = this.fileSelector.click();
     // }
 
-    handleFileSelect() {
+    handleFileSelect = () => {
+        // e.preventDefault();
         console.log('file selected');
+        const selectedFile = document.getElementById('file-upload').files[0];
+        console.log(selectedFile);
     }
 
     handleDirectorySelect = (e) => {
-        e.preventDefault();
-        this.directorySelector.click();
+        // e.preventDefault();
+        // this.directorySelector.click();
     }
 
     handleInstrumentChange = () => {
@@ -297,39 +306,44 @@ export default class FileDialogue extends React.Component {
         // insert api to access c data
     };
 
-    removeSong = () => {
-        const songToRemove = Layout.getSelectedSong
-        console.log(songToRemove)
-        // search list for list item with correactrect list text
-        // get selected list item from list
-        // remove selected song from list
+    updateSong = () => {
+        // read all sliders, changed instruments, rewrite info to midi file
+        toast.configure();
+        toast('Song updated!', {position: toast.POSITION.TOP_RIGHT, autoClose: false})
+    }
+
+    async setIndex(index) {
+        await this.setState({ selectedIndex: index });
+    }
+
+    removeSong = async () => {
+        this.setIndex(Layout.getSelectedIndex());
+        console.log(this.state.selectedIndex);
+        // document.getElementById('list-item-0').remove();
+        // change indices of other items in list
     }
 
     render() {
         return (
             <div>
-                {/*<Button onClick={this.handleFileSelect}>Choose File</Button>*/}
-                <FilePicker
-                    extensions={'.mid'}
-                    onChange={this.handleFileSelect}
-                    onError={errMsg => console.log(errMsg)}
-                >
-                    <Button>Choose File</Button>
-                </FilePicker>
-                <form className={'directory-button'}>
-                    <label htmlFor={'directory-uploads'}>Choose Directory</label>
-                    <input directory={''} webkitdirectory={''} type={'file'} id={'directory'} multiple/>
+                <form className={'file-form'}>
+                    <label htmlFor={'file-upload'} className={'custom-file-upload'}>Choose File</label>
+                    <input id={'file-upload'} type={'file'} ref={this.handleFileSelect} multiple/>
+                </form>
+                <form className={'file-form'}>
+                    <label htmlFor={'directory-uploads'} className={'custom-file-upload'}>Choose Directory</label>
+                    <input directory={''} webkitdirectory={''} type={'file'} id={'directory'}
+                           ref={this.handleDirectorySelect} multiple/>
                 </form>
                 <script>
                 </script>
-                <Button onClick={this.handleDirectorySelect}>Choose Directory</Button>
-                <Button onClick={doNothing}>Update Song</Button>
+                <Button onClick={this.updateSong}>Update Song</Button>
                 <Button onClick={this.removeSong}>Remove Song</Button>
-                <br/><br/><br/><br/>
+                <br/><br/><br/><br/><br/><br/><br/><br/><br/>
                 <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
-                          placeholder={'Change instrument'} className={'dropdown'}/>
+                          placeholder={'Remap instruments'} className={'dropdown'}/>
                 <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                          placeholder={'Change octave'} className={'dropdown'}/>
+                          placeholder={'Remap notes'} className={'dropdown'}/>
             </div>
         );
     }
