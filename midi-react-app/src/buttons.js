@@ -250,57 +250,45 @@ const notes = [
     },
 ];
 
-function buildFileSelector() {
-    const fileSelector = document.createElement('input');
-    fileSelector.setAttribute('type', 'file');
-    fileSelector.setAttribute('multiple', 'multiple');
-    return fileSelector;
-}
-
-function buildDirectorySelector() {
-    const directorySelector = document.createElement('input');
-    directorySelector.setAttribute('directory', '');
-    directorySelector.setAttribute('webkit-directory', '');
-    directorySelector.setAttribute('type', 'file');
-    directorySelector.setAttribute('id', 'directory');
-    return directorySelector;
-}
-
 export default class FileDialogue extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleFileSelect = React.createRef();
-    }
-
     state = {
+        selectedInstrument: 'Remap instruments',
+        selectedNote: 'Remap notes',
         selectedIndex: -1,
     }
 
-    // componentDidMount() {
-    //     this.fileSelector = buildFileSelector();
-    //     this.directorySelector = buildDirectorySelector();
-    // }
-
-    // handleFileSelect = (e) => {
-    //     e.preventDefault();
-    //     let fileSelector = this.fileSelector.click();
-    // }
-
     handleFileSelect = () => {
-        // e.preventDefault();
-        console.log('file selected');
         const selectedFile = document.getElementById('file-upload').files[0];
-        console.log(selectedFile);
+        const reader = new FileReader();
+        reader.readAsBinaryString(selectedFile);
+        reader.onload = () => {
+            console.log(reader.result);
+        }
+        // modify parseFile to parse a giant binary string
     }
 
-    handleDirectorySelect = (e) => {
-        // e.preventDefault();
-        // this.directorySelector.click();
+    handleDirectorySelect = () => {
+        const directory = document.getElementById('directory-upload').files;
+        for (let i = 0; i < directory.length; i++) {
+            const currFile = directory[i];
+            const reader = new FileReader();
+            reader.readAsBinaryString(currFile);
+            reader.onload = () => {
+                console.log(reader.result);
+            }
+            // send to parseFile (or make library really to build the directory)
+        }
     }
 
-    handleInstrumentChange = () => {
+    async setInstrument(instrument) {
+        await this.setState({ selectedInstrument: instrument });
+    }
+
+    handleInstrumentChange = async (e) => {
+        this.setInstrument(e.value);
+        console.log(e.value);
         // insert api to access c data
-    };
+    }
 
     handleNoteChange = () => {
         // insert api to access c data
@@ -317,10 +305,14 @@ export default class FileDialogue extends React.Component {
     }
 
     removeSong = async () => {
-        this.setIndex(Layout.getSelectedIndex());
-        console.log(this.state.selectedIndex);
+        // this.setIndex(Layout.getSelectedIndex());
+        // console.log(this.state.selectedIndex);
         // document.getElementById('list-item-0').remove();
         // change indices of other items in list
+
+        const index = Layout.state.selectedIndex;
+        this.setState({ selectedIndex: index });
+        console.log(index);
     }
 
     render() {
@@ -328,22 +320,29 @@ export default class FileDialogue extends React.Component {
             <div>
                 <form className={'file-form'}>
                     <label htmlFor={'file-upload'} className={'custom-file-upload'}>Choose File</label>
-                    <input id={'file-upload'} type={'file'} ref={this.handleFileSelect} multiple/>
+                    <input id={'file-upload'} type={'file'} accept={'.mid'}
+                           onChange={(e) => {
+                               this.handleFileSelect()
+                               e.target.value = null
+                           }} multiple/>
                 </form>
                 <form className={'file-form'}>
                     <label htmlFor={'directory-uploads'} className={'custom-file-upload'}>Choose Directory</label>
-                    <input directory={''} webkitdirectory={''} type={'file'} id={'directory'}
-                           ref={this.handleDirectorySelect} multiple/>
+                    <input directory={''} webkitdirectory={''} type={'file'} id={'directory-upload'}
+                           onChange={(e) => {
+                               this.handleDirectorySelect()
+                               e.target.value = null
+                           }} multiple/>
                 </form>
                 <script>
                 </script>
                 <Button onClick={this.updateSong}>Update Song</Button>
                 <Button onClick={this.removeSong}>Remove Song</Button>
                 <br/><br/><br/><br/><br/><br/><br/><br/><br/>
-                <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
-                          placeholder={'Remap instruments'} className={'dropdown'}/>
-                <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                          placeholder={'Remap notes'} className={'dropdown'}/>
+                <Dropdown options={instruments} onChange={this.handleInstrumentChange}
+                          value={this.state.selectedInstrument} className={'dropdown'}/>
+                <Dropdown options={notes} onChange={this.handleNoteChange}
+                          value={this.state.selectedNote} className={'dropdown'}/>
             </div>
         );
     }
