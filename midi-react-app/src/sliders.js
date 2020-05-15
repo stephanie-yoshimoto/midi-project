@@ -2,10 +2,13 @@ import React from 'react';
 import './sliders.css'
 
 export default class Sliders extends React.Component {
-    state = {
-        timeScale: 0,
-        warpTime: 0.0,
-        octave: 0,
+    constructor(props) {
+        super(props);
+        this.state = {
+            timeScale: 0,
+            warpTime: 0.0,
+            octave: 0,
+        }
     }
 
     handleTimeScale = (e) => {

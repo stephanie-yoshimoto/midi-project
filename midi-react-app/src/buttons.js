@@ -1,8 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import './buttons.css';
-import Dropdown from "react-dropdown";
-import Layout from './index.js';
+import Dropdown from 'react-dropdown';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -251,10 +250,13 @@ const notes = [
 ];
 
 export default class FileDialogue extends React.Component {
-    state = {
-        selectedInstrument: 'Remap instruments',
-        selectedNote: 'Remap notes',
-        selectedIndex: -1,
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedInstrument: 'Remap instruments',
+            selectedNote: 'Remap notes',
+            selectedIndex: -1,
+        }
     }
 
     handleFileSelect = () => {
@@ -285,8 +287,13 @@ export default class FileDialogue extends React.Component {
     }
 
     handleInstrumentChange = async (e) => {
-        this.setInstrument(e.value);
+        // this.setInstrument(e.value);
+        this.setState({ selectedInstrument: e.value });
+        console.log(this.state.selectedInstrument);
         console.log(e.value);
+        console.log(document.getElementById('drop')); // i think it only works for strict html elements
+        // it won't change to the selected item (still says remap instruments D: )
+
         // insert api to access c data
     }
 
@@ -310,9 +317,10 @@ export default class FileDialogue extends React.Component {
         // document.getElementById('list-item-0').remove();
         // change indices of other items in list
 
-        const index = Layout.state.selectedIndex;
-        this.setState({ selectedIndex: index });
-        console.log(index);
+        // const index = index;
+        // this.setState({ selectedIndex: index });
+        // const child = new Child();
+        // console.log(Child.selectedIndex);
     }
 
     render() {
@@ -339,10 +347,10 @@ export default class FileDialogue extends React.Component {
                 <Button onClick={this.updateSong}>Update Song</Button>
                 <Button onClick={this.removeSong}>Remove Song</Button>
                 <br/><br/><br/><br/><br/><br/><br/><br/><br/>
-                <Dropdown options={instruments} onChange={this.handleInstrumentChange}
-                          value={this.state.selectedInstrument} className={'dropdown'}/>
-                <Dropdown options={notes} onChange={this.handleNoteChange}
-                          value={this.state.selectedNote} className={'dropdown'}/>
+                <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null} id={'drop'}
+                          placeholder={'Remap instruments'} className={'dropdown'}/>
+                <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
+                          placeholder={'Remap notes'} className={'dropdown'}/>
             </div>
         );
     }
