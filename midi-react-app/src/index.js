@@ -4,7 +4,6 @@ import 'react-dropdown/style.css';
 import './index.css';
 import './buttons.css';
 import 'react-toastify/dist/ReactToastify.css';
-// import FileDialogue from './buttons';
 import Sliders from './sliders';
 import {List, ListItem} from '@material-ui/core/';
 import DrawingArea from "./DrawingArea";
@@ -262,14 +261,17 @@ class Layout extends React.Component {
     state = {
         search: '',
         selectedSong: '',
-        selectedInstrument: 'Remap instruments',
-        selectedNote: 'Remap notes',
+        selectedInstrument: 'Select instrument...',
+        selectedNote: 'Select note change...',
         selectedIndex: -1,
-        songs: {
-            0: 'billiejean.mid',
-            1: 'prelude2.mid',
-        },
-        counter: 2,
+        songs: [
+            'billiejean.mid',
+            'prelude2.mid',
+        ],
+        visibleSongs: [
+            'billiejean.mid',
+            'prelude2.mid',
+        ]
     };
 
     handleFileSelect = () => {
@@ -281,43 +283,50 @@ class Layout extends React.Component {
         // }
         // modify parseFile to parse a giant binary string
         let originalList = this.state.songs;
-        originalList[this.state.counter] = selectedFile.name;
-        this.setState({songs: originalList});
-        let newCounter = this.state.counter;
-        newCounter++;
-        this.setState({counter: newCounter});
+        if (originalList.indexOf(selectedFile.name) < 0) {
+            originalList.push(selectedFile.name);
+        } else {
+            alert('ERROR! Song "' + selectedFile.name + '" already exists in list.');
+        }
+        this.setState({ songs: originalList, visibleSongs: originalList });
     }
 
     handleDirectorySelect = () => {
         const directory = document.getElementById('directory-upload').files;
         for (let i = 0; i < directory.length; i++) {
             const currFile = directory[i];
+            if (currFile.name[0] === '.') {
+                // skips hidden files (files with filename starting with .)
+                continue;
+            }
             const reader = new FileReader();
             reader.readAsBinaryString(currFile);
             // reader.onload = () => {
             //     console.log(reader.result);
             // }
             // send to parseFile (or make library really to build the directory)
+            let originalList = this.state.songs;
+            if (originalList.indexOf(currFile.name) < 0) {
+                originalList.push(currFile.name);
+            } else {
+                alert('ERROR! Song "' + currFile.name + '" already exists in list.');
+            }
+            this.setState({ songs: originalList, visibleSongs: originalList });
         }
     }
 
-    async setInstrument(instrument) {
-        await this.setState({ selectedInstrument: instrument });
-    }
-
     handleInstrumentChange = async (e) => {
-        this.setInstrument(e.value);
-        // this.setState({ selectedInstrument: e.value });
-        console.log(this.state.selectedInstrument);
-        console.log(e.value);
-        console.log(document.getElementsByClassName('dropdown')[0]);
-        // it won't change to the selected item (still says remap instruments D: )
-        // run separate test to see if changing title will work with bootstrap'd dropdown
+        const instrument = e.value;
+        this.setState({ selectedInstrument: instrument });
+        for (let i = 0; i < instruments.length; i++) {
 
+        }
         // insert api to access c data
     }
 
-    handleNoteChange = () => {
+    handleNoteChange = async (e) => {
+        const note = e.value;
+        this.setState({ selectedNote: note });
         // insert api to access c data
     };
 
@@ -328,40 +337,26 @@ class Layout extends React.Component {
     }
 
     async updateList(songs) {
-        await this.setState({ songs: songs });
+        await this.setState({ songs: songs, visibleSongs: songs });
     }
 
     removeSong = async () => {
         let index = this.state.selectedIndex;
-        document.getElementById('list-item-' + index).remove();
-
-        // change indices of other items in list
-        let limit = (this.state.counter)--;
         let songsCopy = this.state.songs;
-        console.log(songsCopy);
-        for (let i = index; i <= limit; i++) {
-            songsCopy[index] = songsCopy[++index];
-            index--;
-            if (i >= limit) {
-                songsCopy[limit - 1] = null;
-            }
-        }
-        console.log(songsCopy);
+        songsCopy.splice(index, 1);
         this.updateList(songsCopy);
-
-        // let newCounter = this.state.counter;
-        // newCounter--;
-        // this.setState({ counter: newCounter });
-        console.log(this.state.counter);
     }
 
     updateSearch = (e) => {
         this.setState({ search: e.target.value });
+        let newArray = this.state.songs.filter((d)=>{
+            return d.indexOf(e.target.value) !== -1
+        });
+        this.setState({ visibleSongs: newArray });
     }
 
     async changeState(e, index) {
-        await this.setState({ selectedSong: e.target.innerText });
-        await this.setState({ selectedIndex: index });
+        await this.setState({ selectedSong: e.target.innerText, selectedIndex: index });
     }
 
     selectSong = async (e, index) => {
@@ -402,15 +397,16 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <script>
-                            </script>
                             <Button onClick={this.updateSong}>Update Song</Button>
                             <Button onClick={this.removeSong}>Remove Song</Button>
-                            <br/><br/><br/><br/><br/><br/><br/><br/><br/>
-                            <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={this.state.selectedInstrument}
-                                      id={'drop'} title={this.state.selectedInstrument} className={'dropdown'}/>
+                            <br/><br/><br/><br/><br/>
+                            <label>Remap instruments:</label>
+                            <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
+                                      placeholder={this.state.selectedInstrument} className={'dropdown'}/>
+                            <br/><br/>
+                            <label>Remap notes:</label>
                             <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                                      placeholder={'Remap notes'} className={'dropdown'}/>
+                                      placeholder={this.state.selectedNote} className={'dropdown'} selection/>
                         </div>
                     </div>
                     <div className={'list'}>
@@ -418,15 +414,15 @@ class Layout extends React.Component {
                                value={this.state.search}
                                placeholder={'Search Songs'}
                                onChange={this.updateSearch}/>
-                        <List className={'list-group text-left'}>
-                            {
-                                Object.keys(this.state.songs).map(function(key) {
-                                    return <ListItem button component={'a'} onClick={(e) => this.selectSong(e, key)}
-                                                id={'list-item-' + key} className={'list-item'}>
-                                        {this.state.songs[key]}
-                                    </ListItem>
-                                }.bind(this))
-                            }
+                        <List>
+                            {this.state.visibleSongs.map(song => (
+                                <ListItem button component={'a'} key={song}
+                                          onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
+                                          id={'list-item-' + this.state.visibleSongs.indexOf(song)}
+                                          className={'list-item'}>
+                                    {song}
+                                </ListItem>
+                            ))}
                         </List>
                     </div>
                     <div className={'drawing-div'}>

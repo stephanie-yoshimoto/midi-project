@@ -17,6 +17,12 @@ form {
     margin: 1em;
 }
 
+label {
+    font-family: "PT Serif", serif;
+    font-size: 1.3rem;
+    padding-left: 15px;
+}
+
 .top-block {
     border: none;
     display: inline-flex;
@@ -38,7 +44,7 @@ form {
     font-size: 1.25rem;
     height: 2.25rem;
     max-width: 40rem;
-    border: none;
+    outline: 2px solid #3090c0;
 }
 
 .drawing-div label {
