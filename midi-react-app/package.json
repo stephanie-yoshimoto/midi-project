@@ -11,6 +11,7 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "axios": "^0.19.2",
+    "konva": "^6.0.0",
     "react": "^16.13.1",
     "react-bootstrap": "^1.0.1",
     "react-bootstrap-range-slider": "^0.3.2",
@@ -18,6 +19,7 @@
     "react-dom": "^16.13.1",
     "react-dropdown": "^1.7.0",
     "react-file-picker": "0.0.6",
+    "react-konva": "^16.13.0-3",
     "react-notifications": "^1.6.0",
     "react-scripts": "3.4.1",
     "styled-components": "^5.1.0"
