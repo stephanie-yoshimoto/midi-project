@@ -397,6 +397,8 @@ class Layout extends React.Component {
             // if successful,
             toast.configure();
             toast('Song updated!', {position: toast.POSITION.TOP_RIGHT, autoClose: false});
+        } else {
+            alert('Please select a song.');
         }
     }
 
@@ -410,6 +412,8 @@ class Layout extends React.Component {
             let songsCopy = this.state.songs;
             songsCopy.splice(index, 1);
             this.updateList(songsCopy);
+        } else {
+            alert('Please select a song.');
         }
     }
 
@@ -463,9 +467,11 @@ class Layout extends React.Component {
             <div>
                 <h1 style={{textAlign: `center`}}>MIDI Library</h1>
                 <div className={'top-block'} style={{width: this.state.width, height: this.state.height}}>
-                    <div className={'buttons-dropdown'} style={{width: this.state.width / 4 * .95}}>
+                    <div className={'buttons-dropdown'}
+                         style={{width: this.state.width / 4 * .95, height: this.state.height * .83}}
+                    >
                         <div>
-                            <form style={{width: this.state.width / 4 * .8}}>
+                            <form style={{width: this.state.width / 4 * .85}}>
                                 <label htmlFor={'file-upload'} className={'custom-file-upload'}>Choose File</label>
                                 <input id={'file-upload'} type={'file'} accept={'.mid'}
                                        onChange={(e) => {
@@ -473,7 +479,7 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <form style={{width: this.state.width / 4 * .8}}>
+                            <form style={{width: this.state.width / 4 * .85}}>
                                 <label htmlFor={'directory-upload'} className={'custom-file-upload'}>
                                     Choose Directory
                                 </label>
@@ -483,42 +489,47 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <button onClick={this.removeSong} style={{width: this.state.width / 4 * .8}}>
+                            <button onClick={this.removeSong} style={{width: this.state.width / 4 * .85}}>
                                 Remove Song
                             </button>
-                            <br/><br/><br/>
+                            <br/><br/><br/><br/>
                             <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
                                 Remap instruments:
                             </label>
                             <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
-                                      placeholder={this.state.selectedInstrument} className={'dropdown'}/>
-                            <br/><br/>
+                                      placeholder={this.state.selectedInstrument} className={'dropdown'}
+                                      style={{width: this.state.width / 4 * .85}}/>
+                            <br/>
                             <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
                             <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                                      placeholder={this.state.selectedNote} className={'dropdown'}/>
-                            <button onClick={this.updateSong} style={{width: this.state.width / 4 * .8}}>
+                                      placeholder={this.state.selectedNote} className={'dropdown'}
+                                      style={{width: this.state.width / 4 * .85}}/>
+                            <br/>
+                            <button onClick={this.updateSong} style={{width: this.state.width / 4 * .85}}>
                                 Update Song
                             </button>
                         </div>
                     </div>
-                    <div className={'list'} style={{width: this.state.width / 2 * .9}}>
+                    <div className={'list'} style={{width: this.state.width / 2 * .9, height: this.state.height * .83}}>
                         <input type={'text'}
                                value={this.state.search}
                                placeholder={'Search Songs'}
                                onChange={this.updateSearch}
                                style={{width: (this.state.width / 2) * .87}}/>
                         <List>
-                                {this.state.visibleSongs.map(song => (
-                                    <ListItem button component={'a'} key={song}
-                                              onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
-                                              id={'list-item-' + this.state.visibleSongs.indexOf(song)}
-                                              className={'list-item'} style={{width: this.state.width / 2 * .9}}>
-                                        {song}
-                                    </ListItem>
-                                ))}
-                            </List>
+                            {this.state.visibleSongs.map(song => (
+                                <ListItem button component={'a'} key={song}
+                                          onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
+                                          id={'list-item-' + this.state.visibleSongs.indexOf(song)}
+                                          className={'list-item'} style={{width: this.state.width / 2 * .9}}>
+                                    {song}
+                                </ListItem>
+                            ))}
+                        </List>
                     </div>
-                    <div className={'description'} style={{width: this.state.width / 4 * .95}}>
+                    <div className={'description'}
+                         style={{width: this.state.width / 4 * .95, height: this.state.height * .83}}
+                    >
                         <label style={{width: this.state.width / 4 * .95}}>{this.state.description}</label>
                         <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
                             <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Time Scale</label>

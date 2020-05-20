@@ -6,6 +6,7 @@
       <change beforePath="$PROJECT_DIR$/src/buttons.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/buttons.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sliders.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/sliders.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +63,7 @@
       <updated>1589415846769</updated>
       <workItem from="1589415849107" duration="40667000" />
       <workItem from="1589649944406" duration="5000" />
-      <workItem from="1589817686192" duration="51713000" />
+      <workItem from="1589817686192" duration="57548000" />
     </task>
     <servers />
   </component>
