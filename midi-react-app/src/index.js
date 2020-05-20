@@ -8,27 +8,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import {List, ListItem} from '@material-ui/core/';
 import Dropdown from "react-dropdown";
 import {toast} from "react-toastify";
-import styled from "styled-components";
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
-
-const Button = styled.button`
-    font-family: sans-serif;
-    font-size: 1.3rem;
-    border: 2px solid #3090c0;
-    border-radius: 5px;
-    padding: 7px 7px;
-    display: block;
-    margin: 0em;
-    margin-left: 0.5em;
-    margin-top: 1em;
-    text-align: center;
-    width: 14.25rem;
-    color: #3090c0;
-    &:hover{
-        transform: scale(1.1);
-    }
-`
 
 const instruments = [
     {
@@ -259,6 +240,8 @@ let reverseNotes = new Map();
 
 class Layout extends React.Component {
     state = {
+        width: 0,
+        height: 0,
         search: '',
         selectedSong: '',
         selectedInstrument: 'Select instrument...',
@@ -281,7 +264,13 @@ class Layout extends React.Component {
         originalLength: 0,
     };
 
+    updateDimensions = () => {
+        this.setState({ width: window.innerWidth, height: window.innerHeight });
+    }
     componentDidMount() {
+        this.updateDimensions();
+        window.addEventListener('resize', this.updateDimensions);
+
         reverseInstruments.set('None', -1);
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
@@ -338,6 +327,9 @@ class Layout extends React.Component {
         reverseNotes.set('1', 1);
         reverseNotes.set('2', 2);
         reverseNotes.set('3', 3);
+    }
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.updateDimensions);
     }
 
     handleFileSelect = () => {
@@ -470,10 +462,10 @@ class Layout extends React.Component {
         return (
             <div>
                 <h1 style={{textAlign: `center`}}>MIDI Library</h1>
-                <div className={'top-block'}>
-                    <div className={'buttons-dropdown'}>
+                <div className={'top-block'} style={{width: this.state.width, height: this.state.height}}>
+                    <div className={'buttons-dropdown'} style={{width: this.state.width / 4 * .95}}>
                         <div>
-                            <form className={'file-form'}>
+                            <form style={{width: this.state.width / 4 * .8}}>
                                 <label htmlFor={'file-upload'} className={'custom-file-upload'}>Choose File</label>
                                 <input id={'file-upload'} type={'file'} accept={'.mid'}
                                        onChange={(e) => {
@@ -481,7 +473,7 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <form className={'file-form'}>
+                            <form style={{width: this.state.width / 4 * .8}}>
                                 <label htmlFor={'directory-upload'} className={'custom-file-upload'}>
                                     Choose Directory
                                 </label>
@@ -491,75 +483,102 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <Button onClick={this.removeSong}>Remove Song</Button>
-                            <br/><br/><br/><br/><br/><br/><br/>
-                            <label>Remap instruments:</label>
+                            <button onClick={this.removeSong} style={{width: this.state.width / 4 * .8}}>
+                                Remove Song
+                            </button>
+                            <br/><br/><br/>
+                            <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
+                                Remap instruments:
+                            </label>
                             <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
                                       placeholder={this.state.selectedInstrument} className={'dropdown'}/>
                             <br/><br/>
-                            <label>Remap notes:</label>
+                            <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
                             <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                                      placeholder={this.state.selectedNote} className={'dropdown'} selection/>
-                            <Button onClick={this.updateSong} style={{marginLeft: '0.75em'}}>Update Song</Button>
+                                      placeholder={this.state.selectedNote} className={'dropdown'}/>
+                            <button onClick={this.updateSong} style={{width: this.state.width / 4 * .8}}>
+                                Update Song
+                            </button>
                         </div>
                     </div>
-                    <div className={'list'}>
+                    <div className={'list'} style={{width: this.state.width / 2 * .9}}>
                         <input type={'text'}
                                value={this.state.search}
                                placeholder={'Search Songs'}
-                               onChange={this.updateSearch}/>
+                               onChange={this.updateSearch}
+                               style={{width: (this.state.width / 2) * .87}}/>
                         <List>
-                            {this.state.visibleSongs.map(song => (
-                                <ListItem button component={'a'} key={song}
-                                          onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
-                                          id={'list-item-' + this.state.visibleSongs.indexOf(song)}
-                                          className={'list-item'}>
-                                    {song}
-                                </ListItem>
-                            ))}
-                        </List>
+                                {this.state.visibleSongs.map(song => (
+                                    <ListItem button component={'a'} key={song}
+                                              onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
+                                              id={'list-item-' + this.state.visibleSongs.indexOf(song)}
+                                              className={'list-item'} style={{width: this.state.width / 2 * .9}}>
+                                        {song}
+                                    </ListItem>
+                                ))}
+                            </List>
                     </div>
-                    <div className={'description'}>
-                        <label>{this.state.description}</label>
-                        <form className={'slider'}>
-                            <label>Time Scale</label>
+                    <div className={'description'} style={{width: this.state.width / 4 * .95}}>
+                        <label style={{width: this.state.width / 4 * .95}}>{this.state.description}</label>
+                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
+                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Time Scale</label>
                             <label style={
-                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                                {width: this.state.width / 9 * .95, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
+                                    fontSize: `2rem`}
                             }>
                                 {this.state.timeScale}
                             </label>
                             <input type={'range'} min={1} max={10000} value={this.state.timeScale} step={1}
                                    className={'range-slider'} onChange={this.handleTimeScale}/>
                             <br/>
-                            <label className={'slider-range'} style={{textAlign: `left`}}>{1}</label>
-                            <label className={'slider-range'} style={{textAlign: `right`}}>{10000}</label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
+                                {1}
+                            </label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
+                                {10000}
+                            </label>
                         </form>
-                        <form className={'slider'}>
-                            <label>Warp Time</label>
+                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
+                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Warp Time</label>
                             <label style={
-                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                                {width: this.state.width / 9, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
+                                    fontSize: `2rem`}
                             }>
                                 {this.state.warpTime}
                             </label>
                             <input type={'range'} min={0.1} max={10.0} value={this.state.warpTime} step={0.1}
                                    className={'range-slider'} onChange={this.handleWarpTime}/>
                             <br/>
-                            <label className={'slider-range'} style={{textAlign: `left`}}>{0.1}</label>
                             <label className={'slider-range'}
-                                   style={{textAlign: `right`}}>{parseFloat('10').toFixed(1)}</label>
+                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
+                                {0.1}
+                            </label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
+                                {parseFloat('10').toFixed(1)}
+                            </label>
                         </form>
-                        <form className={'slider'}>
-                            <label>Change Octave</label>
+                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
+                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Change Octave</label>
                             <label style={
-                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                                {width: this.state.width / 9, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
+                                    fontSize: `2rem`}
                             }>
                                 {this.state.octave}
                             </label>
                             <input type={'range'} min={-5} max={5} value={this.state.octave} step={1}
                                    className={'range-slider'} onChange={this.handleOctaveChange}/>
                             <br/>
-                            <label className={'slider-range'} style={{textAlign: `left`}}>{-5}</label>
-                            <label className={'slider-range'} style={{textAlign: `right`}}>{5}</label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
+                                {-5}
+                            </label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
+                                {5}
+                            </label>
                         </form>
                     </div>
                 </div>

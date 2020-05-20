@@ -37,13 +37,28 @@ input[type=file] {
     cursor: pointer;
 }
 
+button {
+    font-family: sans-serif;
+    font-size: 1.3rem;
+    border: 2px solid #3090c0;
+    border-radius: 5px;
+    padding: 7px 7px;
+    display: block;
+    margin: 1em;
+    text-align: center;
+    color: #3090c0;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
 .buttons-dropdown {
-    width: 21rem;
     height: 40rem;
     display: inline-flex;
     border: none;
     padding: 7px 7px;
-    margin: 0em 0em 1em 1em;
+    margin: 0em 0em 1em 0em;
 }
 
 .dropdown {
@@ -61,7 +76,6 @@ input[type=text] {
     font-size: 1rem;
     text-align: start;
     display: flex;
-    min-width: 30rem;
     min-height: 2rem;
     outline: transparent;
     border: 2px solid #60a8d8;
