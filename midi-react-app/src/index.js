@@ -3,10 +3,9 @@ import ReactDOM from 'react-dom';
 import 'react-dropdown/style.css';
 import './index.css';
 import './buttons.css';
+import './sliders.css';
 import 'react-toastify/dist/ReactToastify.css';
-import Sliders from './sliders';
 import {List, ListItem} from '@material-ui/core/';
-import DrawingArea from "./DrawingArea";
 import Dropdown from "react-dropdown";
 import {toast} from "react-toastify";
 import styled from "styled-components";
@@ -229,7 +228,6 @@ const instruments = [
         value: 'Gunshot',
     },
 ];
-
 const notes = [
     {
         id: -2,
@@ -256,6 +254,8 @@ const notes = [
         value: '3',
     },
 ];
+let reverseInstruments = new Map();
+let reverseNotes = new Map();
 
 class Layout extends React.Component {
     state = {
@@ -271,8 +271,74 @@ class Layout extends React.Component {
         visibleSongs: [
             'billiejean.mid',
             'prelude2.mid',
-        ]
+        ],
+        description: 'Song info:',
+        timeScale: 1,
+        warpTime: parseFloat('1').toFixed(1),
+        octave: 0,
+        lowestNote: 0,
+        highestNote: 0,
+        originalLength: 0,
     };
+
+    componentDidMount() {
+        reverseInstruments.set('None', -1);
+        reverseInstruments.set('Acoustic Grand Piano', 0);
+        reverseInstruments.set('Electric Piano', 4);
+        reverseInstruments.set('Harpsichord', 6);
+        reverseInstruments.set('Glockenspiel', 9);
+        reverseInstruments.set('Marimba', 12);
+        reverseInstruments.set('Xylophone', 13);
+        reverseInstruments.set('Reed Organ', 20);
+        reverseInstruments.set('Accordion', 21);
+        reverseInstruments.set('Acoustic Guitar', 24);
+        reverseInstruments.set('Electric Guitar', 27);
+        reverseInstruments.set('Guitar harmonics', 31);
+        reverseInstruments.set('Acoustic Bass', 32);
+        reverseInstruments.set('Violin', 40);
+        reverseInstruments.set('Viola', 41);
+        reverseInstruments.set('Cello', 42);
+        reverseInstruments.set('Contrabass', 43);
+        reverseInstruments.set('Tremolo Strings', 44);
+        reverseInstruments.set('Pizzicato Strings', 45);
+        reverseInstruments.set('Orchestral Harp', 46);
+        reverseInstruments.set('Timpani', 47);
+        reverseInstruments.set('String Ensemble', 48);
+        reverseInstruments.set('Choir Aahs', 52);
+        reverseInstruments.set('Voice Oohs', 53);
+        reverseInstruments.set('Trumpet', 56);
+        reverseInstruments.set('Trombone', 57);
+        reverseInstruments.set('Tuba', 58);
+        reverseInstruments.set('French Horn', 60);
+        reverseInstruments.set('Brass Section', 61);
+        reverseInstruments.set('Alto Sax', 65);
+        reverseInstruments.set('Oboe', 68);
+        reverseInstruments.set('English Horn', 69);
+        reverseInstruments.set('Bassoon', 70);
+        reverseInstruments.set('Clarinet', 71);
+        reverseInstruments.set('Piccolo', 72);
+        reverseInstruments.set('Flute', 73);
+        reverseInstruments.set('Blown Bottle', 76);
+        reverseInstruments.set('Whistle', 78);
+        reverseInstruments.set('Sci-Fi', 103);
+        reverseInstruments.set('Sitar', 104);
+        reverseInstruments.set('Banjo', 105);
+        reverseInstruments.set('Bagpipes', 109);
+        reverseInstruments.set('Steel Drum', 114);
+        reverseInstruments.set('Seashore', 122);
+        reverseInstruments.set('Bird Tweet', 123);
+        reverseInstruments.set('Telephone Ring', 124);
+        reverseInstruments.set('Helicopter', 125);
+        reverseInstruments.set('Applause', 126);
+        reverseInstruments.set('Gunshot', 127);
+
+        reverseNotes.set('No change', -2);
+        reverseNotes.set('-1', -1);
+        reverseNotes.set('0', 0);
+        reverseNotes.set('1', 1);
+        reverseNotes.set('2', 2);
+        reverseNotes.set('3', 3);
+    }
 
     handleFileSelect = () => {
         const selectedFile = document.getElementById('file-upload').files[0];
@@ -318,22 +384,28 @@ class Layout extends React.Component {
     handleInstrumentChange = async (e) => {
         const instrument = e.value;
         this.setState({ selectedInstrument: instrument });
-        for (let i = 0; i < instruments.length; i++) {
-
-        }
+        // const mapping = reverseInstruments.get(instrument);
         // insert api to access c data
     }
 
     handleNoteChange = async (e) => {
         const note = e.value;
         this.setState({ selectedNote: note });
+        // const mapping = reverseNotes.get(note);
         // insert api to access c data
     };
 
     updateSong = () => {
-        // read all sliders, changed instruments, rewrite info to midi file
-        toast.configure();
-        toast('Song updated!', {position: toast.POSITION.TOP_RIGHT, autoClose: false})
+        let index = this.state.selectedIndex;
+        if (index >= 0) {
+            // collect slider info, instruments
+            // send to backend
+            // rewrite to midi file
+
+            // if successful,
+            toast.configure();
+            toast('Song updated!', {position: toast.POSITION.TOP_RIGHT, autoClose: false});
+        }
     }
 
     async updateList(songs) {
@@ -342,9 +414,11 @@ class Layout extends React.Component {
 
     removeSong = async () => {
         let index = this.state.selectedIndex;
-        let songsCopy = this.state.songs;
-        songsCopy.splice(index, 1);
-        this.updateList(songsCopy);
+        if (index >= 0) {
+            let songsCopy = this.state.songs;
+            songsCopy.splice(index, 1);
+            this.updateList(songsCopy);
+        }
     }
 
     updateSearch = (e) => {
@@ -357,6 +431,12 @@ class Layout extends React.Component {
 
     async changeState(e, index) {
         await this.setState({ selectedSong: e.target.innerText, selectedIndex: index });
+        // call api to find note range and original length of song
+        const description = 'Song info:\n' +
+                            'File name: ' + this.state.selectedSong + '\n' +
+                            'Note range: [' + this.state.lowestNote + ', ' + this.state.highestNote + ']\n' +
+                            'Original length: ' + this.state.originalLength;
+        await this.setState({ description: description });
     }
 
     selectSong = async (e, index) => {
@@ -370,6 +450,20 @@ class Layout extends React.Component {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
         document.getElementById('list-item-' + index).style.backgroundColor = '#78a8c0';
+    }
+
+    handleTimeScale = (e) => {
+        this.setState({ timeScale: e.target.value })
+    }
+
+    handleWarpTime = (e) => {
+        const num = parseFloat(e.target.value);
+        const cleanNum = num.toFixed(1);
+        this.setState({ warpTime: cleanNum } );
+    }
+
+    handleOctaveChange = (e) => {
+        this.setState( { octave: e.target.value } )
     }
 
     render() {
@@ -425,14 +519,49 @@ class Layout extends React.Component {
                             ))}
                         </List>
                     </div>
-                    <div className={'drawing-div'}>
-                        <br/><br/><br/><br/>
-                        <label>Drawing Area:</label>
-                        <DrawingArea />
+                    <div className={'description'}>
+                        <label>{this.state.description}</label>
+                        <form className={'slider'}>
+                            <label>Time Scale</label>
+                            <label style={
+                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                            }>
+                                {this.state.timeScale}
+                            </label>
+                            <input type={'range'} min={1} max={10000} value={this.state.timeScale} step={1}
+                                   className={'range-slider'} onChange={this.handleTimeScale}/>
+                            <br/>
+                            <label className={'slider-range'} style={{textAlign: `left`}}>{1}</label>
+                            <label className={'slider-range'} style={{textAlign: `right`}}>{10000}</label>
+                        </form>
+                        {/*<form className={'slider'}>*/}
+                        {/*    <label>Warp Time</label>*/}
+                        {/*    <label style={*/}
+                        {/*        {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}*/}
+                        {/*    }>*/}
+                        {/*        {this.state.warpTime}*/}
+                        {/*    </label>*/}
+                        {/*    <input type={'range'} min={0.1} max={10.0} value={this.state.warpTime} step={0.1}*/}
+                        {/*           className={'range-slider'} onChange={this.handleWarpTime}/>*/}
+                        {/*    <br/>*/}
+                        {/*    <label className={'slider-range'} style={{textAlign: `left`}}>{0.1}</label>*/}
+                        {/*    <label className={'slider-range'}*/}
+                        {/*           style={{textAlign: `right`}}>{parseFloat('10').toFixed(1)}</label>*/}
+                        {/*</form>*/}
+                        {/*<form className={'slider'}>*/}
+                        {/*    <label>Change Octave</label>*/}
+                        {/*    <label style={*/}
+                        {/*        {width: `7rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}*/}
+                        {/*    }>*/}
+                        {/*        {this.state.octave}*/}
+                        {/*    </label>*/}
+                        {/*    <input type={'range'} min={-5} max={5} value={this.state.octave} step={1}*/}
+                        {/*           className={'range-slider'} onChange={this.handleOctaveChange}/>*/}
+                        {/*    <br/>*/}
+                        {/*    <label className={'slider-range'} style={{textAlign: `left`}}>{-5}</label>*/}
+                        {/*    <label className={'slider-range'} style={{textAlign: `right`}}>{5}</label>*/}
+                        {/*</form>*/}
                     </div>
-                </div>
-                <div>
-                    <Sliders />
                 </div>
             </div>
         );
@@ -440,9 +569,6 @@ class Layout extends React.Component {
 }
 
 ReactDOM.render(
-    // <React.StrictMode>
-    //   <App />
-    // </React.StrictMode>,
     <Layout/>,
     document.getElementById('root')
 );

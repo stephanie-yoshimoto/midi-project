@@ -1,12 +1,9 @@
 form {
     font-family: sans-serif;
     font-size: 1.3rem;
-    width: 13rem;
     display: inline-block;
-    padding: 7px 7px;
     border: 2px solid #3090c0;
     border-radius: 5px;
-    margin: 1em;
 }
 
 .sliders-div {
@@ -18,18 +15,20 @@ form {
     font-family: "PT Serif", serif;
     font-size: 1.3rem;
     text-align: left;
-    width: 18.5rem;
+    width: 20rem;
     height: 8rem;
     display: inline-block;
     padding: 7px 7px;
-    border: none;
+    margin-left: 0em;
+    border: 2px solid #184878;
 }
 
 .slider label {
     color: black;
     padding: 7px 7px;
     font-size: 1.3rem;
-    display: inline-block;
+    display: inline;
+    border: none;
 }
 
 .slider-range {

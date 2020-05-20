@@ -47,10 +47,19 @@ label {
     outline: 2px solid #3090c0;
 }
 
-.drawing-div label {
-    font-family: -apple-system, serif;
-    font-size: 1.5rem;
-    padding-left: 40px;
+.description {
+    display: block;
+    margin-left: 1em;
+}
+
+.description label {
+    width: 20rem;
+    height: 7rem;
+    display: block;
+    white-space: pre-wrap;
+    border: 2px solid #184878;
+    border-radius: 5px;
+    padding: 7px 7px;
 }
 
 code {
