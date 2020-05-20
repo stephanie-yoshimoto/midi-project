@@ -17,7 +17,7 @@ form {
     text-align: left;
     width: 20rem;
     height: 8rem;
-    display: inline-block;
+    display: block;
     padding: 7px 7px;
     margin-left: 0em;
     border: 2px solid #184878;
@@ -27,8 +27,11 @@ form {
     color: black;
     padding: 7px 7px;
     font-size: 1.3rem;
-    display: inline;
+    display: inline-block;
     border: none;
+    width: 9rem;
+    height: 2rem;
+    white-space: nowrap;
 }
 
 .slider-range {
@@ -38,7 +41,7 @@ form {
 
 input[type=range] {
     -webkit-appearance: none;
-    width: 90%;
+    width: 95%;
     height: 10px;
     border-radius: 5px;
     background: gray;

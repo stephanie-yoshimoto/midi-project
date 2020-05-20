@@ -23,7 +23,7 @@ const Button = styled.button`
     margin-left: 0.5em;
     margin-top: 1em;
     text-align: center;
-    width: 14rem;
+    width: 14.25rem;
     color: #3090c0;
     &:hover{
         transform: scale(1.1);
@@ -491,9 +491,8 @@ class Layout extends React.Component {
                                            e.target.value = null
                                        }} multiple/>
                             </form>
-                            <Button onClick={this.updateSong}>Update Song</Button>
                             <Button onClick={this.removeSong}>Remove Song</Button>
-                            <br/><br/><br/><br/><br/>
+                            <br/><br/><br/><br/><br/><br/><br/>
                             <label>Remap instruments:</label>
                             <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
                                       placeholder={this.state.selectedInstrument} className={'dropdown'}/>
@@ -501,6 +500,7 @@ class Layout extends React.Component {
                             <label>Remap notes:</label>
                             <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
                                       placeholder={this.state.selectedNote} className={'dropdown'} selection/>
+                            <Button onClick={this.updateSong} style={{marginLeft: '0.75em'}}>Update Song</Button>
                         </div>
                     </div>
                     <div className={'list'}>
@@ -534,33 +534,33 @@ class Layout extends React.Component {
                             <label className={'slider-range'} style={{textAlign: `left`}}>{1}</label>
                             <label className={'slider-range'} style={{textAlign: `right`}}>{10000}</label>
                         </form>
-                        {/*<form className={'slider'}>*/}
-                        {/*    <label>Warp Time</label>*/}
-                        {/*    <label style={*/}
-                        {/*        {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}*/}
-                        {/*    }>*/}
-                        {/*        {this.state.warpTime}*/}
-                        {/*    </label>*/}
-                        {/*    <input type={'range'} min={0.1} max={10.0} value={this.state.warpTime} step={0.1}*/}
-                        {/*           className={'range-slider'} onChange={this.handleWarpTime}/>*/}
-                        {/*    <br/>*/}
-                        {/*    <label className={'slider-range'} style={{textAlign: `left`}}>{0.1}</label>*/}
-                        {/*    <label className={'slider-range'}*/}
-                        {/*           style={{textAlign: `right`}}>{parseFloat('10').toFixed(1)}</label>*/}
-                        {/*</form>*/}
-                        {/*<form className={'slider'}>*/}
-                        {/*    <label>Change Octave</label>*/}
-                        {/*    <label style={*/}
-                        {/*        {width: `7rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}*/}
-                        {/*    }>*/}
-                        {/*        {this.state.octave}*/}
-                        {/*    </label>*/}
-                        {/*    <input type={'range'} min={-5} max={5} value={this.state.octave} step={1}*/}
-                        {/*           className={'range-slider'} onChange={this.handleOctaveChange}/>*/}
-                        {/*    <br/>*/}
-                        {/*    <label className={'slider-range'} style={{textAlign: `left`}}>{-5}</label>*/}
-                        {/*    <label className={'slider-range'} style={{textAlign: `right`}}>{5}</label>*/}
-                        {/*</form>*/}
+                        <form className={'slider'}>
+                            <label>Warp Time</label>
+                            <label style={
+                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                            }>
+                                {this.state.warpTime}
+                            </label>
+                            <input type={'range'} min={0.1} max={10.0} value={this.state.warpTime} step={0.1}
+                                   className={'range-slider'} onChange={this.handleWarpTime}/>
+                            <br/>
+                            <label className={'slider-range'} style={{textAlign: `left`}}>{0.1}</label>
+                            <label className={'slider-range'}
+                                   style={{textAlign: `right`}}>{parseFloat('10').toFixed(1)}</label>
+                        </form>
+                        <form className={'slider'}>
+                            <label>Change Octave</label>
+                            <label style={
+                                {width: `9rem`, textAlign: `right`, color: `#78a8c0`, fontWeight: 900, fontSize: `2rem`}
+                            }>
+                                {this.state.octave}
+                            </label>
+                            <input type={'range'} min={-5} max={5} value={this.state.octave} step={1}
+                                   className={'range-slider'} onChange={this.handleOctaveChange}/>
+                            <br/>
+                            <label className={'slider-range'} style={{textAlign: `left`}}>{-5}</label>
+                            <label className={'slider-range'} style={{textAlign: `right`}}>{5}</label>
+                        </form>
                     </div>
                 </div>
             </div>

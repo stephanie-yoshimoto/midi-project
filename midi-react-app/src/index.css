@@ -26,12 +26,13 @@ label {
 .top-block {
     border: none;
     display: inline-flex;
-    width: 20rem;
+    width: 18rem;
+    height: 40rem;
     margin: 0px;
 }
 
 .list, .list-item {
-    height: 39rem;
+    height: 40rem;
     width: 35rem;
     display: block;
     padding: 7px 7px;
@@ -49,12 +50,14 @@ label {
 
 .description {
     display: block;
+    padding: 7px 7px;
     margin-left: 1em;
 }
 
 .description label {
+    font-size: 1.1rem;
     width: 20rem;
-    height: 7rem;
+    height: 8rem;
     display: block;
     white-space: pre-wrap;
     border: 2px solid #184878;
