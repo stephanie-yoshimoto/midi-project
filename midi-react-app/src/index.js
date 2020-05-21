@@ -11,6 +11,7 @@ import {toast} from "react-toastify";
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
 
+const url = 'http://127.0.0.1:5000/';
 const instruments = [
     {
         id: -1,
@@ -262,6 +263,7 @@ class Layout extends React.Component {
         lowestNote: 0,
         highestNote: 0,
         originalLength: 0,
+        randomText: '',
     };
 
     updateDimensions = () => {
@@ -446,6 +448,17 @@ class Layout extends React.Component {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
         document.getElementById('list-item-' + index).style.backgroundColor = '#78a8c0';
+
+        fetch(url, {
+            'method': 'GET',
+        })
+            .then(response => response.json())
+            .then(response => {
+                this.setState({ randomText: response.sent });
+            })
+            .catch(err => {
+                this.setState({ randomText: err });
+            });
     }
 
     handleTimeScale = (e) => {
@@ -591,6 +604,12 @@ class Layout extends React.Component {
                                 {5}
                             </label>
                         </form>
+                        {/*<label style={*/}
+                        {/*    {color: 'red', width: this.state.width / 4 * .95, border: '2px solid #184878',*/}
+                        {/*        height: '2rem', textAlign: 'center'}*/}
+                        {/*}>*/}
+                        {/*    {this.state.randomText}*/}
+                        {/*</label>*/}
                     </div>
                 </div>
             </div>
