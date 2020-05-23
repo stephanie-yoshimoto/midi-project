@@ -7,7 +7,6 @@
     font-family: "PT Serif", serif;
     font-size: 1.3rem;
     text-align: left;
-    width: 20rem;
     height: 8rem;
     display: block;
     padding: 7px 7px;
@@ -57,4 +56,33 @@ input[type=range]::-webkit-slider-thumb {
 input[type=range]::-ms-track {
     width: 100%;
     cursor: pointer;
+}
+
+.buttons-dropdown {
+    height: 40rem;
+    display: block;
+    border: none;
+    margin: 0em;
+}
+
+.dropdown {
+    font-family: sans-serif;
+    font-size: 1rem;
+    border: 2px solid #60a8d8;
+    border-radius: 5px;
+    margin: 0em;
+    display: block;
+}
+
+.save {
+    font-family: sans-serif;
+    font-size: 1.3rem;
+    border: 2px solid #3090c0;
+    border-radius: 5px;
+    padding: 7px 7px;
+    display: block;
+    text-align: center;
+    color: #3090c0;
+    height: 3rem;
+    margin-left: 0em;
 }

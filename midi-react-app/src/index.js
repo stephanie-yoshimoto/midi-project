@@ -257,7 +257,6 @@ class Layout extends React.Component {
             'prelude2.mid',
         ],
         description: 'Song info:',
-        timeScale: 1,
         warpTime: parseFloat('1').toFixed(1),
         octave: 0,
         lowestNote: 0,
@@ -378,27 +377,36 @@ class Layout extends React.Component {
     handleInstrumentChange = async (e) => {
         const instrument = e.value;
         this.setState({ selectedInstrument: instrument });
-        // const mapping = reverseInstruments.get(instrument);
-        // insert api to access c data
     }
 
     handleNoteChange = async (e) => {
         const note = e.value;
         this.setState({ selectedNote: note });
-        // const mapping = reverseNotes.get(note);
-        // insert api to access c data
     };
 
-    updateSong = () => {
+    saveSong = () => {
         let index = this.state.selectedIndex;
         if (index >= 0) {
-            // collect slider info, instruments
-            // send to backend
-            // rewrite to midi file
+            const warpTime = this.state.warpTime;
+            fetch(url +  'midi/times/' + warpTime, {'method': 'PUT'});
 
-            // if successful,
+            const octave = this.state.octave;
+            fetch(url + 'midi/octaves/' + octave, {'method': 'PUT'});
+
+            const instrumentKey = this.state.selectedInstrument;
+            const instrument = reverseInstruments.get(instrumentKey);
+            if (instrument != null) {
+                fetch(url + 'midi/instruments/' + instrument, {'method': 'PUT'});
+            }
+
+            const notesKey = this.state.selectedNote;
+            const note = reverseNotes.get(notesKey);
+            if (note != null) {
+                fetch(url + 'midi/notes/' + note, {'method': 'PUT'});
+            }
+
             toast.configure();
-            toast('Song updated!', {position: toast.POSITION.TOP_RIGHT, autoClose: false});
+            toast.info('Song updated!', {position: 'top-right', autoClose: false});
         } else {
             alert('Please select a song.');
         }
@@ -429,16 +437,29 @@ class Layout extends React.Component {
 
     async changeState(e, index) {
         await this.setState({ selectedSong: e.target.innerText, selectedIndex: index });
-        // call api to find note range and original length of song
-        const description = 'Song info:\n' +
-                            'File name: ' + this.state.selectedSong + '\n' +
-                            'Note range: [' + this.state.lowestNote + ', ' + this.state.highestNote + ']\n' +
-                            'Original length: ' + this.state.originalLength;
-        await this.setState({ description: description });
+
+        fetch(url + 'midi/' + this.state.selectedSong + '/song_info', {'method': 'GET'})
+            .then(response => response.json())
+            .then(response => {
+                const description = 'Song info:\n' +
+                    'File name: ' + this.state.selectedSong + '\n' +
+                    'Note range: [' + response.low + ', ' + response.high+ ']\n' +
+                    'Original length: ' + response.length;
+                this.setState({
+                    description: description,
+                    lowestNote: response.low,
+                    highestNote: response.high,
+                    length: response.length
+                });
+            })
+            .catch(err => {
+                console.log(err);
+            });
     }
 
     selectSong = async (e, index) => {
         this.changeState(e, index);
+
         for (let i = 0; i < index && document.getElementById('list-item-' + i) !== null; i++) {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
@@ -448,21 +469,6 @@ class Layout extends React.Component {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
         document.getElementById('list-item-' + index).style.backgroundColor = '#78a8c0';
-
-        fetch(url, {
-            'method': 'GET',
-        })
-            .then(response => response.json())
-            .then(response => {
-                this.setState({ randomText: response.sent });
-            })
-            .catch(err => {
-                this.setState({ randomText: err });
-            });
-    }
-
-    handleTimeScale = (e) => {
-        this.setState({ timeScale: e.target.value })
     }
 
     handleWarpTime = (e) => {
@@ -505,22 +511,10 @@ class Layout extends React.Component {
                             <button onClick={this.removeSong} style={{width: this.state.width / 4 * .85}}>
                                 Remove Song
                             </button>
-                            <br/><br/><br/><br/>
-                            <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
-                                Remap instruments:
+                            <br/><br/><br/>
+                            <label style={{width: this.state.width / 4 * .8}} className={'song-info'}>
+                                {this.state.description}
                             </label>
-                            <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
-                                      placeholder={this.state.selectedInstrument} className={'dropdown'}
-                                      style={{width: this.state.width / 4 * .85}}/>
-                            <br/>
-                            <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
-                            <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                                      placeholder={this.state.selectedNote} className={'dropdown'}
-                                      style={{width: this.state.width / 4 * .85}}/>
-                            <br/>
-                            <button onClick={this.updateSong} style={{width: this.state.width / 4 * .85}}>
-                                Update Song
-                            </button>
                         </div>
                     </div>
                     <div className={'list'} style={{width: this.state.width / 2 * .9, height: this.state.height * .83}}>
@@ -543,27 +537,6 @@ class Layout extends React.Component {
                     <div className={'description'}
                          style={{width: this.state.width / 4 * .95, height: this.state.height * .83}}
                     >
-                        <label style={{width: this.state.width / 4 * .95}}>{this.state.description}</label>
-                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
-                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Time Scale</label>
-                            <label style={
-                                {width: this.state.width / 9 * .95, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
-                                    fontSize: `2rem`}
-                            }>
-                                {this.state.timeScale}
-                            </label>
-                            <input type={'range'} min={1} max={10000} value={this.state.timeScale} step={1}
-                                   className={'range-slider'} onChange={this.handleTimeScale}/>
-                            <br/>
-                            <label className={'slider-range'}
-                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
-                                {1}
-                            </label>
-                            <label className={'slider-range'}
-                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
-                                {10000}
-                            </label>
-                        </form>
                         <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
                             <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Warp Time</label>
                             <label style={
@@ -604,12 +577,21 @@ class Layout extends React.Component {
                                 {5}
                             </label>
                         </form>
-                        {/*<label style={*/}
-                        {/*    {color: 'red', width: this.state.width / 4 * .95, border: '2px solid #184878',*/}
-                        {/*        height: '2rem', textAlign: 'center'}*/}
-                        {/*}>*/}
-                        {/*    {this.state.randomText}*/}
-                        {/*</label>*/}
+                        <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
+                            Remap instruments:
+                        </label>
+                        <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
+                                  placeholder={this.state.selectedInstrument} className={'dropdown'}
+                                  style={{width: this.state.width / 4 * .85}}/>
+                        <br/>
+                        <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
+                        <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
+                                  placeholder={this.state.selectedNote} className={'dropdown'}
+                                  style={{width: this.state.width / 4 * .85}}/>
+                        <br/><br/><br/><br/>
+                        <button onClick={this.saveSong} style={{width: this.state.width / 4 * .95}} className={'save'}>
+                            Save Song
+                        </button>
                     </div>
                 </div>
             </div>

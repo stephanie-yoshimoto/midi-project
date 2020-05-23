@@ -36,31 +36,13 @@ button:hover {
     transform: scale(1.1);
 }
 
-.buttons-dropdown {
-    height: 40rem;
+.song-info {
+    font-size: 1.1rem;
+    height: 8rem;
     display: block;
-    border: none;
-    padding: 7px 7px;
-    margin: 0em;
-}
-
-.dropdown {
-    font-family: sans-serif;
-    font-size: 1rem;
-    border: 2px solid #60a8d8;
+    white-space: pre-wrap;
+    border: 2px solid #184878;
     border-radius: 5px;
+    padding: 7px 7px;
     margin: 1em;
-    display: block;
-}
-
-input[type=text] {
-    font-family: "Helvetica Neue", sans-serif;
-    font-size: 1rem;
-    text-align: start;
-    display: flex;
-    height: 2rem;
-    outline: transparent;
-    border: 2px solid #60a8d8;
-    border-radius: 100px;
-    padding: 10px;
 }
