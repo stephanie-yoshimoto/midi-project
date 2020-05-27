@@ -212,28 +212,12 @@ const instruments = [
 ];
 const notes = [
     {
-        id: -2,
+        id: -1,
         value: 'No change',
     },
     {
-        id: -1,
-        value: '-1',
-    },
-    {
-        id: 0,
-        value: '0',
-    },
-    {
         id: 1,
-        value: '1',
-    },
-    {
-        id: 2,
-        value: '2',
-    },
-    {
-        id: 3,
-        value: '3',
+        value: 'Lower',
     },
 ];
 let reverseInstruments = new Map();
@@ -249,11 +233,11 @@ class Layout extends React.Component {
         selectedNote: 'Select note change...',
         selectedIndex: -1,
         songs: [
-            'billiejean.mid',
+            'billiejean-2.mid',
             'prelude2.mid',
         ],
         visibleSongs: [
-            'billiejean.mid',
+            'billiejean-2.mid',
             'prelude2.mid',
         ],
         description: 'Song info:',
@@ -272,7 +256,6 @@ class Layout extends React.Component {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions);
 
-        reverseInstruments.set('None', -1);
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
         reverseInstruments.set('Harpsichord', 6);
@@ -322,32 +305,29 @@ class Layout extends React.Component {
         reverseInstruments.set('Applause', 126);
         reverseInstruments.set('Gunshot', 127);
 
-        reverseNotes.set('No change', -2);
-        reverseNotes.set('-1', -1);
-        reverseNotes.set('0', 0);
-        reverseNotes.set('1', 1);
-        reverseNotes.set('2', 2);
-        reverseNotes.set('3', 3);
+        reverseNotes.set('Lower', 1);
     }
     componentWillUnmount() {
         window.removeEventListener('resize', this.updateDimensions);
     }
 
     handleFileSelect = () => {
-        const selectedFile = document.getElementById('file-upload').files[0];
-        const reader = new FileReader();
-        reader.readAsBinaryString(selectedFile);
-        // reader.onload = () => {
-        // console.log(reader.result);
-        // }
-        // modify parseFile to parse a giant binary string
-        let originalList = this.state.songs;
-        if (originalList.indexOf(selectedFile.name) < 0) {
-            originalList.push(selectedFile.name);
-        } else {
-            alert('ERROR! Song "' + selectedFile.name + '" already exists in list.');
+        const files = document.getElementById('file-upload').files;
+        for (let i = 0; i < files.length; i++) {
+            const currFile = files[i];
+            const reader = new FileReader();
+            reader.readAsBinaryString(currFile);
+            // reader.onload = () => {
+            //     console.log(reader.result);
+            // }
+            let originalList = this.state.songs;
+            if (originalList.indexOf(currFile.name) < 0) {
+                originalList.push(currFile.name);
+            } else {
+                alert('ERROR! Song "' + currFile.name + '" already exists in list.');
+            }
+            this.setState({ songs: originalList, visibleSongs: originalList });
         }
-        this.setState({ songs: originalList, visibleSongs: originalList });
     }
 
     handleDirectorySelect = () => {
@@ -363,7 +343,6 @@ class Layout extends React.Component {
             // reader.onload = () => {
             //     console.log(reader.result);
             // }
-            // send to parseFile (or make library really to build the directory)
             let originalList = this.state.songs;
             if (originalList.indexOf(currFile.name) < 0) {
                 originalList.push(currFile.name);
@@ -371,44 +350,6 @@ class Layout extends React.Component {
                 alert('ERROR! Song "' + currFile.name + '" already exists in list.');
             }
             this.setState({ songs: originalList, visibleSongs: originalList });
-        }
-    }
-
-    handleInstrumentChange = async (e) => {
-        const instrument = e.value;
-        this.setState({ selectedInstrument: instrument });
-    }
-
-    handleNoteChange = async (e) => {
-        const note = e.value;
-        this.setState({ selectedNote: note });
-    };
-
-    saveSong = () => {
-        let index = this.state.selectedIndex;
-        if (index >= 0) {
-            const warpTime = this.state.warpTime;
-            fetch(url +  'midi/times/' + warpTime, {'method': 'PUT'});
-
-            const octave = this.state.octave;
-            fetch(url + 'midi/octaves/' + octave, {'method': 'PUT'});
-
-            const instrumentKey = this.state.selectedInstrument;
-            const instrument = reverseInstruments.get(instrumentKey);
-            if (instrument != null) {
-                fetch(url + 'midi/instruments/' + instrument, {'method': 'PUT'});
-            }
-
-            const notesKey = this.state.selectedNote;
-            const note = reverseNotes.get(notesKey);
-            if (note != null) {
-                fetch(url + 'midi/notes/' + note, {'method': 'PUT'});
-            }
-
-            toast.configure();
-            toast.info('Song updated!', {position: 'top-right', autoClose: false});
-        } else {
-            alert('Please select a song.');
         }
     }
 
@@ -422,6 +363,14 @@ class Layout extends React.Component {
             let songsCopy = this.state.songs;
             songsCopy.splice(index, 1);
             this.updateList(songsCopy);
+        } else {
+            alert('Please select a song.');
+        }
+    }
+
+    playSong = () => {
+        if (this.state.selectedSong !== '') {
+            fetch(url +  'midi/' + this.state.selectedSong + '/play', {'method': 'GET'});
         } else {
             alert('Please select a song.');
         }
@@ -481,6 +430,51 @@ class Layout extends React.Component {
         this.setState( { octave: e.target.value } )
     }
 
+    handleInstrumentChange = async (e) => {
+        const instrument = e.value;
+        this.setState({ selectedInstrument: instrument });
+    }
+
+    handleNoteChange = async (e) => {
+        const note = e.value;
+        this.setState({ selectedNote: note });
+    };
+
+    saveSong = () => {
+        let index = this.state.selectedIndex;
+        if (index >= 0) {
+            const warpTime = this.state.warpTime;
+            fetch(url + 'midi/' + this.state.selectedSong + '/times/' + warpTime, {'method': 'PUT'});
+
+            let octave = this.state.octave;
+            let negative = 'ignore';
+            if (octave < 0) {
+                octave *= -1;
+                negative = 'negative';
+            }
+            fetch(url + 'midi/' + this.state.selectedSong + '/octaves/' + octave + '/' + negative,
+                {'method': 'PUT'});
+
+            const instrumentKey = this.state.selectedInstrument;
+            const instrument = reverseInstruments.get(instrumentKey);
+            if (instrument != null) {
+                fetch(url + 'midi/' + this.state.selectedSong + '/instruments/' + instrument,
+                    {'method': 'PUT'});
+            }
+
+            const notesKey = this.state.selectedNote;
+            let note = reverseNotes.get(notesKey);
+            if (note != null) {
+                fetch(url + 'midi/' + this.state.selectedSong + '/notes', {'method': 'PUT'});
+            }
+
+            toast.configure();
+            toast.info('Song updated!', {position: 'top-right', autoClose: false});
+        } else {
+            alert('Please select a song.');
+        }
+    }
+
     render() {
         return (
             <div>
@@ -511,10 +505,14 @@ class Layout extends React.Component {
                             <button onClick={this.removeSong} style={{width: this.state.width / 4 * .85}}>
                                 Remove Song
                             </button>
-                            <br/><br/><br/>
+                            <br/><br/>
                             <label style={{width: this.state.width / 4 * .8}} className={'song-info'}>
                                 {this.state.description}
                             </label>
+                            <br/><br/><br/><br/><br/><br/><br/><br/>
+                            <button onClick={this.playSong} style={{width: this.state.width / 4 * .85}}>
+                                Play Song
+                            </button>
                         </div>
                     </div>
                     <div className={'list'} style={{width: this.state.width / 2 * .9, height: this.state.height * .83}}>
