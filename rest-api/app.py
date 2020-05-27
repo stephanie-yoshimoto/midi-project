@@ -1,7 +1,5 @@
-# import mido
-from mido import MidiFile, Message
 import pygame
-# import os
+import mido
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -20,21 +18,28 @@ path = "/Users/stephanie/midi-music-files/"
 #     return path
 
 
-def bytes_in_var_len(num):
-    if num < 0x80:
-        return 1
-    elif num < 0x4000:
-        return 2
-    elif num < 0x200000:
-        return 3
-    else:
-        return 4
-
-
 @app.route('/midi/<string:filename>/play', methods=['GET'])
 def play_music(filename):
+    temp = filename
     filename = path + filename
-    clock = pygame.time.Clock()
+    try:
+        mido.MidiFile(filename)
+    except EOFError:
+        # no content in file
+        return jsonify({'message': 'cannot play'})
+    except IndexError:
+        # midi file incorrectly formatted
+        return jsonify({'message': 'cannot play'})
+    except IOError:
+        # file does not exist
+        return jsonify({'message': 'cannot play'})
+
+    # a song was already requested to be started
+    if pygame.mixer.get_init() is not None:
+        # if play is clicked when song is already playing then stop song
+        pygame.mixer.music.stop()
+        pygame.mixer.quit()
+
     freq = 44100  # audio CD quality
     bit_size = -16  # unsigned 16 bit
     channels = 2  # 1 is mono, 2 is stereo
@@ -42,16 +47,56 @@ def play_music(filename):
     pygame.mixer.init(freq, bit_size, channels, buffer_size)
     pygame.mixer.music.load(filename)
     pygame.mixer.music.play()
-    while pygame.mixer.music.get_busy():
-        # check if playback has finished
-        clock.tick(30)
+    return jsonify({'message': temp})
+
+
+@app.route('/midi/stop', methods=['GET'])
+def stop_music():
+    if pygame.mixer.get_init() is None:
+        return jsonify({'message': 'mixer not initialized'})
+    elif pygame.mixer.music.get_busy():
+        pygame.mixer.music.stop()
+        pygame.mixer.quit()
+        return jsonify({'message': 'success'})
+    else:
+        return jsonify({'message': 'no music playing'})
+
+
+@app.route('/midi/<string:filename>/times/<float:multiplier>', methods=['PUT'])
+def change_event_time(filename, multiplier):
+    try:
+        mid = mido.MidiFile(path + filename)
+    except EOFError:
+        # no content in file
+        return 'no changes made'
+    except IndexError:
+        # midi file incorrectly formatted
+        return 'incorrect format'
+    except IOError:
+        # file does not exist
+        return 'file dne'
+
+    for track in mid.tracks:
+        for msg in track:
+            msg.time *= multiplier
+            msg.time = int(msg.time)
+    mid.save(path + filename)
     return 'success'
 
 
 @app.route('/midi/<string:filename>/octaves/<int:num_octaves>/<string:negative>', methods=['PUT'])
 def change_octave(filename, num_octaves, negative):
-    # mid = mido.MidiFile(path + filename, clip=True)
-    mid = MidiFile(path + filename)
+    try:
+        mid = mido.MidiFile(path + filename)
+    except EOFError:
+        # no content in file
+        return 'no changes made'
+    except IndexError:
+        # midi file incorrectly formatted
+        return 'incorrect format'
+    except IOError:
+        # file does not exist
+        return 'file dne'
 
     if negative == 'negative':
         num_octaves *= -1
@@ -66,21 +111,20 @@ def change_octave(filename, num_octaves, negative):
     return 'success'
 
 
-@app.route('/midi/<string:filename>/times/<float:multiplier>', methods=['PUT'])
-def change_event_time(filename, multiplier):
-    mid = MidiFile(path + filename)
-    for track in mid.tracks:
-        for msg in track:
-            msg.time *= multiplier
-            msg.time = int(msg.time)
-    mid.save(path + filename)
-    return 'success'
-
-
 @app.route('/midi/<string:filename>/instruments/<int:instrument>', methods=['PUT'])
 def change_event_instrument(filename, instrument):
-    # mid = mido.MidiFile(path + filename, clip=True)
-    mid = MidiFile(path + filename)
+    try:
+        mid = mido.MidiFile(path + filename)
+    except EOFError:
+        # no content in file
+        return 'no changes made'
+    except IndexError:
+        # midi file incorrectly formatted
+        return 'incorrect format'
+    except IOError:
+        # file does not exist
+        return 'file dne'
+
     for track in mid.tracks:
         for msg in track:
             if msg.type == 'program_change':
@@ -91,7 +135,17 @@ def change_event_instrument(filename, instrument):
 
 @app.route('/midi/<string:filename>/notes', methods=['PUT'])
 def change_event_note(filename):
-    mid = MidiFile(path + filename)
+    try:
+        mid = mido.MidiFile(path + filename)
+    except EOFError:
+        # no content in file
+        return 'no changes made'
+    except IndexError:
+        # midi file incorrectly formatted
+        return 'incorrect format'
+    except IOError:
+        # file does not exist
+        return 'file dne'
 
     # build remapping
     lower = [0] * 0x100
@@ -111,8 +165,18 @@ def change_event_note(filename):
 
 @app.route('/midi/<string:filename>/song_info', methods=['GET'])
 def range_of_song(filename):
-    # mid = mido.MidiFile(path + filename, clip=True)
-    mid = MidiFile(path + filename)
+    try:
+        mid = mido.MidiFile(path + filename)
+    except EOFError:
+        # no content in file
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
+    except IndexError:
+        # midi file incorrectly formatted
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
+    except IOError:
+        # file does not exist
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
+
     lowest_note = 127
     highest_note = 0
     events_length = 0

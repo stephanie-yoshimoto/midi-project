@@ -6,6 +6,9 @@ import './buttons.css';
 import './sliders.css';
 import 'react-toastify/dist/ReactToastify.css';
 import {List, ListItem} from '@material-ui/core/';
+import StopIcon from '@material-ui/icons/Stop';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import IconButton from '@material-ui/core/IconButton';
 import Dropdown from "react-dropdown";
 import {toast} from "react-toastify";
 // import App from './App';
@@ -227,17 +230,18 @@ class Layout extends React.Component {
     state = {
         width: 0,
         height: 0,
+        nowPlaying: '',
         search: '',
         selectedSong: '',
         selectedInstrument: 'Select instrument...',
         selectedNote: 'Select note change...',
         selectedIndex: -1,
         songs: [
-            'billiejean-2.mid',
+            'bohemianrhapsody.mid',
             'prelude2.mid',
         ],
         visibleSongs: [
-            'billiejean-2.mid',
+            'bohemianrhapsody.mid',
             'prelude2.mid',
         ],
         description: 'Song info:',
@@ -246,7 +250,6 @@ class Layout extends React.Component {
         lowestNote: 0,
         highestNote: 0,
         originalLength: 0,
-        randomText: '',
     };
 
     updateDimensions = () => {
@@ -369,11 +372,36 @@ class Layout extends React.Component {
     }
 
     playSong = () => {
-        if (this.state.selectedSong !== '') {
-            fetch(url +  'midi/' + this.state.selectedSong + '/play', {'method': 'GET'});
+        const currentSong = this.state.selectedSong;
+        if (currentSong !== '') {
+            fetch(url +  'midi/' + currentSong + '/play', {'method': 'GET'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.message === 'cannot play') {
+                        alert('Cannot play song.');
+                    } else {
+                        this.setState({ nowPlaying:
+                                'Now playing: ' + response.message
+                        });
+                    }
+                });
         } else {
             alert('Please select a song.');
         }
+    }
+
+    stopSong = () => {
+        fetch(url + 'midi/stop', {'method': 'GET'})
+            .then(response => response.json())
+            .then(response => {
+                if (response.message === 'mixer not initialized') {
+                    alert('No song started.');
+                } else if (response.message === 'no music playing') {
+                    alert('No music playing.');
+                } else {
+                    this.setState({ nowPlaying: '' });
+                }
+            });
     }
 
     updateSearch = (e) => {
@@ -393,7 +421,7 @@ class Layout extends React.Component {
                 const description = 'Song info:\n' +
                     'File name: ' + this.state.selectedSong + '\n' +
                     'Note range: [' + response.low + ', ' + response.high+ ']\n' +
-                    'Original length: ' + response.length;
+                    'Length: ' + response.length;
                 this.setState({
                     description: description,
                     lowestNote: response.low,
@@ -440,11 +468,27 @@ class Layout extends React.Component {
         this.setState({ selectedNote: note });
     };
 
-    saveSong = () => {
+    async update(warpTime, octave, negative, instrument, note) {
+        if (warpTime < 1.0 || warpTime > 1.0) {
+            await fetch(url + 'midi/' + this.state.selectedSong + '/times/' + warpTime, {'method': 'PUT'});
+        }
+        if (octave !== 0) {
+            await fetch(url + 'midi/' + this.state.selectedSong + '/octaves/' + octave + '/' + negative,
+                {'method': 'PUT'});
+        }
+        if (instrument != null) {
+            await fetch(url + 'midi/' + this.state.selectedSong + '/instruments/' + instrument,
+                {'method': 'PUT'});
+        }
+        if (note != null) {
+            await fetch(url + 'midi/' + this.state.selectedSong + '/notes', {'method': 'PUT'});
+        }
+    }
+
+    saveSong = async () => {
         let index = this.state.selectedIndex;
         if (index >= 0) {
             const warpTime = this.state.warpTime;
-            fetch(url + 'midi/' + this.state.selectedSong + '/times/' + warpTime, {'method': 'PUT'});
 
             let octave = this.state.octave;
             let negative = 'ignore';
@@ -452,22 +496,14 @@ class Layout extends React.Component {
                 octave *= -1;
                 negative = 'negative';
             }
-            fetch(url + 'midi/' + this.state.selectedSong + '/octaves/' + octave + '/' + negative,
-                {'method': 'PUT'});
 
             const instrumentKey = this.state.selectedInstrument;
             const instrument = reverseInstruments.get(instrumentKey);
-            if (instrument != null) {
-                fetch(url + 'midi/' + this.state.selectedSong + '/instruments/' + instrument,
-                    {'method': 'PUT'});
-            }
 
             const notesKey = this.state.selectedNote;
-            let note = reverseNotes.get(notesKey);
-            if (note != null) {
-                fetch(url + 'midi/' + this.state.selectedSong + '/notes', {'method': 'PUT'});
-            }
+            const note = reverseNotes.get(notesKey);
 
+            this.update(warpTime, octave, negative, instrument, note);
             toast.configure();
             toast.info('Song updated!', {position: 'top-right', autoClose: false});
         } else {
@@ -500,7 +536,7 @@ class Layout extends React.Component {
                                        onChange={(e) => {
                                            this.handleDirectorySelect()
                                            e.target.value = null
-                                       }} multiple/>
+                                       }}/>
                             </form>
                             <button onClick={this.removeSong} style={{width: this.state.width / 4 * .85}}>
                                 Remove Song
@@ -509,10 +545,29 @@ class Layout extends React.Component {
                             <label style={{width: this.state.width / 4 * .8}} className={'song-info'}>
                                 {this.state.description}
                             </label>
-                            <br/><br/><br/><br/><br/><br/><br/><br/>
-                            <button onClick={this.playSong} style={{width: this.state.width / 4 * .85}}>
-                                Play Song
-                            </button>
+                            <br/><br/><br/><br/>
+                            <label style={{width: this.state.width / 4 * .8}} className={'now-playing'}>
+                                {this.state.nowPlaying}
+                            </label>
+                            <div style={{width: this.state.width / 4 * .8, display: 'inline',
+                                marginLeft: this.state.width / 4 * .05}}>
+                                <IconButton onClick={this.playSong} style={{
+                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
+                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                }}>
+                                    <PlayArrowIcon style={{
+                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                    }}/>
+                                </IconButton>
+                                <IconButton onClick={this.stopSong} style={{
+                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
+                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                }}>
+                                    <StopIcon style={{
+                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                    }}/>
+                                </IconButton>
+                            </div>
                         </div>
                     </div>
                     <div className={'list'} style={{width: this.state.width / 2 * .9, height: this.state.height * .83}}>

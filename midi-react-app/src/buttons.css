@@ -46,3 +46,12 @@ button:hover {
     padding: 7px 7px;
     margin: 1em;
 }
+
+.now-playing {
+    font-size: 1.1rem;
+    min-height: 2rem;
+    display: block;
+    white-space: pre-wrap;
+    padding: 7px 7px;
+    margin: 1em;
+}

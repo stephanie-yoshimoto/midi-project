@@ -5,6 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/buttons.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/buttons.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../rest-api/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../rest-api/app.py" afterDir="false" />
     </list>
@@ -65,7 +66,7 @@
       <workItem from="1589649944406" duration="5000" />
       <workItem from="1589817686192" duration="59670000" />
       <workItem from="1590085527106" duration="14829000" />
-      <workItem from="1590248380508" duration="10923000" />
+      <workItem from="1590248380508" duration="26605000" />
     </task>
     <servers />
   </component>
