@@ -25,23 +25,28 @@ label {
     margin: 0px;
 }
 
+.outer-list {
+    display: block;
+    padding: 7px 7px;
+    border: 2px solid #3090c0;
+    border-radius: 5px;
+}
+
 input[type=text] {
     font-family: "Helvetica Neue", sans-serif;
     font-size: 1rem;
     text-align: start;
-    display: flex;
     height: 2rem;
     outline: transparent;
-    border: 2px solid #60a8d8;
     border-radius: 100px;
     padding: 10px;
+    display: inline;
+    border: 2px solid #3090c0;
 }
 
 .list, .list-item {
     display: block;
     padding: 7px 7px;
-    border: 2px solid #3090c0;
-    border-radius: 5px;
     overflow-y: auto;
     overflow-x: hidden;
 }

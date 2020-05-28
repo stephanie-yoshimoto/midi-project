@@ -9,7 +9,7 @@ import {List, ListItem} from '@material-ui/core/';
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import IconButton from '@material-ui/core/IconButton';
-import Dropdown from "react-dropdown";
+import Dropdown from 'react-dropdown';
 import {toast} from "react-toastify";
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
@@ -238,11 +238,11 @@ class Layout extends React.Component {
         selectedIndex: -1,
         songs: [
             'bohemianrhapsody.mid',
-            'prelude2.mid',
+            'pianoman.mid',
         ],
         visibleSongs: [
             'bohemianrhapsody.mid',
-            'prelude2.mid',
+            'pianoman.mid',
         ],
         description: 'Song info:',
         warpTime: parseFloat('1').toFixed(1),
@@ -406,9 +406,30 @@ class Layout extends React.Component {
 
     updateSearch = (e) => {
         this.setState({ search: e.target.value });
-        let newArray = this.state.songs.filter((d)=>{
-            return d.indexOf(e.target.value) !== -1
-        });
+        const searchKey = e.target.value.toLowerCase();
+        let originalArray = [];
+
+        // copy state array into local array
+        for (let i = 0; i < this.state.songs.length; i++) {
+            originalArray[i] = this.state.songs[i];
+        }
+
+        // change all elements of local array to lower case
+        for (let i = 0; i < originalArray.length; i++) {
+            originalArray[i] = originalArray[i].toLowerCase();
+        }
+
+        let newArray = [];
+        for (let i = 0, j = 0; i < originalArray.length; i++) {
+            if (originalArray[i].includes(searchKey)) {
+                newArray[j] = i;
+                j++;
+            }
+        }
+
+        for (let i = 0; i < newArray.length; i++) {
+            newArray[i] = this.state.songs[newArray[i]];
+        }
         this.setState({ visibleSongs: newArray });
     }
 
@@ -550,7 +571,7 @@ class Layout extends React.Component {
                                 {this.state.nowPlaying}
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
-                                marginLeft: this.state.width / 4 * .05}}>
+                                marginLeft: this.state.width / 4 * .1}}>
                                 <IconButton onClick={this.playSong} style={{
                                     color: 'white', margin: '1em', height: this.state.width / 4 * .225,
                                     marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
@@ -570,13 +591,14 @@ class Layout extends React.Component {
                             </div>
                         </div>
                     </div>
-                    <div className={'list'} style={{width: this.state.width / 2 * .9, height: this.state.height * .83}}>
+                    <div className={'outer-list'} style={{width: this.state.width / 2 * .9,
+                        height: this.state.height * .83}}>
                         <input type={'text'}
                                value={this.state.search}
                                placeholder={'Search Songs'}
                                onChange={this.updateSearch}
                                style={{width: (this.state.width / 2) * .87}}/>
-                        <List>
+                        <List className={'list'} style={{height: this.state.height * .75}}>
                             {this.state.visibleSongs.map(song => (
                                 <ListItem button component={'a'} key={song}
                                           onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
@@ -641,6 +663,10 @@ class Layout extends React.Component {
                         <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
                                   placeholder={this.state.selectedNote} className={'dropdown'}
                                   style={{width: this.state.width / 4 * .85}}/>
+                        {/*<select value={null} placeholder={this.state.selectedNote} className={'dropdown'}>*/}
+                        {/*    <option value={-1}>No change</option>*/}
+                        {/*    <option value={1}>Lower</option>*/}
+                        {/*</select>*/}
                         <br/><br/><br/><br/>
                         <button onClick={this.saveSong} style={{width: this.state.width / 4 * .95}} className={'save'}>
                             Save Song

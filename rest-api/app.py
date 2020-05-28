@@ -1,27 +1,28 @@
 import pygame
 import mido
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-path = "/Users/stephanie/midi-music-files/"
+global path
 
 
-# @app.route('/<string:filename>', methods=['GET'])
-# def get_file_path(filename):
-#     for dirpath, dirnames, filenames in os.walk('/Users/stephanie/'):
-#         if filename in filenames:
-#             global path
-#             path = dirpath + '/' + filename
-#     return path
+@app.route('/<string:filename>', methods=['GET'])
+def get_file_path(filename):
+    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
+        if filename in filenames:
+            global path
+            path = dirpath + '/' + filename
+    return path
 
 
 @app.route('/midi/<string:filename>/play', methods=['GET'])
 def play_music(filename):
     temp = filename
-    filename = path + filename
+    filename = get_file_path(filename)
     try:
         mido.MidiFile(filename)
     except EOFError:
@@ -65,7 +66,7 @@ def stop_music():
 @app.route('/midi/<string:filename>/times/<float:multiplier>', methods=['PUT'])
 def change_event_time(filename, multiplier):
     try:
-        mid = mido.MidiFile(path + filename)
+        mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
         return 'no changes made'
@@ -87,7 +88,7 @@ def change_event_time(filename, multiplier):
 @app.route('/midi/<string:filename>/octaves/<int:num_octaves>/<string:negative>', methods=['PUT'])
 def change_octave(filename, num_octaves, negative):
     try:
-        mid = mido.MidiFile(path + filename)
+        mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
         return 'no changes made'
@@ -114,7 +115,7 @@ def change_octave(filename, num_octaves, negative):
 @app.route('/midi/<string:filename>/instruments/<int:instrument>', methods=['PUT'])
 def change_event_instrument(filename, instrument):
     try:
-        mid = mido.MidiFile(path + filename)
+        mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
         return 'no changes made'
@@ -136,7 +137,7 @@ def change_event_instrument(filename, instrument):
 @app.route('/midi/<string:filename>/notes', methods=['PUT'])
 def change_event_note(filename):
     try:
-        mid = mido.MidiFile(path + filename)
+        mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
         return 'no changes made'
@@ -166,7 +167,7 @@ def change_event_note(filename):
 @app.route('/midi/<string:filename>/song_info', methods=['GET'])
 def range_of_song(filename):
     try:
-        mid = mido.MidiFile(path + filename)
+        mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
         return jsonify({'low': 0, 'high': 0, 'length': 0})
