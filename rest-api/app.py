@@ -35,9 +35,8 @@ def play_music(filename):
         # file does not exist
         return jsonify({'message': 'cannot play'})
 
-    # a song was already requested to be started
-    if pygame.mixer.get_init() is not None:
-        # if play is clicked when song is already playing then stop song
+    if pygame.mixer.get_init():
+        # if play is clicked when song is already playing then stop song and quit initializer
         pygame.mixer.music.stop()
         pygame.mixer.quit()
 
@@ -48,6 +47,8 @@ def play_music(filename):
     pygame.mixer.init(freq, bit_size, channels, buffer_size)
     pygame.mixer.music.load(filename)
     pygame.mixer.music.play()
+    while pygame.mixer.get_busy():
+        continue
     return jsonify({'message': temp})
 
 
@@ -164,19 +165,29 @@ def change_event_note(filename):
     return 'success'
 
 
+def check_if_playing():
+    if pygame.mixer.get_init():
+        if pygame.mixer.music.get_busy():
+            return 'True'
+        else:
+            return 'False'
+    else:
+        return 'False'
+
+
 @app.route('/midi/<string:filename>/song_info', methods=['GET'])
 def range_of_song(filename):
     try:
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return jsonify({'low': 0, 'high': 0, 'length': 0})
+        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
     except IndexError:
         # midi file incorrectly formatted
-        return jsonify({'low': 0, 'high': 0, 'length': 0})
+        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
     except IOError:
         # file does not exist
-        return jsonify({'low': 0, 'high': 0, 'length': 0})
+        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
 
     lowest_note = 127
     highest_note = 0
@@ -200,7 +211,7 @@ def range_of_song(filename):
         # reset events_length to count for next track
         events_length = 0
 
-    return jsonify({'low': lowest_note, 'high': highest_note, 'length': original_length})
+    return jsonify({'low': lowest_note, 'high': highest_note, 'length': original_length, 'playing': check_if_playing()})
 
 
 if __name__ == '__main__':

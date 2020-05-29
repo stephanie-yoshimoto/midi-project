@@ -22,7 +22,7 @@ label {
 .top-block {
     border: none;
     display: inline-flex;
-    margin: 0px;
+    margin: 0;
 }
 
 .outer-list {

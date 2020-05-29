@@ -7,6 +7,7 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/styles": "^4.9.14",
     "@reach/slider": "^0.10.2",
+    "@syncfusion/ej2-react-dropdowns": "^18.1.54",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
@@ -27,6 +28,7 @@
     "react-native-elements": "^2.0.0",
     "react-notifications": "^1.6.0",
     "react-scripts": "3.4.1",
+    "react-select": "^3.1.0",
     "semantic-ui-react": "^0.88.2",
     "styled-components": "^5.1.0"
   },

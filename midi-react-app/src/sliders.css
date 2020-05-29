@@ -10,7 +10,7 @@
     height: 8rem;
     display: block;
     padding: 7px 7px;
-    margin-left: 0em;
+    margin-left: 0;
     border: 2px solid #184878;
     border-radius: 5px;
 }
@@ -62,15 +62,15 @@ input[type=range]::-ms-track {
     height: 40rem;
     display: block;
     border: none;
-    margin: 0em;
+    margin: 0;
 }
 
 .dropdown {
     font-family: sans-serif;
     font-size: 1rem;
-    border: 2px solid #60a8d8;
+    border: 2px solid #3090c0;
     border-radius: 5px;
-    margin: 0em;
+    margin: 0;
     display: block;
 }
 

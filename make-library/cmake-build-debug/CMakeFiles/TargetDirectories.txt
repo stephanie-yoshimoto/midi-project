@@ -1,3 +1,0 @@
-/Users/stephanie/midi-project/make-library/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/stephanie/midi-project/make-library/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/stephanie/midi-project/make-library/cmake-build-debug/CMakeFiles/make_library.dir

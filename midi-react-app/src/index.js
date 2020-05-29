@@ -9,220 +9,78 @@ import {List, ListItem} from '@material-ui/core/';
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import IconButton from '@material-ui/core/IconButton';
-import Dropdown from 'react-dropdown';
-import {toast} from "react-toastify";
+import {toast} from 'react-toastify';
+import Select from 'react-select';
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
 
 const url = 'http://127.0.0.1:5000/';
 const instruments = [
-    {
-        id: -1,
-        value: 'None',
-    },
-    {
-        id: 0,
-        value: 'Acoustic Grand Piano',
-    },
-    {
-        id: 4,
-        value: 'Electric Piano',
-    },
-    {
-        id: 6,
-        value: 'Harpsichord',
-    },
-    {
-        id: 9,
-        value: 'Glockenspiel',
-    },
-    {
-        id: 12,
-        value: 'Marimba',
-    },
-    {
-        id: 13,
-        value: 'Xylophone',
-    },
-    {
-        id: 20,
-        value: 'Reed Organ',
-    },
-    {
-        id: 21,
-        value: 'Accordion',
-    },
-    {
-        id: 24,
-        value: 'Acoustic Guitar',
-    },
-    {
-        id: 27,
-        value: 'Electric Guitar',
-    },
-    {
-        id: 31,
-        value: 'Guitar harmonics',
-    },
-    {
-        id: 32,
-        value: 'Acoustic Bass',
-    },
-    {
-        id: 40,
-        value: 'Violin',
-    },
-    {
-        id: 41,
-        value: 'Viola',
-    },
-    {
-        id: 42,
-        value: 'Cello',
-    },
-    {
-        id: 43,
-        value: 'Contrabass',
-    },
-    {
-        id: 44,
-        value: 'Tremolo Strings',
-    },
-    {
-        id: 45,
-        value: 'Pizzicato Strings',
-    },
-    {
-        id: 46,
-        value: 'Orchestral Harp',
-    },
-    {
-        id: 47,
-        value: 'Timpani',
-    },
-    {
-        id: 48,
-        value: 'String Ensemble',
-    },
-    {
-        id: 52,
-        value: 'Choir Aahs',
-    },
-    {
-        id: 53,
-        value: 'Voice Oohs',
-    },
-    {
-        id: 56,
-        value: 'Trumpet',
-    },
-    {
-        id: 57,
-        value: 'Trombone',
-    },
-    {
-        id: 58,
-        value: 'Tuba',
-    },
-    {
-        id: 60,
-        value: 'French Horn',
-    },
-    {
-        id: 61,
-        value: 'Brass Section',
-    },
-    {
-        id: 65,
-        value: 'Alto Sax',
-    },
-    {
-        id: 68,
-        value: 'Oboe',
-    },
-    {
-        id: 69,
-        value: 'English Horn',
-    },
-    {
-        id: 70,
-        value: 'Bassoon',
-    },
-    {
-        id: 71,
-        value: 'Clarinet',
-    },
-    {
-        id: 72,
-        value: 'Piccolo',
-    },
-    {
-        id: 73,
-        value: 'Flute',
-    },
-    {
-        id: 76,
-        value: 'Blown Bottle',
-    },
-    {
-        id: 78,
-        value: 'Whistle',
-    },
-    {
-        id: 103,
-        value: 'Sci-Fi',
-    },
-    {
-        id: 104,
-        value: 'Sitar',
-    },
-    {
-        id: 105,
-        value: 'Banjo',
-    },
-    {
-        id: 109,
-        value: 'Bagpipes',
-    },
-    {
-        id: 114,
-        value: 'Steel Drum',
-    },
-    {
-        id: 122,
-        value: 'Seashore',
-    },
-    {
-        id: 123,
-        value: 'Bird Tweet',
-    },
-    {
-        id: 124,
-        value: 'Telephone Ring',
-    },
-    {
-        id: 125,
-        value: 'Helicopter',
-    },
-    {
-        id: 126,
-        value: 'Applause',
-    },
-    {
-        id: 127,
-        value: 'Gunshot',
-    },
-];
+    { label: 'None', value: -1 },
+    { label: 'Acoustic Grand Piano', value: 0 },
+    { label: 'Electric Piano', value: 4 },
+    { label: 'Harpsichord', value: 6 },
+    { label: 'Glockenspiel', value: 9 },
+    { label: 'Marimba', value: 12 },
+    { label: 'Xylophone', value: 13 },
+    { label: 'Reed Organ', value: 20 },
+    { label: 'Accordion', value: 21 },
+    { label: 'Acoustic Guitar', value: 24 },
+    { label: 'Electric Guitar', value: 27 },
+    { label: 'Guitar harmonics', value: 31 },
+    { label: 'Acoustic Bass', value: 32 },
+    { label: 'Violin', value: 40 },
+    { label: 'Viola', value: 41 },
+    { label: 'Cello', value: 42 },
+    { label: 'Contrabass', value: 43 },
+    { label: 'Tremolo Strings', value: 44 },
+    { label: 'Pizzicato Strings', value: 45 },
+    { label: 'Orchestral Harp', value: 46 },
+    { label: 'Timpani', value: 47 },
+    { label: 'String Ensemble', value: 48 },
+    { label: 'Choir Aahs', value: 52 },
+    { label: 'Voice Oohs', value: 53 },
+    { label: 'Trumpet', value: 56 },
+    { label: 'Trombone', value: 57 },
+    { label: 'Tuba', value: 58 },
+    { label: 'French Horn', value: 60 },
+    { label: 'Brass Section', value: 61 },
+    { label: 'Alto Sax', value: 65 },
+    { label: 'Oboe', value: 68 },
+    { label: 'English Horn', value: 69 },
+    { label: 'Bassoon', value: 70 },
+    { label: 'Clarinet', value: 71 },
+    { label: 'Piccolo', value: 72 },
+    { label: 'Flute', value: 73 },
+    { label: 'Blown Bottle', value: 76 },
+    { label: 'Whistle', value: 78 },
+    { label: 'Sci-Fi', value: 103 },
+    { label: 'Sitar', value: 104 },
+    { label: 'Banjo', value: 105 },
+    { label: 'Bagpipes', value: 109 },
+    { label: 'Steel Drum', value: 114 },
+    { label: 'Seashore', value: 122 },
+    { label: 'Bird Tweet', value: 123 },
+    { label: 'Telephone Ring', value: 124 },
+    { label: 'Helicopter', value: 125 },
+    { label: 'Applause', value: 126 },
+    { label: 'Gunshot', value: 127 },
+]
 const notes = [
-    {
-        id: -1,
-        value: 'No change',
-    },
-    {
-        id: 1,
-        value: 'Lower',
-    },
+    { label: 'No change', value: -1 },
+    { label: 'Lower', value: 1 },
 ];
+const customStyle = {
+    control: (base, state) => ({
+        ...base,
+        border: state.isFocused ? 0 : 0,
+        boxShadow: state.isFocused ? 0 : 0,
+        '&:hover': {
+            border: state.isFocused ? 0 : 0
+        }
+    })
+};
+
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
@@ -233,6 +91,7 @@ class Layout extends React.Component {
         nowPlaying: '',
         search: '',
         selectedSong: '',
+        disabled: true,
         selectedInstrument: 'Select instrument...',
         selectedNote: 'Select note change...',
         selectedIndex: -1,
@@ -434,7 +293,7 @@ class Layout extends React.Component {
     }
 
     async changeState(e, index) {
-        await this.setState({ selectedSong: e.target.innerText, selectedIndex: index });
+        await this.setState({ selectedSong: e.target.innerText, selectedIndex: index, disabled: false });
 
         fetch(url + 'midi/' + this.state.selectedSong + '/song_info', {'method': 'GET'})
             .then(response => response.json())
@@ -449,6 +308,9 @@ class Layout extends React.Component {
                     highestNote: response.high,
                     length: response.length
                 });
+                if (response.playing === 'False') {
+                    this.setState({nowPlaying: ''});
+                }
             })
             .catch(err => {
                 console.log(err);
@@ -474,20 +336,6 @@ class Layout extends React.Component {
         const cleanNum = num.toFixed(1);
         this.setState({ warpTime: cleanNum } );
     }
-
-    handleOctaveChange = (e) => {
-        this.setState( { octave: e.target.value } )
-    }
-
-    handleInstrumentChange = async (e) => {
-        const instrument = e.value;
-        this.setState({ selectedInstrument: instrument });
-    }
-
-    handleNoteChange = async (e) => {
-        const note = e.value;
-        this.setState({ selectedNote: note });
-    };
 
     async update(warpTime, octave, negative, instrument, note) {
         if (warpTime < 1.0 || warpTime > 1.0) {
@@ -520,6 +368,7 @@ class Layout extends React.Component {
 
             const instrumentKey = this.state.selectedInstrument;
             const instrument = reverseInstruments.get(instrumentKey);
+
 
             const notesKey = this.state.selectedNote;
             const note = reverseNotes.get(notesKey);
@@ -641,7 +490,10 @@ class Layout extends React.Component {
                                 {this.state.octave}
                             </label>
                             <input type={'range'} min={-5} max={5} value={this.state.octave} step={1}
-                                   className={'range-slider'} onChange={this.handleOctaveChange}/>
+                                   className={'range-slider'}
+                                   onChange={(e) => {
+                                        this.setState({octave: e.target.value});
+                                   }}/>
                             <br/>
                             <label className={'slider-range'}
                                    style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
@@ -655,18 +507,22 @@ class Layout extends React.Component {
                         <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
                             Remap instruments:
                         </label>
-                        <Dropdown options={instruments} onChange={this.handleInstrumentChange} value={null}
-                                  placeholder={this.state.selectedInstrument} className={'dropdown'}
-                                  style={{width: this.state.width / 4 * .85}}/>
+                        <Select
+                            value={null} placeholder={this.state.selectedInstrument} isDisabled={this.state.disabled}
+                            onChange={(e) => {
+                                this.setState({ selectedInstrument: e.label });
+                            }}
+                            options={instruments} className={'dropdown'} styles={customStyle} isSearchable={false}
+                        />
                         <br/>
                         <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
-                        <Dropdown options={notes} onChange={this.handleNoteChange} value={null}
-                                  placeholder={this.state.selectedNote} className={'dropdown'}
-                                  style={{width: this.state.width / 4 * .85}}/>
-                        {/*<select value={null} placeholder={this.state.selectedNote} className={'dropdown'}>*/}
-                        {/*    <option value={-1}>No change</option>*/}
-                        {/*    <option value={1}>Lower</option>*/}
-                        {/*</select>*/}
+                        <Select
+                            value={null} placeholder={this.state.selectedNote} isSearchable={false}
+                            onChange={(e) => {
+                                this.setState({ selectedNote: e.label });
+                            }}
+                            options={notes} className={'dropdown'} styles={customStyle} isDisabled={this.state.disabled}
+                        />
                         <br/><br/><br/><br/>
                         <button onClick={this.saveSong} style={{width: this.state.width / 4 * .95}} className={'save'}>
                             Save Song
