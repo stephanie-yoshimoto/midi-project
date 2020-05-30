@@ -15,8 +15,9 @@ def get_file_path(filename):
     for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
         if filename in filenames:
             global path
-            path = dirpath + '/' + filename
-    return path
+            path = dirpath + filename
+            return path
+    return 'file dne'
 
 
 @app.route('/midi/<string:filename>/play', methods=['GET'])

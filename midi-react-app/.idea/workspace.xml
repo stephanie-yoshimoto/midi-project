@@ -2,18 +2,30 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e980c18a-a991-4760-9b70-8fec7fa04ab6" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../not-shared/.idea/not-shared.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/midi-react-app.iml" beforeDir="false" afterPath="$PROJECT_DIR$/midi-react-app.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sliders.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/sliders.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/script.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/test.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../rest-api/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../rest-api/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -28,11 +40,18 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="Errors" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration name="index.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/index.js" working-dir="$PROJECT_DIR$/src">
@@ -67,7 +86,7 @@
       <workItem from="1589649944406" duration="5000" />
       <workItem from="1589817686192" duration="59670000" />
       <workItem from="1590085527106" duration="14829000" />
-      <workItem from="1590248380508" duration="43377000" />
+      <workItem from="1590248380508" duration="62690000" />
     </task>
     <servers />
   </component>
@@ -143,9 +162,13 @@
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
     <state width="1417" height="332" key="GridCell.Tab.3.right/0.23.3840.2084@0.23.3840.2084" timestamp="1589487811713" />
-    <state x="2485" y="688" width="670" height="676" key="search.everywhere.popup" timestamp="1590509550046">
+    <state x="2234" y="573" width="1259" height="795" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1590796149880">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
-    <state x="2485" y="688" width="670" height="676" key="search.everywhere.popup/0.23.3840.2084@0.23.3840.2084" timestamp="1590509550046" />
+    <state x="2234" y="573" width="1259" height="795" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.3840.2084@0.23.3840.2084" timestamp="1590796149880" />
+    <state x="2485" y="688" width="670" height="676" key="search.everywhere.popup" timestamp="1590794362043">
+      <screen x="0" y="23" width="3840" height="2084" />
+    </state>
+    <state x="2485" y="688" width="670" height="676" key="search.everywhere.popup/0.23.3840.2084@0.23.3840.2084" timestamp="1590794362043" />
   </component>
 </project>

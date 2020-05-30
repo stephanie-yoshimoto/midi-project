@@ -84,6 +84,14 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
+function createPlay() {
+    return {__html:
+        <div>
+            <a href="index_play.html#example" onClick="MIDIjs.play('http://localhost:8080/midis/crazyinlove.mid');">Play</a>
+        </div>
+    };
+}
+
 class Layout extends React.Component {
     state = {
         width: 0,
@@ -117,6 +125,12 @@ class Layout extends React.Component {
     componentDidMount() {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions);
+
+        // const script = document.createElement("script");
+        // script.src = "//www.midijs.net/lib/midi.js";
+        // script.type = "/text/javascript";
+        // script.async = true;
+        // document.body.appendChild(script);
 
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
@@ -232,21 +246,11 @@ class Layout extends React.Component {
 
     playSong = () => {
         const currentSong = this.state.selectedSong;
-        if (currentSong !== '') {
-            fetch(url +  'midi/' + currentSong + '/play', {'method': 'GET'})
-                .then(response => response.json())
-                .then(response => {
-                    if (response.message === 'cannot play') {
-                        alert('Cannot play song.');
-                    } else {
-                        this.setState({ nowPlaying:
-                                'Now playing: ' + response.message
-                        });
-                    }
-                });
-        } else {
-            alert('Please select a song.');
-        }
+        fetch(url + currentSong, {'method': 'GET'})
+            .then(response => {
+                const resp = response.toString();
+                console.log(resp);
+            })
     }
 
     stopSong = () => {
@@ -421,21 +425,23 @@ class Layout extends React.Component {
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
                                 marginLeft: this.state.width / 4 * .1}}>
-                                <IconButton onClick={this.playSong} style={{
-                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
-                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
-                                }}>
-                                    <PlayArrowIcon style={{
-                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
-                                    }}/>
-                                </IconButton>
+                                <div dangerouslySetInnerHTML={createPlay()}>
+                                    <IconButton style={{
+                                        color: 'white', margin: '1em', height: this.state.width / 4 * .225,
+                                        marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                    }}>
+                                        <PlayArrowIcon style={{
+                                            width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                        }}/>
+                                    </IconButton>
+                                </div>
                                 <IconButton onClick={this.stopSong} style={{
-                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
-                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
-                                }}>
-                                    <StopIcon style={{
-                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
-                                    }}/>
+                                     color: 'white', margin: '1em', height: this.state.width / 4 * .225,
+                                     marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                 }}>
+                                     <StopIcon style={{
+                                         width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                     }}/>
                                 </IconButton>
                             </div>
                         </div>
