@@ -11,6 +11,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import IconButton from '@material-ui/core/IconButton';
 import {toast} from 'react-toastify';
 import Select from 'react-select';
+import ScriptTag from 'react-script-tag';
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
 
@@ -84,12 +85,17 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
+const midi = props => (
+    <ScriptTag type="text/javascript" isHydrating={true} src="//www.midijs.net/lib/midi.js" />
+);
 function createPlay() {
-    return {__html:
-        <div>
-            <a href="index_play.html#example" onClick="MIDIjs.play('http://localhost:8080/midis/crazyinlove.mid');">Play</a>
-        </div>
-    };
+    alert('playing');
+    // __html:
+    // midi.play('http://localhost:8080/midis/dontstopbelievin.mid');
+
+    // return {
+    //     alert('playing');
+    // }
 }
 
 class Layout extends React.Component {
@@ -125,12 +131,6 @@ class Layout extends React.Component {
     componentDidMount() {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions);
-
-        // const script = document.createElement("script");
-        // script.src = "//www.midijs.net/lib/midi.js";
-        // script.type = "/text/javascript";
-        // script.async = true;
-        // document.body.appendChild(script);
 
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
@@ -245,12 +245,14 @@ class Layout extends React.Component {
     }
 
     playSong = () => {
-        const currentSong = this.state.selectedSong;
-        fetch(url + currentSong, {'method': 'GET'})
-            .then(response => {
-                const resp = response.toString();
-                console.log(resp);
-            })
+        // const currentSong = this.state.selectedSong;
+        // fetch(url + currentSong, {'method': 'GET'})
+        //     .then(response => {
+        //         const resp = response.toString();
+        //         console.log(resp);
+        //     });
+
+        // MIDIjs.play('http://localhost:8080/midis/dontstopbelievin.mid');
     }
 
     stopSong = () => {
@@ -425,16 +427,16 @@ class Layout extends React.Component {
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
                                 marginLeft: this.state.width / 4 * .1}}>
-                                <div dangerouslySetInnerHTML={createPlay()}>
-                                    <IconButton style={{
-                                        color: 'white', margin: '1em', height: this.state.width / 4 * .225,
-                                        marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
-                                    }}>
-                                        <PlayArrowIcon style={{
-                                            width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
-                                        }}/>
-                                    </IconButton>
-                                </div>
+                                <IconButton onClick={() => {
+                                    createPlay();
+                                }} style={{
+                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
+                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                }}>
+                                    <PlayArrowIcon style={{
+                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                    }}/>
+                                </IconButton>
                                 <IconButton onClick={this.stopSong} style={{
                                      color: 'white', margin: '1em', height: this.state.width / 4 * .225,
                                      marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
