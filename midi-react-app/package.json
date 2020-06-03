@@ -60,6 +60,7 @@
     "midi-player-js": "^2.0.13",
     "react-notifications-component": "^2.4.0",
     "react-toastify": "^6.0.4",
-    "reactstrap": "^8.4.1"
+    "reactstrap": "^8.4.1",
+    "web-midi-player": "^1.4.1"
   }
 }

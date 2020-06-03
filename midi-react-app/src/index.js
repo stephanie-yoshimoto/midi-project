@@ -11,6 +11,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import IconButton from '@material-ui/core/IconButton';
 import {toast} from 'react-toastify';
 import Select from 'react-select';
+import MidiPlayer from 'web-midi-player';
 // import ScriptTag from 'react-script-tag';
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
@@ -85,22 +86,25 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
-// const midi = props => (
-//     <ScriptTag type="text/javascript" isHydrating={true} src="//www.midijs.net/lib/midi.js" />
-// );
-// function createPlay() {
-//     alert('playing');
-//     // __html:
-//     // midi.play('http://localhost:8080/midis/dontstopbelievin.mid');
-//
-//     // return {
-//     //     alert('playing');
-//     // }
-// }
-const MidiPlayer = require('midi-player-js');
-const Player = new MidiPlayer.Player(function(event) {
-    console.log(event);
-});
+// const MidiPlayer_2 = require('midi-player-js');
+// const AudioContext = window.AudioContext || window.webkitAudioContext || false;
+// const ac = new AudioContext || new webkitAudioContext;
+// let Player;
+// Soundfont.instrument(ac,
+//     'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/MusyngKite/acoustic_guitar_nylon-mp3.js')
+//     .then(function (instrument) {
+//         Player = new MidiPlayer_2.Player(function (event) {
+//             if (event.name === 'Note on') {
+//                 instrument.play(event.noteName, ac.currentTime, {gain: event.velocity / 100});
+//             }
+//             console.log(event);
+//         });
+//     }, false);
+// const Player = new MidiPlayer_2.Player(function (event) {
+//     console.log('playing...');
+// });
+
+const player = new MidiPlayer();
 
 class Layout extends React.Component {
     state = {
@@ -252,26 +256,8 @@ class Layout extends React.Component {
         const currentSong = this.state.selectedSong;
         if (currentSong !== '') {
             const filesURL = 'http://localhost:8080/midis/' + currentSong;
-            fetch(filesURL)
-                .then(response => {
-                    if (response.ok) {
-                        return response.text();
-                    }
-                    throw new Error('Error message');
-                })
-                .then(function (data) {
-                    this.setState({content: data});
-                    new Response(data).arrayBuffer()
-                        .then(function (buffer) {
-                            Player.loadArrayBuffer(buffer);
-                            if (Player.fileLoaded()) {
-                                Player.play();
-                            }
-                        });
-                }.bind(this))
-                .catch(err => {
-                    console.log(err);
-                });
+            player.play({url: filesURL});
+            this.setState({nowPlaying: 'Now playing: ' + currentSong});
         } else {
             alert('Please select a song.');
         }
@@ -290,7 +276,9 @@ class Layout extends React.Component {
         //         }
         //     });
 
-        Player.stop();
+        // Player.stop();
+        player.stop();
+        this.setState({nowPlaying: ''});
     }
 
     updateSearch = (e) => {
