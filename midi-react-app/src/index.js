@@ -11,7 +11,7 @@ import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import IconButton from '@material-ui/core/IconButton';
 import {toast} from 'react-toastify';
 import Select from 'react-select';
-import ScriptTag from 'react-script-tag';
+// import ScriptTag from 'react-script-tag';
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
 
@@ -85,18 +85,22 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
-const midi = props => (
-    <ScriptTag type="text/javascript" isHydrating={true} src="//www.midijs.net/lib/midi.js" />
-);
-function createPlay() {
-    alert('playing');
-    // __html:
-    // midi.play('http://localhost:8080/midis/dontstopbelievin.mid');
-
-    // return {
-    //     alert('playing');
-    // }
-}
+// const midi = props => (
+//     <ScriptTag type="text/javascript" isHydrating={true} src="//www.midijs.net/lib/midi.js" />
+// );
+// function createPlay() {
+//     alert('playing');
+//     // __html:
+//     // midi.play('http://localhost:8080/midis/dontstopbelievin.mid');
+//
+//     // return {
+//     //     alert('playing');
+//     // }
+// }
+const MidiPlayer = require('midi-player-js');
+const Player = new MidiPlayer.Player(function(event) {
+    console.log(event);
+});
 
 class Layout extends React.Component {
     state = {
@@ -245,28 +249,48 @@ class Layout extends React.Component {
     }
 
     playSong = () => {
-        // const currentSong = this.state.selectedSong;
-        // fetch(url + currentSong, {'method': 'GET'})
-        //     .then(response => {
-        //         const resp = response.toString();
-        //         console.log(resp);
-        //     });
-
-        // MIDIjs.play('http://localhost:8080/midis/dontstopbelievin.mid');
+        const currentSong = this.state.selectedSong;
+        if (currentSong !== '') {
+            const filesURL = 'http://localhost:8080/midis/' + currentSong;
+            fetch(filesURL)
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    throw new Error('Error message');
+                })
+                .then(function (data) {
+                    this.setState({content: data});
+                    new Response(data).arrayBuffer()
+                        .then(function (buffer) {
+                            Player.loadArrayBuffer(buffer);
+                            if (Player.fileLoaded()) {
+                                Player.play();
+                            }
+                        });
+                }.bind(this))
+                .catch(err => {
+                    console.log(err);
+                });
+        } else {
+            alert('Please select a song.');
+        }
     }
 
     stopSong = () => {
-        fetch(url + 'midi/stop', {'method': 'GET'})
-            .then(response => response.json())
-            .then(response => {
-                if (response.message === 'mixer not initialized') {
-                    alert('No song started.');
-                } else if (response.message === 'no music playing') {
-                    alert('No music playing.');
-                } else {
-                    this.setState({ nowPlaying: '' });
-                }
-            });
+        // fetch(url + 'midi/stop', {'method': 'GET'})
+        //     .then(response => response.json())
+        //     .then(response => {
+        //         if (response.message === 'mixer not initialized') {
+        //             alert('No song started.');
+        //         } else if (response.message === 'no music playing') {
+        //             alert('No music playing.');
+        //         } else {
+        //             this.setState({ nowPlaying: '' });
+        //         }
+        //     });
+
+        Player.stop();
     }
 
     updateSearch = (e) => {
@@ -427,9 +451,7 @@ class Layout extends React.Component {
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
                                 marginLeft: this.state.width / 4 * .1}}>
-                                <IconButton onClick={() => {
-                                    createPlay();
-                                }} style={{
+                                <IconButton onClick={this.playSong} style={{
                                     color: 'white', margin: '1em', height: this.state.width / 4 * .225,
                                     marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
                                 }}>

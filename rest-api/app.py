@@ -11,6 +11,15 @@ global path
 
 
 @app.route('/<string:filename>', methods=['GET'])
+def browser_request(filename):
+    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
+        if filename in filenames:
+            global path
+            path = dirpath + filename
+            return jsonify({'path': path})
+    return jsonify({'path': 'file dne'})
+
+
 def get_file_path(filename):
     for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
         if filename in filenames:

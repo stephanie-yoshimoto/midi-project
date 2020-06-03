@@ -3,10 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="e980c18a-a991-4760-9b70-8fec7fa04ab6" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../rest-api/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../rest-api/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +39,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/src" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="Errors" />
+    <property name="ts.external.directory.path" value="$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -80,7 +79,7 @@
       <workItem from="1589649944406" duration="5000" />
       <workItem from="1589817686192" duration="59670000" />
       <workItem from="1590085527106" duration="14829000" />
-      <workItem from="1590248380508" duration="80534000" />
+      <workItem from="1590248380508" duration="92124000" />
     </task>
     <servers />
   </component>
@@ -88,10 +87,10 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="2420" y="632" key="#Inspections" timestamp="1591037401234">
+    <state x="2420" y="632" key="#Inspections" timestamp="1591138707319">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
-    <state x="2420" y="632" key="#Inspections/0.23.3840.2084@0.23.3840.2084" timestamp="1591037401234" />
+    <state x="2420" y="632" key="#Inspections/0.23.3840.2084@0.23.3840.2084" timestamp="1591138707319" />
     <state x="2601" y="724" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1591035553657">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
@@ -160,6 +159,10 @@
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
     <state width="1417" height="332" key="GridCell.Tab.3.right/0.23.3840.2084@0.23.3840.2084" timestamp="1591052444476" />
+    <state x="2514" y="671" key="NewModule_or_Project.wizard" timestamp="1591113929213">
+      <screen x="0" y="23" width="3840" height="2084" />
+    </state>
+    <state x="2514" y="671" key="NewModule_or_Project.wizard/0.23.3840.2084@0.23.3840.2084" timestamp="1591113929213" />
     <state x="2372" y="609" key="SettingsEditor" timestamp="1591038195421">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
@@ -168,6 +171,10 @@
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
     <state x="2234" y="573" width="1259" height="795" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.3840.2084@0.23.3840.2084" timestamp="1590796149880" />
+    <state x="2293" y="555" key="new project wizard" timestamp="1591113711359">
+      <screen x="0" y="23" width="3840" height="2084" />
+    </state>
+    <state x="2293" y="555" key="new project wizard/0.23.3840.2084@0.23.3840.2084" timestamp="1591113711359" />
     <state x="2485" y="688" width="670" height="676" key="search.everywhere.popup" timestamp="1590794362043">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
