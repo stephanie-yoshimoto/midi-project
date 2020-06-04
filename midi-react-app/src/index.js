@@ -86,31 +86,20 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
-// const MidiPlayer_2 = require('midi-player-js');
-// const AudioContext = window.AudioContext || window.webkitAudioContext || false;
-// const ac = new AudioContext || new webkitAudioContext;
-// let Player;
-// Soundfont.instrument(ac,
-//     'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/MusyngKite/acoustic_guitar_nylon-mp3.js')
-//     .then(function (instrument) {
-//         Player = new MidiPlayer_2.Player(function (event) {
-//             if (event.name === 'Note on') {
-//                 instrument.play(event.noteName, ac.currentTime, {gain: event.velocity / 100});
-//             }
-//             console.log(event);
-//         });
-//     }, false);
-// const Player = new MidiPlayer_2.Player(function (event) {
-//     console.log('playing...');
-// });
-
-const player = new MidiPlayer();
+let eventLogger = (payload) => {
+    if (payload.event !== 'MIDI_PLAY') {
+        console.log(payload.event);
+    }
+};
+let player = new MidiPlayer({eventLogger});
+// let nowPlaying = '';
 
 class Layout extends React.Component {
     state = {
         width: 0,
         height: 0,
-        nowPlaying: '',
+        // nowPlaying: nowPlaying,
+        nowPLaying: '',
         search: '',
         selectedSong: '',
         disabled: true,
@@ -139,6 +128,12 @@ class Layout extends React.Component {
     componentDidMount() {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions);
+
+        player.eventLogger = (payload) => {
+            if (payload.event === 'MIDI_END') {
+                this.setState({nowPlaying: ''});
+            }
+        };
 
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
@@ -238,7 +233,7 @@ class Layout extends React.Component {
     }
 
     async updateList(songs) {
-        await this.setState({ songs: songs, visibleSongs: songs });
+        await this.setState({ songs: songs, visibleSongs: songs, selectedIndex: -1 });
     }
 
     removeSong = async () => {
@@ -255,30 +250,36 @@ class Layout extends React.Component {
     playSong = () => {
         const currentSong = this.state.selectedSong;
         if (currentSong !== '') {
-            const filesURL = 'http://localhost:8080/midis/' + currentSong;
-            player.play({url: filesURL});
-            this.setState({nowPlaying: 'Now playing: ' + currentSong});
+            let filesURL;
+            fetch(url + currentSong, {'method': 'GET'})
+                .then(response => response.json())
+                .then(response => {
+                    // no actual possibility of this occurring because selected song is an uploaded, existing file
+                    if (response.path === 'file dne') {
+                        alert('File does not exist.');
+                        return;
+                    }
+
+                    if (response.path.includes("music-copy")) {
+                        filesURL = 'http://localhost:8080/midis/music-copy/' + currentSong;
+                    } else {
+                        filesURL = 'http://localhost:8080/midis/' + currentSong;
+                    }
+                })
+                .then(() => {
+                    player.play({url: filesURL});
+                    this.setState({nowPlaying: 'Now playing: ' + currentSong});
+                    // nowPlaying = 'Now playing: ' + currentSong;
+                });
         } else {
             alert('Please select a song.');
         }
     }
 
     stopSong = () => {
-        // fetch(url + 'midi/stop', {'method': 'GET'})
-        //     .then(response => response.json())
-        //     .then(response => {
-        //         if (response.message === 'mixer not initialized') {
-        //             alert('No song started.');
-        //         } else if (response.message === 'no music playing') {
-        //             alert('No music playing.');
-        //         } else {
-        //             this.setState({ nowPlaying: '' });
-        //         }
-        //     });
-
-        // Player.stop();
         player.stop();
         this.setState({nowPlaying: ''});
+        // nowPlaying = '';
     }
 
     updateSearch = (e) => {
@@ -318,7 +319,7 @@ class Layout extends React.Component {
             .then(response => {
                 const description = 'Song info:\n' +
                     'File name: ' + this.state.selectedSong + '\n' +
-                    'Note range: [' + response.low + ', ' + response.high+ ']\n' +
+                    'Note range: [' + response.low + ', ' + response.high + ']\n' +
                     'Length: ' + response.length;
                 this.setState({
                     description: description,
@@ -326,9 +327,6 @@ class Layout extends React.Component {
                     highestNote: response.high,
                     length: response.length
                 });
-                if (response.playing === 'False') {
-                    this.setState({nowPlaying: ''});
-                }
             })
             .catch(err => {
                 console.log(err);
@@ -436,6 +434,7 @@ class Layout extends React.Component {
                             <br/><br/><br/><br/>
                             <label style={{width: this.state.width / 4 * .8}} className={'now-playing'}>
                                 {this.state.nowPlaying}
+                                {/*{nowPlaying}*/}
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
                                 marginLeft: this.state.width / 4 * .1}}>

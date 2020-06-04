@@ -1,9 +1,6 @@
 body {
     font: 20px "AppleGothic", Apple Gothic, sans-serif;
     overflow: hidden;
-
-    /*-webkit-font-smoothing: antialiased;*/
-    /*-moz-osx-font-smoothing: grayscale;*/
 }
 
 form {

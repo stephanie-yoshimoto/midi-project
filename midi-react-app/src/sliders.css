@@ -75,14 +75,5 @@ input[type=range]::-ms-track {
 }
 
 .save {
-    font-family: sans-serif;
-    font-size: 1.3rem;
-    border: 2px solid #3090c0;
-    border-radius: 5px;
-    padding: 7px 7px;
-    display: block;
-    text-align: center;
-    color: #3090c0;
-    height: 3rem;
-    margin-left: 0em;
+    margin-left: 0;
 }

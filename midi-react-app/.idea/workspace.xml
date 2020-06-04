@@ -3,9 +3,11 @@
   <component name="ChangeListManager">
     <list default="true" id="e980c18a-a991-4760-9b70-8fec7fa04ab6" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/buttons.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/buttons.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sliders.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/sliders.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../rest-api/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/../rest-api/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,6 +50,9 @@
     <property name="ts.external.directory.path" value="$APPLICATION_HOME_DIR$/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/public" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src" />
     </key>
@@ -86,7 +91,7 @@
       <workItem from="1589817686192" duration="59670000" />
       <workItem from="1590085527106" duration="14829000" />
       <workItem from="1590248380508" duration="100738000" />
-      <workItem from="1591211250566" duration="226000" />
+      <workItem from="1591211250566" duration="6124000" />
     </task>
     <servers />
   </component>
@@ -98,6 +103,10 @@
       <screen x="0" y="23" width="3840" height="2084" />
     </state>
     <state x="2420" y="632" key="#Inspections/0.23.3840.2084@0.23.3840.2084" timestamp="1591138707319" />
+    <state x="2597" y="780" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1591232139452">
+      <screen x="0" y="23" width="3840" height="2084" />
+    </state>
+    <state x="2597" y="780" key="#com.intellij.fileTypes.FileTypeChooser/0.23.3840.2084@0.23.3840.2084" timestamp="1591232139452" />
     <state x="2601" y="724" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1591035553657">
       <screen x="0" y="23" width="3840" height="2084" />
     </state>

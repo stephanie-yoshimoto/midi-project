@@ -1,4 +1,3 @@
-import pygame
 import mido
 import os
 from flask import Flask, jsonify
@@ -12,66 +11,21 @@ global path
 
 @app.route('/<string:filename>', methods=['GET'])
 def browser_request(filename):
-    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
+    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files'):
         if filename in filenames:
             global path
-            path = dirpath + filename
+            path = dirpath + '/' + filename
             return jsonify({'path': path})
     return jsonify({'path': 'file dne'})
 
 
 def get_file_path(filename):
-    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files/'):
+    for dirpath, dirnames, filenames in os.walk('/Users/stephanie/midi-music-files'):
         if filename in filenames:
             global path
-            path = dirpath + filename
+            path = dirpath + '/' + filename
             return path
     return 'file dne'
-
-
-@app.route('/midi/<string:filename>/play', methods=['GET'])
-def play_music(filename):
-    temp = filename
-    filename = get_file_path(filename)
-    try:
-        mido.MidiFile(filename)
-    except EOFError:
-        # no content in file
-        return jsonify({'message': 'cannot play'})
-    except IndexError:
-        # midi file incorrectly formatted
-        return jsonify({'message': 'cannot play'})
-    except IOError:
-        # file does not exist
-        return jsonify({'message': 'cannot play'})
-
-    if pygame.mixer.get_init():
-        # if play is clicked when song is already playing then stop song and quit initializer
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
-
-    freq = 44100  # audio CD quality
-    bit_size = -16  # unsigned 16 bit
-    channels = 2  # 1 is mono, 2 is stereo
-    buffer_size = 1024  # number of samples
-    pygame.mixer.init(freq, bit_size, channels, buffer_size)
-    pygame.mixer.music.load(filename)
-    pygame.mixer.music.play()
-    while pygame.mixer.get_busy():
-        continue
-    return jsonify({'message': temp})
-
-
-@app.route('/midi/stop', methods=['GET'])
-def stop_music():
-    if pygame.mixer.get_init() is None:
-        return jsonify({'message': 'mixer not initialized'})
-    elif pygame.mixer.music.get_busy():
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
-        return jsonify({'message': 'success'})
-    else:
-        return jsonify({'message': 'no music playing'})
 
 
 @app.route('/midi/<string:filename>/times/<float:multiplier>', methods=['PUT'])
@@ -175,29 +129,19 @@ def change_event_note(filename):
     return 'success'
 
 
-def check_if_playing():
-    if pygame.mixer.get_init():
-        if pygame.mixer.music.get_busy():
-            return 'True'
-        else:
-            return 'False'
-    else:
-        return 'False'
-
-
 @app.route('/midi/<string:filename>/song_info', methods=['GET'])
 def range_of_song(filename):
     try:
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
     except IndexError:
         # midi file incorrectly formatted
-        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
     except IOError:
         # file does not exist
-        return jsonify({'low': 0, 'high': 0, 'length': 0, 'playing': check_if_playing()})
+        return jsonify({'low': 0, 'high': 0, 'length': 0})
 
     lowest_note = 127
     highest_note = 0
@@ -221,7 +165,7 @@ def range_of_song(filename):
         # reset events_length to count for next track
         events_length = 0
 
-    return jsonify({'low': lowest_note, 'high': highest_note, 'length': original_length, 'playing': check_if_playing()})
+    return jsonify({'low': lowest_note, 'high': highest_note, 'length': original_length})
 
 
 if __name__ == '__main__':
