@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import {List, ListItem} from '@material-ui/core/';
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import PauseIcon from '@material-ui/icons/Pause';
 import IconButton from '@material-ui/core/IconButton';
 import {toast} from 'react-toastify';
 import Select from 'react-select';
@@ -86,20 +87,14 @@ const customStyle = {
 let reverseInstruments = new Map();
 let reverseNotes = new Map();
 
-let eventLogger = (payload) => {
-    if (payload.event !== 'MIDI_PLAY') {
-        console.log(payload.event);
-    }
-};
-let player = new MidiPlayer({eventLogger});
-// let nowPlaying = '';
+let eventLogger, player;
 
 class Layout extends React.Component {
     state = {
         width: 0,
         height: 0,
-        // nowPlaying: nowPlaying,
         nowPLaying: '',
+        previousPress: '',
         search: '',
         selectedSong: '',
         disabled: true,
@@ -129,11 +124,12 @@ class Layout extends React.Component {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions);
 
-        player.eventLogger = (payload) => {
+        eventLogger = (payload) => {
             if (payload.event === 'MIDI_END') {
                 this.setState({nowPlaying: ''});
             }
         };
+        player = new MidiPlayer({eventLogger});
 
         reverseInstruments.set('Acoustic Grand Piano', 0);
         reverseInstruments.set('Electric Piano', 4);
@@ -268,18 +264,33 @@ class Layout extends React.Component {
                 })
                 .then(() => {
                     player.play({url: filesURL});
-                    this.setState({nowPlaying: 'Now playing: ' + currentSong});
-                    // nowPlaying = 'Now playing: ' + currentSong;
+
+                    this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'play'});
                 });
         } else {
             alert('Please select a song.');
         }
     }
 
+    pauseSong = () => {
+        if (this.state.selectedIndex < 0 || this.state.selectedSong === '') {
+            alert('Please select a song.');
+            return;
+        }
+        const currentSong = this.state.selectedSong;
+
+        if (this.state.previousPress === 'pause') {
+            player.resume();
+            this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'resume'});
+        } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
+            player.pause();
+            this.setState({nowPlaying: '', previousPress: 'pause'});
+        }
+    }
+
     stopSong = () => {
         player.stop();
-        this.setState({nowPlaying: ''});
-        // nowPlaying = '';
+        this.setState({nowPlaying: '', previousPress: 'stop'});
     }
 
     updateSearch = (e) => {
@@ -431,27 +442,37 @@ class Layout extends React.Component {
                             <label style={{width: this.state.width / 4 * .8}} className={'song-info'}>
                                 {this.state.description}
                             </label>
-                            <br/><br/><br/><br/>
+                            <br/><br/><br/><br/><br/>
                             <label style={{width: this.state.width / 4 * .8}} className={'now-playing'}>
                                 {this.state.nowPlaying}
-                                {/*{nowPlaying}*/}
                             </label>
                             <div style={{width: this.state.width / 4 * .8, display: 'inline',
-                                marginLeft: this.state.width / 4 * .1}}>
+                                marginLeft: this.state.width / 4 * .03}}>
                                 <IconButton onClick={this.playSong} style={{
-                                    color: 'white', margin: '1em', height: this.state.width / 4 * .225,
-                                    marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                    color: 'white', margin: '1em', height: this.state.width / 4 * .18,
+                                    marginTop: '0em', marginBottom: '0em', border: '2px solid #186090',
+                                    backgroundColor: '#184878'
                                 }}>
                                     <PlayArrowIcon style={{
-                                        width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                        width: this.state.width / 4 * .09, height: this.state.width / 4 * .09
+                                    }}/>
+                                </IconButton>
+                                <IconButton onClick={this.pauseSong} style={{
+                                    color: 'white', margin: '1em', height: this.state.width / 4 * .18,
+                                    marginTop: '0em', marginBottom: '0em', border: '2px solid #186090',
+                                    backgroundColor: '#184878'
+                                }}>
+                                    <PauseIcon style={{
+                                        width: this.state.width / 4 * .09, height: this.state.width / 4 * .09
                                     }}/>
                                 </IconButton>
                                 <IconButton onClick={this.stopSong} style={{
-                                     color: 'white', margin: '1em', height: this.state.width / 4 * .225,
-                                     marginTop: '0em', border: '2px solid #186090', backgroundColor: '#184878'
+                                     color: 'white', margin: '1em', height: this.state.width / 4 * .18,
+                                     marginTop: '0em', marginBottom: '0em', border: '2px solid #186090',
+                                    backgroundColor: '#184878'
                                  }}>
                                      <StopIcon style={{
-                                         width: this.state.width / 4 * .15, height: this.state.width / 4 * .15
+                                         width: this.state.width / 4 * .09, height: this.state.width / 4 * .09
                                      }}/>
                                 </IconButton>
                             </div>
