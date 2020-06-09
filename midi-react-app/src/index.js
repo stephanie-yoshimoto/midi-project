@@ -13,7 +13,6 @@ import IconButton from '@material-ui/core/IconButton';
 import {toast} from 'react-toastify';
 import Select from 'react-select';
 import MidiPlayer from 'web-midi-player';
-// import ScriptTag from 'react-script-tag';
 // import App from './App';
 // import * as serviceWorker from './serviceWorker';
 
@@ -68,7 +67,7 @@ const instruments = [
     { label: 'Helicopter', value: 125 },
     { label: 'Applause', value: 126 },
     { label: 'Gunshot', value: 127 },
-]
+];
 const notes = [
     { label: 'No change', value: -1 },
     { label: 'Lower', value: 1 },
@@ -190,11 +189,6 @@ class Layout extends React.Component {
         const files = document.getElementById('file-upload').files;
         for (let i = 0; i < files.length; i++) {
             const currFile = files[i];
-            const reader = new FileReader();
-            reader.readAsBinaryString(currFile);
-            // reader.onload = () => {
-            //     console.log(reader.result);
-            // }
             let originalList = this.state.songs;
             if (originalList.indexOf(currFile.name) < 0) {
                 originalList.push(currFile.name);
@@ -213,11 +207,7 @@ class Layout extends React.Component {
                 // skips hidden files (files with filename starting with .)
                 continue;
             }
-            const reader = new FileReader();
-            reader.readAsBinaryString(currFile);
-            // reader.onload = () => {
-            //     console.log(reader.result);
-            // }
+
             let originalList = this.state.songs;
             if (originalList.indexOf(currFile.name) < 0) {
                 originalList.push(currFile.name);
@@ -229,7 +219,8 @@ class Layout extends React.Component {
     }
 
     async updateList(songs) {
-        await this.setState({ songs: songs, visibleSongs: songs, selectedIndex: -1 });
+        await this.setState({ songs: songs, visibleSongs: songs, selectedIndex: -1, selectedSong: '',
+            disabled: true });
     }
 
     removeSong = async () => {
@@ -244,9 +235,9 @@ class Layout extends React.Component {
     }
 
     playSong = () => {
-        const currentSong = this.state.selectedSong;
-        if (currentSong !== '') {
+        if (this.state.selectedIndex >= 0) {
             let filesURL;
+            const currentSong = this.state.selectedSong;
             fetch(url + currentSong, {'method': 'GET'})
                 .then(response => response.json())
                 .then(response => {
@@ -264,27 +255,34 @@ class Layout extends React.Component {
                 })
                 .then(() => {
                     player.play({url: filesURL});
-
                     this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'play'});
                 });
         } else {
+            this.stopSong();
             alert('Please select a song.');
         }
     }
 
     pauseSong = () => {
-        if (this.state.selectedIndex < 0 || this.state.selectedSong === '') {
-            alert('Please select a song.');
-            return;
-        }
         const currentSong = this.state.selectedSong;
-
-        if (this.state.previousPress === 'pause') {
-            player.resume();
-            this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'resume'});
-        } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
-            player.pause();
-            this.setState({nowPlaying: '', previousPress: 'pause'});
+        if (this.state.selectedIndex >= 0 && currentSong !== '') {
+            if (this.state.previousPress === 'pause') {
+                player.resume();
+                this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'resume'});
+            } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
+                player.pause();
+                this.setState({nowPlaying: '', previousPress: 'pause'});
+            }
+        } else {
+            if (this.state.previousPress === 'pause') {
+                player.resume();
+                this.setState({nowPlaying: '', previousPress: 'resume'});
+            } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
+                player.pause();
+                this.setState({previousPress: 'pause'});
+            } else if (this.state.previousPress === 'stop') {
+                alert('Please select a song.');
+            }
         }
     }
 
@@ -318,6 +316,13 @@ class Layout extends React.Component {
 
         for (let i = 0; i < newArray.length; i++) {
             newArray[i] = this.state.songs[newArray[i]];
+        }
+
+        const tempIndex = newArray.indexOf(this.state.selectedSong);
+        if (tempIndex === -1) {
+            this.setState({selectedIndex: -1, selectedSong: '', disabled: true});
+        } else {
+            this.setState({selectedIndex: tempIndex});
         }
         this.setState({ visibleSongs: newArray });
     }
@@ -499,11 +504,11 @@ class Layout extends React.Component {
                     <div className={'description'}
                          style={{width: this.state.width / 4 * .95, height: this.state.height * .83}}
                     >
-                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
-                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Warp Time</label>
+                        <form className={'slider'} style={{width: this.state.width / 4 * .9}}>
+                            <label style={{textAlign: `left`, width: this.state.width / 9 * .9}}>Warp Time</label>
                             <label style={
-                                {width: this.state.width / 9, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
-                                    fontSize: `2rem`}
+                                {width: this.state.width / 9 * .95, textAlign: `right`, color: `#78a8c0`,
+                                    fontWeight: 900, fontSize: `2rem`}
                             }>
                                 {this.state.warpTime}
                             </label>
@@ -511,19 +516,19 @@ class Layout extends React.Component {
                                    className={'range-slider'} onChange={this.handleWarpTime}/>
                             <br/>
                             <label className={'slider-range'}
-                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
+                                   style={{textAlign: `left`, width: this.state.width / 9 * .9}}>
                                 {0.1}
                             </label>
                             <label className={'slider-range'}
-                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
+                                   style={{textAlign: `right`, width: this.state.width / 9 * .9}}>
                                 {parseFloat('10').toFixed(1)}
                             </label>
                         </form>
-                        <form className={'slider'} style={{width: this.state.width / 4 * .95}}>
-                            <label style={{textAlign: `left`, width: this.state.width / 9 * .95}}>Change Octave</label>
+                        <form className={'slider'} style={{width: this.state.width / 4 * .9}}>
+                            <label style={{textAlign: `left`, width: this.state.width / 9 * .9}}>Change Octave</label>
                             <label style={
-                                {width: this.state.width / 9, textAlign: `right`, color: `#78a8c0`, fontWeight: 900,
-                                    fontSize: `2rem`}
+                                {width: this.state.width / 9 * .95, textAlign: `right`, color: `#78a8c0`,
+                                    fontWeight: 900, fontSize: `2rem`}
                             }>
                                 {this.state.octave}
                             </label>
@@ -534,15 +539,15 @@ class Layout extends React.Component {
                                    }}/>
                             <br/>
                             <label className={'slider-range'}
-                                   style={{textAlign: `left`, width: this.state.width / 9 * .95}}>
+                                   style={{textAlign: `left`, width: this.state.width / 9 * .9}}>
                                 {-5}
                             </label>
                             <label className={'slider-range'}
-                                   style={{textAlign: `right`, width: this.state.width / 9 * .95}}>
+                                   style={{textAlign: `right`, width: this.state.width / 9 * .9}}>
                                 {5}
                             </label>
                         </form>
-                        <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>
+                        <label style={{width: this.state.width / 4 * .9, textAlign: 'left'}}>
                             Remap instruments:
                         </label>
                         <Select
@@ -553,7 +558,7 @@ class Layout extends React.Component {
                             options={instruments} className={'dropdown'} styles={customStyle} isSearchable={false}
                         />
                         <br/>
-                        <label style={{width: this.state.width / 4 * .8, textAlign: 'left'}}>Remap notes:</label>
+                        <label style={{width: this.state.width / 4 * .9, textAlign: 'left'}}>Remap notes:</label>
                         <Select
                             value={null} placeholder={this.state.selectedNote} isSearchable={false}
                             onChange={(e) => {

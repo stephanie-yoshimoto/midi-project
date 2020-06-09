@@ -58,13 +58,6 @@ input[type=range]::-ms-track {
     cursor: pointer;
 }
 
-.buttons-dropdown {
-    height: 40rem;
-    display: block;
-    border: none;
-    margin: 0;
-}
-
 .dropdown {
     font-family: sans-serif;
     font-size: 1rem;

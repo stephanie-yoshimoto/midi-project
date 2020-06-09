@@ -46,7 +46,7 @@ def change_event_time(filename, multiplier):
         for msg in track:
             msg.time *= multiplier
             msg.time = int(msg.time)
-    mid.save(path + filename)
+    mid.save(path)
     return 'success'
 
 
@@ -73,7 +73,7 @@ def change_octave(filename, num_octaves, negative):
                 octave_increase = msg.note + (12 * num_octaves)
                 if 0 <= octave_increase <= 127:
                     msg.note = octave_increase
-    mid.save(path + filename)
+    mid.save(path)
     return 'success'
 
 
@@ -95,7 +95,7 @@ def change_event_instrument(filename, instrument):
         for msg in track:
             if msg.type == 'program_change':
                 msg.program = instrument
-    mid.save(path + filename)
+    mid.save(path)
     return 'success'
 
 
@@ -125,7 +125,7 @@ def change_event_note(filename):
             if msg.type == 'note_on' or msg.type == 'note_off' or msg.type == 'polytouch':
                 msg.note = lower[msg.note]
 
-    mid.save(path + filename)
+    mid.save(path)
     return 'success'
 
 
