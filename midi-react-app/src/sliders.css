@@ -63,10 +63,4 @@ input[type=range]::-ms-track {
     font-size: 1rem;
     border: 2px solid #3090c0;
     border-radius: 5px;
-    margin: 0;
-    display: block;
-}
-
-.save {
-    margin-left: 0;
 }

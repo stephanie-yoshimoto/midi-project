@@ -93,6 +93,8 @@ class Layout extends React.Component {
         width: 0,
         height: 0,
         nowPLaying: '',
+        songPlaying: '', // will remain constant from playSong() up until stopSong() or end of song (regardless of
+                         // pause/resume functions, different song selections)
         previousPress: '',
         search: '',
         selectedSong: '',
@@ -125,7 +127,7 @@ class Layout extends React.Component {
 
         eventLogger = (payload) => {
             if (payload.event === 'MIDI_END') {
-                this.setState({nowPlaying: ''});
+                this.setState({nowPlaying: '', songPlaying: ''});
             }
         };
         player = new MidiPlayer({eventLogger});
@@ -255,7 +257,8 @@ class Layout extends React.Component {
                 })
                 .then(() => {
                     player.play({url: filesURL});
-                    this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'play'});
+                    this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'play',
+                        songPlaying: currentSong});
                 });
         } else {
             this.stopSong();
@@ -266,21 +269,23 @@ class Layout extends React.Component {
     pauseSong = () => {
         const currentSong = this.state.selectedSong;
         if (this.state.selectedIndex >= 0 && currentSong !== '') {
+            // song selected
             if (this.state.previousPress === 'pause') {
                 player.resume();
-                this.setState({nowPlaying: 'Now playing: ' + currentSong, previousPress: 'resume'});
+                this.setState({nowPlaying: 'Now playing: ' + this.state.songPlaying, previousPress: 'resume'});
             } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
                 player.pause();
                 this.setState({nowPlaying: '', previousPress: 'pause'});
             }
         } else {
+            // no song selected
             if (this.state.previousPress === 'pause') {
                 player.resume();
-                this.setState({nowPlaying: '', previousPress: 'resume'});
+                this.setState({nowPlaying: 'Now playing: ' + this.state.songPlaying, previousPress: 'resume'});
             } else if (this.state.previousPress === 'resume' || this.state.previousPress === 'play') {
                 player.pause();
-                this.setState({previousPress: 'pause'});
-            } else if (this.state.previousPress === 'stop') {
+                this.setState({nowPlaying: '', previousPress: 'pause'});
+            } else {
                 alert('Please select a song.');
             }
         }
@@ -288,7 +293,7 @@ class Layout extends React.Component {
 
     stopSong = () => {
         player.stop();
-        this.setState({nowPlaying: '', previousPress: 'stop'});
+        this.setState({nowPlaying: '', previousPress: 'stop', songPlaying: ''});
     }
 
     updateSearch = (e) => {
@@ -567,7 +572,7 @@ class Layout extends React.Component {
                             options={notes} className={'dropdown'} styles={customStyle} isDisabled={this.state.disabled}
                         />
                         <br/><br/><br/><br/>
-                        <button onClick={this.saveSong} style={{width: this.state.width / 4 * .95}} className={'save'}>
+                        <button onClick={this.saveSong} style={{width: this.state.width / 4 * .95, marginLeft: 0}}>
                             Save Song
                         </button>
                     </div>
