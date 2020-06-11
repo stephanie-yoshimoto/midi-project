@@ -51,8 +51,7 @@ input[type=text] {
 .list-item {
     font-family: sans-serif;
     font-size: 1.25rem;
-    min-height: 2.25rem; /* min-height to account for long song names that may fill 2+ lines */
-    outline: 2px solid #3090c0;
+    min-height: 2.75rem; /* min-height to account for long song names that may fill 2+ lines */
     overflow: hidden;
 }
 

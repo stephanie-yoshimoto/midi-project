@@ -34,20 +34,20 @@ def change_event_time(filename, multiplier):
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return 'no changes made'
+        return jsonify({'message': 'no changes made'})
     except IndexError:
         # midi file incorrectly formatted
-        return 'incorrect format'
+        return jsonify({'message': 'incorrect format'})
     except IOError:
         # file does not exist
-        return 'file dne'
+        return jsonify({'message': 'file dne'})
 
     for track in mid.tracks:
         for msg in track:
             msg.time *= multiplier
             msg.time = int(msg.time)
     mid.save(path)
-    return 'success'
+    return jsonify({'message': 'success'})
 
 
 @app.route('/midi/<string:filename>/octaves/<int:num_octaves>/<string:negative>', methods=['PUT'])
@@ -56,13 +56,13 @@ def change_octave(filename, num_octaves, negative):
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return 'no changes made'
+        return jsonify({'message': 'no changes made'})
     except IndexError:
         # midi file incorrectly formatted
-        return 'incorrect format'
+        return jsonify({'message': 'incorrect format'})
     except IOError:
         # file does not exist
-        return 'file dne'
+        return jsonify({'message': 'file dne'})
 
     if negative == 'negative':
         num_octaves *= -1
@@ -74,7 +74,7 @@ def change_octave(filename, num_octaves, negative):
                 if 0 <= octave_increase <= 127:
                     msg.note = octave_increase
     mid.save(path)
-    return 'success'
+    return jsonify({'message': 'success'})
 
 
 @app.route('/midi/<string:filename>/instruments/<int:instrument>', methods=['PUT'])
@@ -83,20 +83,20 @@ def change_event_instrument(filename, instrument):
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return 'no changes made'
+        return jsonify({'message': 'no changes made'})
     except IndexError:
         # midi file incorrectly formatted
-        return 'incorrect format'
+        return jsonify({'message': 'incorrect format'})
     except IOError:
         # file does not exist
-        return 'file dne'
+        return jsonify({'message': 'file dne'})
 
     for track in mid.tracks:
         for msg in track:
             if msg.type == 'program_change':
                 msg.program = instrument
     mid.save(path)
-    return 'success'
+    return jsonify({'message': 'success'})
 
 
 @app.route('/midi/<string:filename>/notes', methods=['PUT'])
@@ -105,13 +105,13 @@ def change_event_note(filename):
         mid = mido.MidiFile(get_file_path(filename))
     except EOFError:
         # no content in file
-        return 'no changes made'
+        return jsonify({'message': 'no changes made'})
     except IndexError:
         # midi file incorrectly formatted
-        return 'incorrect format'
+        return jsonify({'message': 'incorrect format'})
     except IOError:
         # file does not exist
-        return 'file dne'
+        return jsonify({'message': 'file dne'})
 
     # build remapping
     lower = [0] * 0x100
@@ -126,7 +126,7 @@ def change_event_note(filename):
                 msg.note = lower[msg.note]
 
     mid.save(path)
-    return 'success'
+    return jsonify({'message': 'success'})
 
 
 @app.route('/midi/<string:filename>/song_info', methods=['GET'])

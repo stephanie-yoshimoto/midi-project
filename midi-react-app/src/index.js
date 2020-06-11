@@ -65,10 +65,12 @@ const instruments = [
     { label: 'Applause', value: 126 },
     { label: 'Gunshot', value: 127 },
 ];
+let reverseInstruments = new Map();
 const notes = [
     { label: 'No change', value: -1 },
     { label: 'Lower', value: 1 },
 ];
+let reverseNotes = new Map();
 const customStyle = {
     control: (base, state) => ({
         ...base,
@@ -80,25 +82,19 @@ const customStyle = {
         }
     })
 };
-
-let reverseInstruments = new Map();
-let reverseNotes = new Map();
-
 let eventLogger, player;
 
 class Layout extends React.Component {
     state = {
         width: 0,
         height: 0,
-        nowPLaying: '',
+        description: 'Song info:',
+        nowPlaying: '',
         songPlaying: '', // will remain constant from playSong() up until stopSong() or end of song (regardless of
                          // pause/resume functions, different song selections)
         previousPress: '',
         search: '',
         selectedSong: '',
-        disabled: true,
-        selectedInstrument: 'Select instrument...',
-        selectedNote: 'Select note change...',
         selectedIndex: -1,
         songs: [
             'bohemianrhapsody.mid',
@@ -108,12 +104,11 @@ class Layout extends React.Component {
             'bohemianrhapsody.mid',
             'pianoman.mid',
         ],
-        description: 'Song info:',
         warpTime: parseFloat('1').toFixed(1),
         octave: 0,
-        lowestNote: 0,
-        highestNote: 0,
-        originalLength: 0,
+        disabled: true,
+        selectedInstrument: 'Select instrument...',
+        selectedNote: 'Select note change...',
     };
 
     updateDimensions = () => {
@@ -220,11 +215,11 @@ class Layout extends React.Component {
 
     async updateList(songs) {
         await this.setState({ songs: songs, visibleSongs: songs, selectedIndex: -1, selectedSong: '',
-            disabled: true });
+            disabled: true, description: 'Song info:' });
     }
 
     removeSong = async () => {
-        let index = this.state.selectedIndex;
+        const index = this.state.selectedIndex;
         if (index >= 0) {
             let songsCopy = this.state.songs;
             songsCopy.splice(index, 1);
@@ -232,6 +227,21 @@ class Layout extends React.Component {
         } else {
             alert('Please select a song.');
         }
+    }
+
+    async updateSongInfo() {
+        fetch(url + 'midi/' + this.state.selectedSong + '/song_info', {'method': 'GET'})
+            .then(response => response.json())
+            .then(response => {
+                const description = 'Song info:\n' +
+                    'File name: ' + this.state.selectedSong + '\n' +
+                    'Note range: [' + response.low + ', ' + response.high + ']\n' +
+                    'Length: ' + response.length;
+                this.setState({description: description});
+            })
+            .catch(err => {
+                console.log(err);
+            });
     }
 
     playSong = () => {
@@ -332,24 +342,7 @@ class Layout extends React.Component {
 
     async changeState(e, index) {
         await this.setState({ selectedSong: e.target.innerText, selectedIndex: index, disabled: false });
-
-        fetch(url + 'midi/' + this.state.selectedSong + '/song_info', {'method': 'GET'})
-            .then(response => response.json())
-            .then(response => {
-                const description = 'Song info:\n' +
-                    'File name: ' + this.state.selectedSong + '\n' +
-                    'Note range: [' + response.low + ', ' + response.high + ']\n' +
-                    'Length: ' + response.length;
-                this.setState({
-                    description: description,
-                    lowestNote: response.low,
-                    highestNote: response.high,
-                    length: response.length
-                });
-            })
-            .catch(err => {
-                console.log(err);
-            });
+        this.updateSongInfo();
     }
 
     selectSong = async (e, index) => {
@@ -358,7 +351,7 @@ class Layout extends React.Component {
         for (let i = 0; i < index && document.getElementById('list-item-' + i) !== null; i++) {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
         }
-        let temp = index++;
+        const temp = index++;
         index--;
         for (let i = temp; document.getElementById('list-item-' + i) !== null; i++) {
             document.getElementById('list-item-' + i).style.backgroundColor = 'transparent';
@@ -373,24 +366,53 @@ class Layout extends React.Component {
     }
 
     async update(warpTime, octave, negative, instrument, note) {
+        let changesMade = false;
         if (warpTime < 1.0 || warpTime > 1.0) {
-            await fetch(url + 'midi/' + this.state.selectedSong + '/times/' + warpTime, {'method': 'PUT'});
+            await fetch(url + 'midi/' + this.state.selectedSong + '/times/' + warpTime, {'method': 'PUT'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.message === 'success') {
+                        changesMade = true;
+                    }
+                });
         }
         if (octave !== 0) {
             await fetch(url + 'midi/' + this.state.selectedSong + '/octaves/' + octave + '/' + negative,
-                {'method': 'PUT'});
+                {'method': 'PUT'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.message === 'success') {
+                        changesMade = true;
+                    }
+                });
         }
         if (instrument != null) {
             await fetch(url + 'midi/' + this.state.selectedSong + '/instruments/' + instrument,
-                {'method': 'PUT'});
+                {'method': 'PUT'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.message === 'success') {
+                        changesMade = true;
+                    }
+                });
         }
         if (note != null) {
-            await fetch(url + 'midi/' + this.state.selectedSong + '/notes', {'method': 'PUT'});
+            await fetch(url + 'midi/' + this.state.selectedSong + '/notes', {'method': 'PUT'})
+                .then(response => response.json())
+                .then(response => {
+                    if (response.message === 'success') {
+                        changesMade = true;
+                    }
+                });
+        }
+
+        if (changesMade) {
+            this.updateSongInfo();
         }
     }
 
     saveSong = async () => {
-        let index = this.state.selectedIndex;
+        const index = this.state.selectedIndex;
         if (index >= 0) {
             const warpTime = this.state.warpTime;
 
@@ -410,7 +432,7 @@ class Layout extends React.Component {
 
             this.update(warpTime, octave, negative, instrument, note);
             toast.configure();
-            toast.info('Song updated!', {position: 'top-right', autoClose: false});
+            toast.info('Song updated!', {position: 'top-right', autoClose: 10_000, pauseOnHover: false});
         } else {
             alert('Please select a song.');
         }
@@ -495,7 +517,7 @@ class Layout extends React.Component {
                                style={{width: (this.state.width / 2) * .87}}/>
                         <List className={'list'} style={{height: this.state.height * .75}}>
                             {this.state.visibleSongs.map(song => (
-                                <ListItem button component={'a'} key={song}
+                                <ListItem button divider component={'a'} key={song}
                                           onClick={(e) => this.selectSong(e, this.state.visibleSongs.indexOf(song))}
                                           id={'list-item-' + this.state.visibleSongs.indexOf(song)}
                                           className={'list-item'} style={{width: this.state.width / 2 * .9}}>
