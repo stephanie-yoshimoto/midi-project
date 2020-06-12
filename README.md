@@ -21,10 +21,6 @@ An interactive web page that allows users to both modify and play MIDI files.
 
 * Stephanie Yoshimoto ([stephanie-yoshimoto](https://github.com/stephanie-yoshimoto))
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
 ## Acknowledgements
 
 * Inspired by a project completed during CS 240 "Programming in C" in Spring 2020 at Purdue University 
