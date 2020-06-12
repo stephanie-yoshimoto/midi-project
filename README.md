@@ -4,10 +4,6 @@ An interactive web page that allows users to both modify and play MIDI files.
 
 ## Demo
 
-### Screenshot
-
-![photo](https://github.com/stephanie-yoshimoto/midi-project/blob/master/example.png)
-
 ### Video
 
 ![gif](https://github.com/stephanie-yoshimoto/midi-project/blob/master/recording_gif.gif)
