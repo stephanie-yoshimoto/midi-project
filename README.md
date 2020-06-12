@@ -8,6 +8,10 @@ An interactive web page that allows users to both modify and play MIDI files.
 
 ![photo](https://github.com/stephanie-yoshimoto/midi-project/blob/master/example.png)
 
+### Video
+
+![gif](https://github.com/stephanie-yoshimoto/midi-project/blob/master/recording_gif.gif)
+
 ## Built With
 
 * [ReactJS](https://reactjs.org/) - Web framework
